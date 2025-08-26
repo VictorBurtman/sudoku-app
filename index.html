@@ -166,7 +166,7 @@
 
         .sudoku-cell.thick-right { border-right: 2px solid #ffffff; }
         .sudoku-cell.thick-bottom { border-bottom: 2px solid #ffffff; }
-        .sudoku-cell.selected { background: #1565c0; }
+        .sudoku-cell.selected { background: #ff9800; }
         .sudoku-cell.error { background: #d32f2f; }
         .sudoku-cell.highlight-number { background: #f57c00; }
         .sudoku-cell.highlight-area { background: #424242; }
@@ -205,30 +205,47 @@
             gap: 12px;
         }
 
-        .notes-toggle {
+        .action-buttons {
             display: flex;
-            align-items: center;
             gap: 8px;
-            font-size: 14px;
-            font-weight: 500;
-            color: #ffffff;
+            align-items: center;
         }
 
-        .checkbox {
-            width: 18px;
-            height: 18px;
-            border: 2px solid #9c27b0;
-            border-radius: 3px;
+        .action-button {
+            width: 40px;
+            height: 40px;
+            border: none;
+            border-radius: 6px;
             cursor: pointer;
+            font-size: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #2d2d2d;
+            font-weight: bold;
+            transition: all 0.2s;
         }
 
-        .checkbox.checked {
+        .notes-button {
+            background: #404040;
+            color: #ffffff;
+        }
+
+        .notes-button.active {
             background: #9c27b0;
-            color: white;
+            color: #ffffff;
+        }
+
+        .undo-button {
+            background: #404040;
+            color: #ffffff;
+        }
+
+        .action-button:hover {
+            opacity: 0.8;
+        }
+
+        .notes-toggle {
+            display: none;
         }
 
         .number-buttons {
@@ -449,10 +466,9 @@
                 <div class="sudoku-grid" id="sudokuGrid"></div>
                 
                 <div class="controls">
-                    <div class="notes-toggle">
-                        <div class="checkbox" id="notesCheckbox" onclick="toggleNotesMode()"></div>
-                        <span>Mode notes</span>
-                        <span id="notesIcon">✏️</span>
+                    <div class="action-buttons">
+                        <button class="action-button notes-button" id="notesButton" onclick="toggleNotesMode()">✏️</button>
+                        <button class="action-button undo-button" onclick="undoLastAction()">↶</button>
                     </div>
                     
                     <div class="number-buttons" id="numberButtons"></div>
@@ -506,7 +522,8 @@
             elapsedTime: 0,
             gameTimer: null,
             difficulty: '',
-            source: ''
+            source: '',
+            actionHistory: [] // Historique des actions pour annulation
         };
 
         let options = {
@@ -575,6 +592,7 @@
             gameState.elapsedTime = 0;
             gameState.difficulty = difficultyLabel;
             gameState.source = 'Sugoku API';
+            gameState.actionHistory = [];
 
             document.getElementById('gameTitle').textContent = `Sudoku - ${difficultyLabel}`;
             document.getElementById('gameSource').textContent = `Source: Sugoku API (${difficulty})`;
@@ -584,6 +602,39 @@
                 startTimer();
             }
 
+            renderGame();
+        }
+
+        function saveAction(action) {
+            gameState.actionHistory.push(action);
+            // Limiter l'historique à 50 actions
+            if (gameState.actionHistory.length > 50) {
+                gameState.actionHistory.shift();
+            }
+        }
+
+        function undoLastAction() {
+            if (gameState.actionHistory.length === 0) return;
+            
+            const lastAction = gameState.actionHistory.pop();
+            
+            if (lastAction.type === 'number') {
+                gameState.currentGrid[lastAction.row][lastAction.col] = lastAction.oldValue;
+                if (lastAction.oldNotes) {
+                    gameState.notesGrid[lastAction.row][lastAction.col] = new Set(lastAction.oldNotes);
+                }
+            } else if (lastAction.type === 'note') {
+                if (lastAction.action === 'add') {
+                    gameState.notesGrid[lastAction.row][lastAction.col].delete(lastAction.number);
+                } else {
+                    gameState.notesGrid[lastAction.row][lastAction.col].add(lastAction.number);
+                }
+            }
+            
+            if (options.indicativeMode) {
+                updateErrors();
+            }
+            
             renderGame();
         }
 
@@ -672,10 +723,8 @@
                             cell.classList.add('highlight-number');
                         }
                         
-                        // Surligner notes identiques
-                        if (selectedValue !== 0 && gameState.notesGrid[row][col].has(selectedValue)) {
-                            cell.classList.add('highlight-number');
-                        }
+                        // Pour les notes, on ne surligne plus toute la case
+                        // La surbrillance des notes individuelles est gérée plus bas
                     }
                     
                     cell.onclick = () => selectCell(row, col);
@@ -724,16 +773,7 @@
             
             const remaining = options.indicativeMode ? getRemainingNumbers() : {};
             
-            for (let i = 0; i <= 9; i++) {
-                if (i === 0) {
-                    const btn = document.createElement('button');
-                    btn.className = 'number-button erase';
-                    btn.textContent = '×';
-                    btn.onclick = () => placeNumber(0);
-                    container.appendChild(btn);
-                    continue;
-                }
-                
+            for (let i = 1; i <= 9; i++) {
                 const isVisible = !options.indicativeMode || (remaining[i] || 0) > 0;
                 
                 if (isVisible) {
@@ -755,6 +795,14 @@
                     container.appendChild(btn);
                 }
             }
+
+            // Bouton pour effacer (placer 0)
+            const eraseBtn = document.createElement('button');
+            eraseBtn.className = 'number-button';
+            eraseBtn.style.background = '#d32f2f';
+            eraseBtn.textContent = '×';
+            eraseBtn.onclick = () => placeNumber(0);
+            container.appendChild(eraseBtn);
         }
 
         function getRemainingNumbers() {
@@ -892,6 +940,10 @@
             gameState.notesMode = false;
             gameState.startTime = Date.now();
             gameState.elapsedTime = 0;
+            gameState.actionHistory = [];
+
+            // Réinitialiser le bouton notes
+            document.getElementById('notesButton').classList.remove('active');
 
             clearInterval(gameState.gameTimer);
             if (options.showTimer) {
