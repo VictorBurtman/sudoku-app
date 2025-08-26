@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mon Sudoku</title>
+    <title>My Sudoku</title>
     <meta name="theme-color" content="#2196F3">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="Mon Sudoku">
+    <meta name="apple-mobile-web-app-title" content="My Sudoku">
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIk1vbiBTdWRva3UiLAogICJzaG9ydF9uYW1lIjogIlN1ZG9rdSIsCiAgImRlc2NyaXB0aW9uIjogIkpldSBkZSBTdWRva3UgcGVyc29ubmFsaXPDqSIsCiAgInN0YXJ0X3VybCI6ICIuLyIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2ZmZmZmZiIsCiAgInRoZW1lX2NvbG9yIjogIiMyMTk2RjMiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUIzYVdSMGFEMGlOVEV5SWlCb1pXbG5hSFE5SWpVeE1pSWdkbWxsZDBKdmVEMGlNQ0F3SURVNE5DQTBPRFFpSUdobGNtaHNhVzVyUFNKb2RIUndjem92TDNkM2R5NTNNeTV2Y21jdk1qQXdNQzl6ZG1jaUlIaHRiRzV6UFNKb2RIUndjem92TDNkM2R5NTNNeTV2Y21jdk1qQXdNQzl6ZG1jaUNpQWdJQ0FnYVdROUluTjJaekl5TnpFaUlIaHRiRzV6T21oc2FXNXJQU0pvZEhSd2N6b3ZMM2QzZHk1M015NXZjbWN2TVRrNU9TOXNiR2x1YXlJK0NpQWdQR2RsY21Gc1pYUmhjbUJ6ZEhKdmEyVTlJbTV2Ym1VaUlHWnBiR3c5SWpBeE5qUkdRa0lpTHo0S0lDQThaV3hzYVhCelpTQmplRDBpTWpRM0lpQmplVDBpTWpRM0lpQnllRDBpTnpraUlHWnBiR3c5SWpBeE5qUkdRa0lpTHo0S0lDQThaV3hzYVhCelpTQmplRDBpTXpZMUlpQmplVDBpTWpRM0lpQnllRDBpTnpraUlHWnBiR3c5SWpBeE5qUkdRa0lpTHo0S0lDQThaV3hzYVhCelpTQmplRDBpTXpZMUlpQmplVDBpTXpZMUlpQnllRDBpTnpraUlHWnBiR3c5SWpBeE5qUkdRa0lpTHo0S1BDOXpkbWMrIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9zdmcreG1sIgogICAgfQogIF0KfQ==">
@@ -166,7 +166,7 @@
 
         .sudoku-cell.thick-right { border-right: 2px solid #ffffff; }
         .sudoku-cell.thick-bottom { border-bottom: 2px solid #ffffff; }
-        .sudoku-cell.selected { background: #ff9800; }
+        .sudoku-cell.selected { background: #ffb74d; }
         .sudoku-cell.error { background: #d32f2f; }
         .sudoku-cell.highlight-number { background: #f57c00; }
         .sudoku-cell.highlight-area { background: #424242; }
@@ -228,16 +228,21 @@
         .notes-button {
             background: #404040;
             color: #ffffff;
+            border: 2px solid transparent;
         }
 
         .notes-button.active {
             background: #9c27b0;
             color: #ffffff;
+            border: 2px solid #ce93d8;
+            box-shadow: 0 0 8px rgba(156, 39, 176, 0.4);
+            transform: scale(1.1);
         }
 
         .undo-button {
             background: #404040;
             color: #ffffff;
+            border: 2px solid transparent;
         }
 
         .action-button:hover {
@@ -467,8 +472,8 @@
                 
                 <div class="controls">
                     <div class="action-buttons">
-                        <button class="action-button notes-button" id="notesButton" onclick="toggleNotesMode()">✏️</button>
                         <button class="action-button undo-button" onclick="undoLastAction()">↶</button>
+                        <button class="action-button notes-button" id="notesButton" onclick="toggleNotesMode()">✏️</button>
                     </div>
                     
                     <div class="number-buttons" id="numberButtons"></div>
@@ -479,10 +484,10 @@
         <!-- Modales -->
         <div id="optionsModal" class="modal">
             <div class="modal-content">
-                <div class="modal-title">Options de jeu</div>
+                <div class="modal-title">Game Options</div>
                 <div id="optionsContent"></div>
                 <div class="modal-actions">
-                    <button class="btn btn-primary" onclick="closeOptionsModal()">Fermer</button>
+                    <button class="btn btn-primary" onclick="closeOptionsModal()">Close</button>
                 </div>
             </div>
         </div>
@@ -499,7 +504,7 @@
             <div class="modal-content">
                 <div class="loading">
                     <div style="margin-right: 10px;">⏳</div>
-                    <div>Chargement de la grille...</div>
+                    <div>Loading grid...</div>
                 </div>
             </div>
         </div>
@@ -571,7 +576,7 @@
                 initializeGame(grid, label, difficulty);
                 showScreen('gameScreen');
             } catch (e) {
-                alert('Impossible de récupérer une grille. Vérifiez votre connexion internet.');
+                alert('Unable to retrieve a grid. Check your internet connection.');
             } finally {
                 document.getElementById('loadingModal').classList.remove('show');
             }
@@ -905,7 +910,7 @@
             const errorEl = document.getElementById('errorDisplay');
             if (options.indicativeMode) {
                 errorEl.classList.remove('hidden');
-                errorEl.textContent = `Erreurs: ${gameState.errorCount}/3`;
+                errorEl.textContent = `Errors: ${gameState.errorCount}/3`;
                 errorEl.style.color = gameState.errorCount >= 2 ? '#f44336' : '#000';
             } else {
                 errorEl.classList.add('hidden');
@@ -961,23 +966,23 @@
 
             clearInterval(gameState.gameTimer);
 
-            title.textContent = won ? '🎉 Félicitations !' : '💥 Partie terminée';
+            title.textContent = won ? '🎉 Congratulations!' : '💥 Game Over';
             
             if (won) {
                 content.innerHTML = `
-                    <p>Vous avez résolu le sudoku !</p>
+                    <p>You solved the sudoku!</p>
                     <div style="margin-top: 15px; padding: 12px; background: #e8f5e8; border: 1px solid #4caf50; border-radius: 8px; display: flex; align-items: center; gap: 8px;">
                         <span>⏱️</span>
-                        <strong>Temps: ${formatTime(gameState.elapsedTime)}</strong>
+                        <strong>Time: ${formatTime(gameState.elapsedTime)}</strong>
                     </div>
                 `;
             } else {
-                content.innerHTML = '<p>Vous avez fait trop d\'erreurs (3 max).</p>';
+                content.innerHTML = '<p>You made too many errors (3 max).</p>';
             }
 
             actions.innerHTML = `
-                <button class="btn btn-secondary" onclick="closeGameOverModal(); showScreen('menuScreen')">Menu principal</button>
-                ${!won ? '<button class="btn btn-primary" onclick="closeGameOverModal(); resetGame()">Recommencer</button>' : ''}
+                <button class="btn btn-secondary" onclick="closeGameOverModal(); showScreen('menuScreen')">Main Menu</button>
+                ${!won ? '<button class="btn btn-primary" onclick="closeGameOverModal(); resetGame()">Try Again</button>' : ''}
             `;
 
             modal.classList.add('show');
@@ -998,8 +1003,8 @@
                         ${options.indicativeMode ? '✓' : ''}
                     </div>
                     <div class="option-details">
-                        <div class="option-title">Mode indicatif</div>
-                        <div class="option-subtitle">Indique les erreurs en rouge. 3 erreurs = défaite</div>
+                        <div class="option-title">Hint Mode</div>
+                        <div class="option-subtitle">Shows errors in red. 3 errors = game over</div>
                     </div>
                 </div>
                 <div class="option-item">
@@ -1008,8 +1013,8 @@
                         ${options.highlightMode ? '✓' : ''}
                     </div>
                     <div class="option-details">
-                        <div class="option-title">Surbrillance</div>
-                        <div class="option-subtitle">Surligne ligne/colonne et chiffres identiques</div>
+                        <div class="option-title">Highlight</div>
+                        <div class="option-subtitle">Highlights row/column and identical numbers</div>
                     </div>
                 </div>
                 <div class="option-item">
@@ -1018,8 +1023,8 @@
                         ${options.showTimer ? '✓' : ''}
                     </div>
                     <div class="option-details">
-                        <div class="option-title">Afficher timer</div>
-                        <div class="option-subtitle">Montre le temps écoulé pendant le jeu</div>
+                        <div class="option-title">Show Timer</div>
+                        <div class="option-subtitle">Shows elapsed time during game</div>
                     </div>
                 </div>
             `;
@@ -1059,11 +1064,11 @@
             // Afficher un bouton d'installation discret
             if (!localStorage.getItem('pwa_install_dismissed')) {
                 setTimeout(() => {
-                    if (confirm('Installer cette app sur votre écran d\'accueil pour une meilleure expérience ?')) {
+                    if (confirm('Install this app on your home screen for a better experience?')) {
                         deferredPrompt.prompt();
                         deferredPrompt.userChoice.then((choiceResult) => {
                             if (choiceResult.outcome === 'accepted') {
-                                console.log('PWA installée');
+                                console.log('PWA installed');
                             }
                             deferredPrompt = null;
                         });
