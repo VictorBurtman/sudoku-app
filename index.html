@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="My Sudoku">
     
     <!-- PWA Manifest -->
-    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIk1vbiBTdWRva3UiLAogICJzaG9ydF9uYW1lIjogIlN1ZG9rdSIsCiAgImRlc2NyaXB0aW9uIjogIkpldSBkZSBTdWRva3UgcGVyc29ubmFsaXPDqSIsCiAgInN0YXJ0X3VybCI6ICIuLyIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2ZmZmZmZiIsCiAgInRoZW1lX2NvbG9yIjogIiMyMTk2RjMiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUIzYVdSMGFEMGlOVEV5SWlCb1pXbG5hSFE5SWpVeE1pSWdkbWxsZDBKdmVEMGlNQ0F3SURVNE5DQTBPRFFpSUdobGNtaHNhVzVyUFNKb2RIUndjem92TDNkM2R5NTNNeTV2Y21jdk1qQXdNQzl6ZG1jaUlIaHRiRzV6UFNKb2RIUndjem92TDNkM2R5NTNNeTV2Y21jdk1qQXdNQzl6ZG1jaUNpQWdJQ0FnYVdROUluTjJaekl5TnpFaUlIaHRiRzV6T21oc2FXNXJQU0pvZEhSd2N6b3ZMM2QzZHk1M015NXZjbWN2TVRrNU9TOXNiR2x1YXlJK0NpQWdQR2RsY21Gc1pYUmhjbUJ6ZEhKdmEyVTlJbTV2Ym1VaUlHWnBiR3c5SWpBeE5qUkdRa0lpTHo0S0lDQThaV3hzYVhCelpTQmplRDBpTWpRM0lpQmplVDBpTWpRM0lpQnllRDBpTnpraUlHWnBiR3c5SWpBeE5qUkdRa0lpTHo0S0lDQThaV3hzYVhCelpTQmplRDBpTXpZMUlpQmplVDBpTWpRM0lpQnllRDBpTnpraUlHWnBiR3c5SWpBeE5qUkdRa0lpTHo0S0lDQThaV3hzYVhCelpTQmplRDBpTXpZMUlpQmplVDBpTXpZMUlpQnllRDBpTnpraUlHWnBiR3c5SWpBeE5qUkdRa0lpTHo0S1BDOXpkbWMrIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9zdmcreG1sIgogICAgfQogIF0KfQ==">
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIk1vbiBTdWRva3UiLAogICJzaG9ydF9uYW1lIjogIlN1ZG9rdSIsCiAgImRlc2NyaXB0aW9uIjogIkpldSBkZSBTdWRva3UgcGVyc29ubmFsaXPDqSIsCiAgInN0YXJ0X3VybCI6ICIuLyIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2ZmZmZmZiIsCiAgInRoZW1lX2NvbG9yIjogIiMyMTk2RjMiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUI3YVdSMGFEMGlOVEV5SWlCb1pXbG5hSFE5SWpVeE1pSWdkbWxsZDBKdmVEMGlNQ0F3TORRES0F5TREE1SWlCb1pIUndYbTl0QUFBTE1pVnZjbWNOQTFNbGRGa3Y0c3hJWElnZUhONXh0VER5cFNkYTFjeWJOeTNMaTJ5VDZOdCFYTzNVeXhNTm1ySERpRHlZdXYyTklpeHpQSERCVVhZWUZOTkFCTUZKOVpGdHdDRWc1MkVOTEFGRVhmQXZoZ09SelRmZUYxWnBEeVdKUkp2dDBzIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiLAogICAgICAidHlwZSI6ICJpbWFnZS9zdmcreG1sIgogICAgfQogIF0KfQ==">
     
     <style>
         * {
@@ -166,7 +166,10 @@
 
         .sudoku-cell.thick-right { border-right: 2px solid #ffffff; }
         .sudoku-cell.thick-bottom { border-bottom: 2px solid #ffffff; }
-        .sudoku-cell.selected { background: #ffb74d; }
+        .sudoku-cell.selected { 
+            background: #ff8f00 !important; 
+            color: #ffffff;
+        }
         .sudoku-cell.error { background: #d32f2f; }
         .sudoku-cell.highlight-number { background: #f57c00; }
         .sudoku-cell.highlight-area { background: #424242; }
@@ -222,30 +225,53 @@
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            transition: all 0.2s;
+            transition: all 0.3s ease;
         }
 
         .notes-button {
             background: #404040;
             color: #ffffff;
-            border: 2px solid transparent;
+            border: 2px solid #606060;
+            position: relative;
         }
 
         .notes-button.active {
-            background: #9c27b0;
+            background: #7b1fa2;
             color: #ffffff;
             border: 2px solid #ce93d8;
-            box-shadow: 0 0 8px rgba(156, 39, 176, 0.4);
-            transform: scale(1.1);
+            box-shadow: 0 0 12px rgba(123, 31, 162, 0.6), 0 0 24px rgba(123, 31, 162, 0.3);
+            transform: scale(1.15);
+        }
+
+        .notes-button.active::after {
+            content: '';
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            width: 8px;
+            height: 8px;
+            background: #4caf50;
+            border-radius: 50%;
+            border: 1px solid #ffffff;
         }
 
         .undo-button {
             background: #404040;
             color: #ffffff;
-            border: 2px solid transparent;
+            border: 2px solid #606060;
         }
 
-        .action-button:hover {
+        .undo-button:hover:not(:disabled) {
+            background: #505050;
+            border-color: #707070;
+        }
+
+        .undo-button:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .action-button:hover:not(:disabled) {
             opacity: 0.8;
         }
 
@@ -379,6 +405,26 @@
 
         .option-item:last-child { border-bottom: none; }
 
+        .checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #666666;
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            background: #2d2d2d;
+            color: #4caf50;
+            font-weight: bold;
+        }
+
+        .checkbox.checked {
+            background: #4caf50;
+            border-color: #4caf50;
+            color: #ffffff;
+        }
+
         .option-details {
             flex: 1;
             margin-left: 12px;
@@ -405,7 +451,7 @@
             color: #ffffff;
         }
 
-        /* Responsive pour petits écrans */
+        /* Responsive for small screens */
         @media (max-width: 400px) {
             .sudoku-grid {
                 width: 320px;
@@ -427,30 +473,30 @@
 </head>
 <body>
     <div class="app-container">
-        <!-- Menu Principal -->
+        <!-- Main Menu -->
         <div id="menuScreen" class="screen">
             <div class="app-bar">
                 <div>
-                    <div class="app-title">Mon Sudoku</div>
+                    <div class="app-title">My Sudoku</div>
                 </div>
             </div>
             <div class="menu-screen">
                 <div class="main-title">SUDOKU</div>
-                <div class="subtitle">Choisissez votre niveau</div>
-                <div class="warning-text">⚠️ Premier chargement peut prendre 50+ secondes</div>
+                <div class="subtitle">Choose your level</div>
+                <div class="warning-text">⚠️ First loading may take 50+ seconds</div>
                 
                 <button class="option-button" onclick="showOptionsModal()">
                     <span>⚙️</span>
                     <span>Options</span>
                 </button>
                 
-                <button class="difficulty-button" style="background: #4caf50; color: white;" onclick="startGame('easy', 'Facile')">Facile</button>
-                <button class="difficulty-button" style="background: #ff9800; color: white;" onclick="startGame('medium', 'Moyen')">Moyen</button>
-                <button class="difficulty-button" style="background: #f44336; color: white;" onclick="startGame('hard', 'Difficile')">Difficile</button>
+                <button class="difficulty-button" style="background: #4caf50; color: white;" onclick="startGame('easy', 'Easy')">Easy</button>
+                <button class="difficulty-button" style="background: #ff9800; color: white;" onclick="startGame('medium', 'Medium')">Medium</button>
+                <button class="difficulty-button" style="background: #f44336; color: white;" onclick="startGame('hard', 'Hard')">Hard</button>
             </div>
         </div>
 
-        <!-- Écran de Jeu -->
+        <!-- Game Screen -->
         <div id="gameScreen" class="screen hidden">
             <div class="app-bar">
                 <div>
@@ -472,7 +518,7 @@
                 
                 <div class="controls">
                     <div class="action-buttons">
-                        <button class="action-button undo-button" onclick="undoLastAction()">↶</button>
+                        <button class="action-button undo-button" id="undoButton" onclick="undoLastAction()">↶</button>
                         <button class="action-button notes-button" id="notesButton" onclick="toggleNotesMode()">✏️</button>
                     </div>
                     
@@ -481,7 +527,7 @@
             </div>
         </div>
 
-        <!-- Modales -->
+        <!-- Modals -->
         <div id="optionsModal" class="modal">
             <div class="modal-content">
                 <div class="modal-title">Game Options</div>
@@ -511,7 +557,7 @@
     </div>
 
     <script>
-        // État global de l'application
+        // Global application state
         let gameState = {
             currentGrid: [],
             originalGrid: [],
@@ -528,7 +574,7 @@
             gameTimer: null,
             difficulty: '',
             source: '',
-            actionHistory: [] // Historique des actions pour annulation
+            actionHistory: [] // Action history for undo
         };
 
         let options = {
@@ -537,14 +583,14 @@
             showTimer: true
         };
 
-        // Charger les options sauvegardées
+        // Load saved options
         function loadOptions() {
             const saved = localStorage.getItem('sudoku_options');
             if (saved) {
                 try {
                     options = {...options, ...JSON.parse(saved)};
                 } catch (e) {
-                    console.log('Erreur chargement options:', e);
+                    console.log('Error loading options:', e);
                 }
             }
         }
@@ -553,21 +599,21 @@
             localStorage.setItem('sudoku_options', JSON.stringify(options));
         }
 
-        // Navigation entre écrans
+        // Screen navigation
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
             document.getElementById(screenId).classList.remove('hidden');
         }
 
-        // Récupération de grille depuis l'API
+        // Fetch grid from API
         async function fetchSudokuGrid(difficulty) {
             const response = await fetch(`https://sugoku.onrender.com/board?difficulty=${difficulty}`);
-            if (!response.ok) throw new Error('Erreur API');
+            if (!response.ok) throw new Error('API Error');
             const data = await response.json();
             return data.board;
         }
 
-        // Démarrer une nouvelle partie
+        // Start a new game
         async function startGame(difficulty, label) {
             document.getElementById('loadingModal').classList.add('show');
             
@@ -612,10 +658,16 @@
 
         function saveAction(action) {
             gameState.actionHistory.push(action);
-            // Limiter l'historique à 50 actions
+            // Limit history to 50 actions
             if (gameState.actionHistory.length > 50) {
                 gameState.actionHistory.shift();
             }
+            updateUndoButton();
+        }
+
+        function updateUndoButton() {
+            const undoButton = document.getElementById('undoButton');
+            undoButton.disabled = gameState.actionHistory.length === 0;
         }
 
         function undoLastAction() {
@@ -627,6 +679,8 @@
                 gameState.currentGrid[lastAction.row][lastAction.col] = lastAction.oldValue;
                 if (lastAction.oldNotes) {
                     gameState.notesGrid[lastAction.row][lastAction.col] = new Set(lastAction.oldNotes);
+                } else {
+                    gameState.notesGrid[lastAction.row][lastAction.col] = new Set();
                 }
             } else if (lastAction.type === 'note') {
                 if (lastAction.action === 'add') {
@@ -640,6 +694,7 @@
                 updateErrors();
             }
             
+            updateUndoButton();
             renderGame();
         }
 
@@ -681,6 +736,7 @@
             renderNumberButtons();
             updateErrorDisplay();
             updateTimerDisplay();
+            updateUndoButton();
         }
 
         function renderGrid() {
@@ -692,11 +748,11 @@
                     const cell = document.createElement('div');
                     cell.className = 'sudoku-cell';
                     
-                    // Bordures épaisses
+                    // Thick borders
                     if ((col + 1) % 3 === 0 && col !== 8) cell.classList.add('thick-right');
                     if ((row + 1) % 3 === 0 && row !== 8) cell.classList.add('thick-bottom');
                     
-                    // États de la case
+                    // Cell states
                     if (gameState.selectedRow === row && gameState.selectedCol === col) {
                         cell.classList.add('selected');
                     }
@@ -705,11 +761,11 @@
                         cell.classList.add('error');
                     }
                     
-                    // Surbrillance
+                    // Highlighting
                     if (options.highlightMode && gameState.selectedRow !== null && gameState.selectedCol !== null) {
                         const selectedValue = gameState.currentGrid[gameState.selectedRow][gameState.selectedCol];
                         
-                        // Surligner ligne, colonne, carré
+                        // Highlight row, column, square
                         if (row === gameState.selectedRow || col === gameState.selectedCol) {
                             cell.classList.add('highlight-area');
                         }
@@ -723,18 +779,15 @@
                             cell.classList.add('highlight-area');
                         }
                         
-                        // Surligner chiffres identiques
+                        // Highlight identical numbers
                         if (selectedValue !== 0 && gameState.currentGrid[row][col] === selectedValue) {
                             cell.classList.add('highlight-number');
                         }
-                        
-                        // Pour les notes, on ne surligne plus toute la case
-                        // La surbrillance des notes individuelles est gérée plus bas
                     }
                     
                     cell.onclick = () => selectCell(row, col);
                     
-                    // Contenu de la case
+                    // Cell content
                     if (gameState.currentGrid[row][col] !== 0) {
                         cell.textContent = gameState.currentGrid[row][col];
                         cell.classList.add(gameState.originalGrid[row][col] !== 0 ? 'original' : 'user');
@@ -747,7 +800,7 @@
                             noteEl.className = 'note';
                             noteEl.textContent = note;
                             
-                            // Surligner les notes si elles correspondent au chiffre sélectionné
+                            // Highlight notes if they match the selected number
                             if (options.highlightMode && gameState.selectedRow !== null && gameState.selectedCol !== null) {
                                 const selectedValue = gameState.currentGrid[gameState.selectedRow][gameState.selectedCol];
                                 if (selectedValue !== 0 && note === selectedValue) {
@@ -801,10 +854,9 @@
                 }
             }
 
-            // Bouton pour effacer (placer 0)
+            // Erase button (place 0)
             const eraseBtn = document.createElement('button');
-            eraseBtn.className = 'number-button';
-            eraseBtn.style.background = '#d32f2f';
+            eraseBtn.className = 'number-button erase';
             eraseBtn.textContent = '×';
             eraseBtn.onclick = () => placeNumber(0);
             container.appendChild(eraseBtn);
@@ -830,16 +882,40 @@
             if (gameState.selectedRow === null || gameState.selectedCol === null || gameState.gameWon || gameState.gameLost) return;
             if (gameState.originalGrid[gameState.selectedRow][gameState.selectedCol] !== 0) return;
 
+            const row = gameState.selectedRow;
+            const col = gameState.selectedCol;
+
             if (gameState.notesMode && number !== 0) {
-                if (gameState.notesGrid[gameState.selectedRow][gameState.selectedCol].has(number)) {
-                    gameState.notesGrid[gameState.selectedRow][gameState.selectedCol].delete(number);
+                // Save action for undo
+                const action = {
+                    type: 'note',
+                    row: row,
+                    col: col,
+                    number: number,
+                    action: gameState.notesGrid[row][col].has(number) ? 'remove' : 'add'
+                };
+                saveAction(action);
+
+                if (gameState.notesGrid[row][col].has(number)) {
+                    gameState.notesGrid[row][col].delete(number);
                 } else {
-                    gameState.notesGrid[gameState.selectedRow][gameState.selectedCol].add(number);
+                    gameState.notesGrid[row][col].add(number);
                 }
             } else {
-                gameState.currentGrid[gameState.selectedRow][gameState.selectedCol] = number;
+                // Save action for undo
+                const action = {
+                    type: 'number',
+                    row: row,
+                    col: col,
+                    oldValue: gameState.currentGrid[row][col],
+                    newValue: number,
+                    oldNotes: gameState.notesGrid[row][col].size > 0 ? Array.from(gameState.notesGrid[row][col]) : null
+                };
+                saveAction(action);
+
+                gameState.currentGrid[row][col] = number;
                 if (number !== 0) {
-                    gameState.notesGrid[gameState.selectedRow][gameState.selectedCol].clear();
+                    gameState.notesGrid[row][col].clear();
                 }
             }
 
@@ -863,14 +939,17 @@
         }
 
         function isValidMove(row, col, number) {
+            // Check row
             for (let c = 0; c < 9; c++) {
                 if (c !== col && gameState.currentGrid[row][c] === number) return false;
             }
             
+            // Check column
             for (let r = 0; r < 9; r++) {
                 if (r !== row && gameState.currentGrid[r][col] === number) return false;
             }
             
+            // Check 3x3 box
             const startRow = Math.floor(row / 3) * 3;
             const startCol = Math.floor(col / 3) * 3;
             for (let r = startRow; r < startRow + 3; r++) {
@@ -911,7 +990,7 @@
             if (options.indicativeMode) {
                 errorEl.classList.remove('hidden');
                 errorEl.textContent = `Errors: ${gameState.errorCount}/3`;
-                errorEl.style.color = gameState.errorCount >= 2 ? '#f44336' : '#000';
+                errorEl.style.color = gameState.errorCount >= 2 ? '#f44336' : '#ffffff';
             } else {
                 errorEl.classList.add('hidden');
             }
@@ -919,17 +998,12 @@
 
         function toggleNotesMode() {
             gameState.notesMode = !gameState.notesMode;
-            const checkbox = document.getElementById('notesCheckbox');
-            const icon = document.getElementById('notesIcon');
+            const button = document.getElementById('notesButton');
             
             if (gameState.notesMode) {
-                checkbox.classList.add('checked');
-                checkbox.textContent = '✓';
-                icon.style.color = '#9c27b0';
+                button.classList.add('active');
             } else {
-                checkbox.classList.remove('checked');
-                checkbox.textContent = '';
-                icon.style.color = '#666';
+                button.classList.remove('active');
             }
         }
 
@@ -947,7 +1021,7 @@
             gameState.elapsedTime = 0;
             gameState.actionHistory = [];
 
-            // Réinitialiser le bouton notes
+            // Reset notes button
             document.getElementById('notesButton').classList.remove('active');
 
             clearInterval(gameState.gameTimer);
@@ -971,7 +1045,7 @@
             if (won) {
                 content.innerHTML = `
                     <p>You solved the sudoku!</p>
-                    <div style="margin-top: 15px; padding: 12px; background: #e8f5e8; border: 1px solid #4caf50; border-radius: 8px; display: flex; align-items: center; gap: 8px;">
+                    <div style="margin-top: 15px; padding: 12px; background: #1b5e20; border: 1px solid #4caf50; border-radius: 8px; display: flex; align-items: center; gap: 8px;">
                         <span>⏱️</span>
                         <strong>Time: ${formatTime(gameState.elapsedTime)}</strong>
                     </div>
@@ -1036,7 +1110,7 @@
             options[optionName] = !options[optionName];
             saveOptions();
             
-            // Redémarrer le timer si nécessaire
+            // Restart timer if necessary
             if (optionName === 'showTimer') {
                 clearInterval(gameState.gameTimer);
                 if (options.showTimer && !gameState.gameWon && !gameState.gameLost) {
@@ -1044,9 +1118,9 @@
                 }
             }
             
-            showOptionsModal(); // Rafraîchir l'affichage
+            showOptionsModal(); // Refresh display
             if (document.getElementById('gameScreen').classList.contains('hidden') === false) {
-                renderGame(); // Rafraîchir le jeu si on y est
+                renderGame(); // Refresh game if we're in it
             }
         }
 
@@ -1054,14 +1128,14 @@
             document.getElementById('optionsModal').classList.remove('show');
         }
 
-        // Installation PWA
+        // PWA installation
         let deferredPrompt;
 
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
             
-            // Afficher un bouton d'installation discret
+            // Show a discrete installation button
             if (!localStorage.getItem('pwa_install_dismissed')) {
                 setTimeout(() => {
                     if (confirm('Install this app on your home screen for a better experience?')) {
@@ -1079,12 +1153,12 @@
             }
         });
 
-        // Initialisation
+        // Initialization
         document.addEventListener('DOMContentLoaded', () => {
             loadOptions();
             showScreen('menuScreen');
             
-            // Gestion du retour arrière sur mobile
+            // Mobile back button handling
             if ('serviceWorker' in navigator) {
                 navigator.serviceWorker.register('data:application/javascript;base64,Y29uc3QgQ0FDSEVfTkFNRSA9ICdzdWRva3UtdjEnOwpjb25zdCB1cmxzVG9DYWNoZSA9IFsKICAnLicsCiAgJy4vJwpdOwoKc2VsZi5hZGRFdmVudExpc3RlbmVyKCdpbnN0YWxsJywgZXZlbnQgPT4gewogIGV2ZW50LndhaXRVbnRpbCgKICAgIGNhY2hlcy5vcGVuKENBQ0hFX05BTUUpCiAgICAgIC50aGVuKGNhY2hlID0+IGNhY2hlLmFkZEFsbCh1cmxzVG9DYWNoZSkpCiAgKTsKfSk7CgpzZWxmLmFkZEV2ZW50TGlzdGVuZXIoJ2ZldGNoJywgZXZlbnQgPT4gewogIGV2ZW50LnJlc3BvbmRXaXRoKAogICAgY2FjaGVzLm1hdGNoKGV2ZW50LnJlcXVlc3QpCiAgICAgIC50aGVuKHJlc3BvbnNlID0+IHsKICAgICAgICByZXR1cm4gcmVzcG9uc2UgfHwgZmV0Y2goZXZlbnQucmVxdWVzdCk7CiAgICAgIH0pCiAgKTsKfSk7');
             }
