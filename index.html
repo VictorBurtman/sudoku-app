@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>My Sudoku</title>
     <meta name="theme-color" content="#2196F3">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -25,6 +25,7 @@
             color: #ffffff;
             user-select: none;
             overflow-x: hidden;
+            touch-action: manipulation;
         }
 
         .app-container {
@@ -139,7 +140,7 @@
             align-items: center;
             padding: 20px;
             min-height: calc(100vh - 80px);
-            gap: 20px;
+            gap: 12px;
         }
 
         .sudoku-grid {
@@ -149,7 +150,6 @@
             display: grid;
             grid-template-columns: repeat(9, 1fr);
             grid-template-rows: repeat(9, 1fr);
-            margin-bottom: 20px;
         }
 
         .sudoku-cell {
@@ -469,6 +469,11 @@
             .sudoku-grid {
                 width: 320px;
                 height: 320px;
+            }
+            
+            .game-screen {
+                padding: 10px;
+                gap: 15px;
             }
             
             .number-button {
