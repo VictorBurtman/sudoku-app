@@ -868,6 +868,11 @@
                     numberText.textContent = i;
                     btn.appendChild(numberText);
                     
+                    // Test visible : changer le texte du bouton 1
+                    if (i === 1) {
+                        numberText.textContent = "🟠";
+                    }
+                    
                     if (options.indicativeMode) {
                         const countText = document.createElement('div');
                         countText.className = 'remaining-count';
