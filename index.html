@@ -881,6 +881,13 @@
                     }
                     
                     container.appendChild(btn);
+                    
+                    // Appliquer les styles après ajout au DOM
+                    if (i === 1) {
+                        setTimeout(() => {
+                            btn.style.cssText = 'background: #ff9800 !important; border: 3px solid #ffc107 !important; transform: scale(1.1) !important; box-shadow: 0 0 15px rgba(255, 152, 0, 0.8) !important; min-width: 38px; width: 38px; height: 50px; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; color: #ffffff !important; display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0;';
+                        }, 10);
+                    }
                 }
             }
 
