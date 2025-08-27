@@ -311,18 +311,20 @@
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-        }
-
-        .number-button.highlighted {
-            background: #ff9800 !important;
-            color: #ffffff !important;
-            border: 2px solid #ffc107 !important;
-            transform: scale(1.05);
-            box-shadow: 0 0 8px rgba(255, 152, 0, 0.5);
+            transition: all 0.2s ease;
         }
 
         .number-button:hover:not(.highlighted) {
             background: #505050;
+        }
+
+        .number-button.erase {
+            background: #d32f2f;
+            font-size: 18px;
+        }
+
+        .number-button.erase:hover {
+            background: #f44336;
         }
 
         .number-button.erase {
