@@ -166,7 +166,7 @@
         .sudoku-cell.thick-right { border-right: 2px solid #ffffff; }
         .sudoku-cell.thick-bottom { border-bottom: 2px solid #ffffff; }
         .sudoku-cell.selected { 
-            background: #ff8f00 !important; 
+            background: #ffb74d !important; 
             color: #ffffff;
         }
         .sudoku-cell.error { background: #d32f2f; }
@@ -882,7 +882,7 @@
             const remaining = options.indicativeMode ? getRemainingNumbers() : {};
             
             let selectedCellNotes = new Set();
-            if (gameState.selectedRow !== null && gameState.selectedCol !== null) {
+            if (gameState.selectedRow !== null && gameState.selectedCol !== null && gameState.notesMode) {
                 selectedCellNotes = gameState.notesGrid[gameState.selectedRow][gameState.selectedCol];
             }
             
@@ -1104,6 +1104,9 @@
             } else {
                 button.classList.remove('active');
             }
+            
+            // Rafraîchir l'affichage des boutons pour mettre à jour la surbrillance
+            renderNumberButtons();
         }
 
         function resetGame() {
