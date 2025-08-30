@@ -62,7 +62,7 @@
             background: #1a237e;
             border: 1px solid #3f51b5;
             border-radius: 6px;
-            padding: 4px 8px;
+            padding: 2px 6px;
             display: flex;
             align-items: center;
             gap: 4px;
@@ -258,6 +258,18 @@
             border: 1px solid #ffffff;
         }
 
+        .erase-button {
+            background: #d32f2f;
+            color: #ffffff;
+            border: 2px solid #f44336;
+            font-size: 18px;
+        }
+
+        .erase-button:hover:not(:disabled) {
+            background: #f44336;
+            border-color: #f66;
+        }
+
         .undo-button {
             background: #404040;
             color: #ffffff;
@@ -289,8 +301,8 @@
         }
 
         .number-button {
-            min-width: 38px;
-            width: 38px;
+            flex: 1;
+            min-width: 0;
             height: 50px;
             border: none;
             border-radius: 5px;
@@ -303,12 +315,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            flex-shrink: 0;
             transition: all 0.2s ease;
-        }
-
-        .number-button:hover:not(.highlighted) {
-            background: #505050;
         }
 
         .number-button.erase {
@@ -318,6 +325,10 @@
 
         .number-button.erase:hover {
             background: #f44336;
+        }
+
+        .number-button:hover:not(.highlighted) {
+            background: #505050;
         }
 
         .number-button:disabled {
@@ -505,16 +516,16 @@
         <!-- Game Screen -->
         <div id="gameScreen" class="screen hidden">
             <div class="app-bar">
-                <div>
+                <div class="game-info">
+                    <button class="back-button" onclick="showScreen('menuScreen')">←</button>
                     <div class="app-title" id="gameTitle">Sudoku</div>
-                    <div class="app-subtitle" id="gameSource">Source: Local Generator</div>
-                </div>
-                <div class="app-actions">
                     <div id="timerDisplay" class="timer-display hidden">
                         <span>⏱️</span>
                         <span id="timerText">0s</span>
                     </div>
                     <div id="errorDisplay" class="error-display hidden"></div>
+                </div>
+                <div class="game-actions">
                     <button class="btn btn-secondary" onclick="resetGame()">🔄</button>
                 </div>
             </div>
@@ -525,6 +536,7 @@
                 <div class="controls">
                     <div class="action-buttons">
                         <button class="action-button undo-button" id="undoButton" onclick="undoLastAction()">↶</button>
+                        <button class="action-button erase-button" onclick="placeNumber(0)">×</button>
                         <button class="action-button notes-button" id="notesButton" onclick="toggleNotesMode()">✏️</button>
                     </div>
                     
@@ -742,7 +754,6 @@
             gameState.actionHistory = [];
 
             document.getElementById('gameTitle').textContent = `Sudoku - ${difficultyLabel}`;
-            document.getElementById('gameSource').textContent = `Source: Local Generator (${Math.round(difficulty * 100)}% difficulty)`;
 
             clearInterval(gameState.gameTimer);
             if (options.showTimer) {
@@ -887,42 +898,39 @@
             }
             
             for (let i = 1; i <= 9; i++) {
-                const isVisible = !options.indicativeMode || (remaining[i] || 0) > 0;
+                const btn = document.createElement('button');
+                btn.className = 'number-button';
                 
-                if (isVisible) {
-                    const btn = document.createElement('button');
-                    btn.className = 'number-button';
-                    
-                    const shouldHighlight = selectedCellNotes && selectedCellNotes.has && selectedCellNotes.has(i);
-                    
-                    btn.onclick = () => placeNumber(i);
-                    
-                    const numberText = document.createElement('div');
-                    numberText.textContent = i;
-                    btn.appendChild(numberText);
-                    
-                    if (options.indicativeMode) {
-                        const countText = document.createElement('div');
-                        countText.className = 'remaining-count';
-                        countText.textContent = remaining[i] || 0;
-                        btn.appendChild(countText);
-                    }
-                    
-                    container.appendChild(btn);
-                    
-                    if (shouldHighlight) {
-                        setTimeout(() => {
-                            btn.style.cssText = 'background: #ff9800 !important; border: 3px solid #ffc107 !important; transform: scale(1.1) !important; box-shadow: 0 0 15px rgba(255, 152, 0, 0.8) !important; min-width: 38px; width: 38px; height: 50px; border-radius: 5px; font-size: 16px; font-weight: bold; cursor: pointer; color: #ffffff !important; display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0;';
-                        }, 10);
-                    }
+                // Cacher le bouton au lieu de le retirer si plus de chiffres disponibles
+                if (options.indicativeMode && (remaining[i] || 0) === 0) {
+                    btn.style.visibility = 'hidden';
+                } else {
+                    btn.style.visibility = 'visible';
+                }
+                
+                const shouldHighlight = selectedCellNotes && selectedCellNotes.has && selectedCellNotes.has(i);
+                
+                btn.onclick = () => placeNumber(i);
+                
+                const numberText = document.createElement('div');
+                numberText.textContent = i;
+                btn.appendChild(numberText);
+                
+                if (options.indicativeMode) {
+                    const countText = document.createElement('div');
+                    countText.className = 'remaining-count';
+                    countText.textContent = remaining[i] || 0;
+                    btn.appendChild(countText);
+                }
+                
+                container.appendChild(btn);
+                
+                if (shouldHighlight) {
+                    setTimeout(() => {
+                        btn.style.cssText += 'background: #ff9800 !important; border: 2px solid #ffb74d !important; transform: scale(1.05) !important; box-shadow: 0 0 8px rgba(255, 152, 0, 0.4) !important;';
+                    }, 10);
                 }
             }
-
-            const eraseBtn = document.createElement('button');
-            eraseBtn.className = 'number-button erase';
-            eraseBtn.textContent = '×';
-            eraseBtn.onclick = () => placeNumber(0);
-            container.appendChild(eraseBtn);
         }
 
         function getRemainingNumbers() {
@@ -949,6 +957,26 @@
             const col = gameState.selectedCol;
 
             if (gameState.notesMode && number !== 0) {
+                // En mode hint, empêcher l'ajout de notes si le chiffre existe déjà dans la ligne, colonne ou carré
+                if (options.indicativeMode) {
+                    // Vérifier la ligne
+                    for (let c = 0; c < 9; c++) {
+                        if (gameState.currentGrid[row][c] === number) return;
+                    }
+                    // Vérifier la colonne
+                    for (let r = 0; r < 9; r++) {
+                        if (gameState.currentGrid[r][col] === number) return;
+                    }
+                    // Vérifier le carré 3x3
+                    const startRow = Math.floor(row / 3) * 3;
+                    const startCol = Math.floor(col / 3) * 3;
+                    for (let r = startRow; r < startRow + 3; r++) {
+                        for (let c = startCol; c < startCol + 3; c++) {
+                            if (gameState.currentGrid[r][c] === number) return;
+                        }
+                    }
+                }
+
                 const action = {
                     type: 'note',
                     row: row,
