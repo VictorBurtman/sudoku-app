@@ -1,1364 +1,287 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>My Sudoku</title>
-    <meta name="theme-color" content="#2196F3">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="My Sudoku">
-    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reconnaissance de Chiffres - DoodleNet</title>
+    <script src="https://unpkg.com/ml5@latest/dist/ml5.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Courier New', monospace;
-            background: #121212;
-            color: #ffffff;
-            user-select: none;
-            overflow-x: hidden;
-            touch-action: manipulation;
-        }
-
-        .app-container {
-            max-width: 480px;
+            font-family: Arial, sans-serif;
+            max-width: 800px;
             margin: 0 auto;
-            background: #1e1e1e;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
+            color: white;
         }
-
-        .app-bar {
-            background: #2d2d2d;
-            padding: 8px 16px;
-            border-bottom: 1px solid #404040;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            min-height: 48px;
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
         }
-
-        .back-button {
-            background: none;
-            border: none;
-            color: #ffffff;
-            font-size: 18px;
-            cursor: pointer;
-            padding: 4px;
-            margin-right: 8px;
-            opacity: 0.8;
-            flex-shrink: 0;
-        }
-
-        .back-button:hover {
-            opacity: 1;
-        }
-
-        .game-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex: 1;
-            min-width: 0;
-            overflow: hidden;
-        }
-
-        .game-actions {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            flex-shrink: 0;
-        }
-
-        .app-title {
-            font-size: 16px;
-            font-weight: bold;
-            color: #ffffff;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-
-        .timer-display {
-            background: #1a237e;
-            border: 1px solid #3f51b5;
-            border-radius: 4px;
-            padding: 2px 4px;
-            display: flex;
-            align-items: center;
-            gap: 2px;
-            font-size: 11px;
-            font-weight: bold;
-            color: #90caf9;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-
-        .error-display {
-            font-weight: bold;
-            font-size: 12px;
-            color: #ffffff;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-
-        .menu-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 80vh;
-            padding: 20px;
-        }
-
-        .main-title {
-            font-size: 48px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            color: #ffffff;
-        }
-
-        .subtitle {
-            font-size: 18px;
-            color: #b0b0b0;
-            margin-bottom: 10px;
-        }
-
-        .warning-text {
-            font-size: 12px;
-            color: #4caf50;
-            font-style: italic;
-            margin-bottom: 30px;
-        }
-
-        .option-button, .difficulty-button {
-            width: 200px;
-            height: 60px;
-            border: none;
+        .tech-note {
+            background: rgba(255, 165, 0, 0.2);
+            border: 2px solid rgba(255, 165, 0, 0.5);
+            padding: 15px;
             border-radius: 10px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
         }
-
-        .option-button {
-            background: #404040;
-            color: #ffffff;
-            height: 50px;
+        #canvas {
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            background: white;
+            cursor: crosshair;
+            margin: 20px 0;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
         }
-
-        .option-button:hover {
-            background: #505050;
-        }
-
-        .game-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            min-height: calc(100vh - 80px);
-            gap: 12px;
-        }
-
-        .sudoku-grid {
-            width: 100%;
-            max-width: 480px;
-            height: 100vw;
-            max-height: 480px;
-            aspect-ratio: 1;
-            border: 3px solid #ffffff;
-            display: grid;
-            grid-template-columns: repeat(9, 1fr);
-            grid-template-rows: repeat(9, 1fr);
-        }
-
-        .sudoku-cell {
-            border: 0.5px solid #666666;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            font-weight: bold;
-            cursor: pointer;
-            position: relative;
-            background: #2d2d2d;
-            color: #ffffff;
-            overflow: hidden;
-            transition: background-color 0.3s ease;
-        }
-
-        .sudoku-cell.thick-right { border-right: 2px solid #ffffff; }
-        .sudoku-cell.thick-bottom { border-bottom: 2px solid #ffffff; }
-        .sudoku-cell.selected { 
-            background: #ffb74d !important; 
-            color: #ffffff;
-        }
-        .sudoku-cell.error { background: #d32f2f; }
-        .sudoku-cell.highlight-number { background: #f57c00; }
-        .sudoku-cell.highlight-area { background: #424242; }
-        .sudoku-cell.original { color: #ffffff; }
-        .sudoku-cell.user { color: #90caf9; }
-        
-        .sudoku-cell.flash-conflict {
-            animation: flashRed 0.6s ease-in-out;
-        }
-
-        @keyframes flashRed {
-            0% { background-color: #2d2d2d; }
-            50% { background-color: #f44336; }
-            100% { background-color: #2d2d2d; }
-        }
-
-        .notes-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(3, 1fr);
-            gap: 1px;
-            padding: 2px;
-        }
-
-        .note {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 8px;
-            color: #90caf9;
-            font-weight: bold;
-            background: none;
-            border-radius: 0;
-        }
-
-        .note.highlighted {
-            background: #f57c00;
-            color: #ffffff;
-        }
-
-        .controls {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 12px;
-            width: 100%;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .action-button {
-            width: 40px;
-            height: 40px;
+        button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
             border: none;
-            border-radius: 6px;
-            cursor: pointer;
+            padding: 12px 25px;
+            border-radius: 25px;
             font-size: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
+            cursor: pointer;
+            margin: 0 10px;
             transition: all 0.3s ease;
         }
-
-        .erase-button {
-            background: #d32f2f;
-            color: #ffffff;
-            border: 2px solid #f44336;
+        button:hover:not(:disabled) { 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        button:disabled {
+            background: #666;
+            cursor: not-allowed;
+        }
+        #result {
             font-size: 18px;
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            backdrop-filter: blur(5px);
         }
-
-        .erase-button:hover:not(:disabled) {
-            background: #f44336;
-            border-color: #f66;
+        .prediction { 
+            font-size: 48px; 
+            font-weight: bold; 
+            color: #ffd700;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            margin: 15px 0;
         }
-
-        .notes-button {
-            background: #404040;
-            color: #ffffff;
-            border: 2px solid #606060;
-            position: relative;
+        .predictions-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
         }
-
-        .notes-button.active {
-            background: #7b1fa2;
-            color: #ffffff;
-            border: 2px solid #ce93d8;
-            box-shadow: 0 0 12px rgba(123, 31, 162, 0.6), 0 0 24px rgba(123, 31, 162, 0.3);
-            transform: scale(1.15);
+        .prediction-item {
+            background: rgba(255, 255, 255, 0.3);
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 14px;
         }
-
-        .notes-button.active::after {
-            content: '';
-            position: absolute;
-            top: -4px;
-            right: -4px;
-            width: 8px;
-            height: 8px;
-            background: #4caf50;
-            border-radius: 50%;
-            border: 1px solid #ffffff;
-        }
-
-        .undo-button {
-            background: #404040;
-            color: #ffffff;
-            border: 2px solid #606060;
-        }
-
-        .undo-button:hover:not(:disabled) {
-            background: #505050;
-            border-color: #707070;
-        }
-
-        .undo-button:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-        }
-
-        .action-button:hover:not(:disabled) {
-            opacity: 0.8;
-        }
-
-        .number-buttons {
-            display: flex;
-            gap: 4px;
-            width: 100%;
-            padding: 0;
-        }
-
-        .number-button {
-            flex: 1;
-            height: 50px;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
+        .prediction-item.best {
+            background: rgba(255, 215, 0, 0.6);
             font-weight: bold;
-            cursor: pointer;
-            background: #404040;
-            color: #ffffff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
+            color: black;
         }
-
-        .number-button:hover:not(.highlighted) {
-            background: #505050;
-        }
-
-        .number-button:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-        }
-
-        .remaining-count {
-            font-size: 10px;
-            color: #b0b0b0;
-            font-weight: bold;
-            margin-top: 2px;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 1000;
-        }
-
-        .modal.show { display: flex; }
-
-        .modal-content {
-            background: #2d2d2d;
-            color: #ffffff;
-            margin: auto;
+        .alternative {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid rgba(0, 255, 0, 0.3);
             padding: 20px;
             border-radius: 10px;
-            max-width: 400px;
-            width: 90%;
-            border: 1px solid #404040;
-        }
-
-        .modal-title {
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #ffffff;
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            margin-top: 20px;
-        }
-
-        .btn {
-            padding: 8px 16px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-        }
-
-        .btn-primary { 
-            background: #2196f3; 
-            color: white; 
-        }
-        
-        .btn-primary:hover { 
-            background: #1976d2; 
-        }
-
-        .btn-secondary { 
-            background: #404040; 
-            color: #ffffff; 
-        }
-        
-        .btn-secondary:hover { 
-            background: #505050; 
-        }
-
-        .option-item {
-            display: flex;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid #404040;
-        }
-
-        .option-item:last-child { border-bottom: none; }
-
-        .checkbox {
-            width: 20px;
-            height: 20px;
-            border: 2px solid #666666;
-            border-radius: 3px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            background: #2d2d2d;
-            color: #4caf50;
-            font-weight: bold;
-        }
-
-        .checkbox.checked {
-            background: #4caf50;
-            border-color: #4caf50;
-            color: #ffffff;
-        }
-
-        .option-details {
-            flex: 1;
-            margin-left: 12px;
-        }
-
-        .option-title {
-            font-weight: bold;
-            margin-bottom: 4px;
-            color: #ffffff;
-        }
-
-        .option-subtitle {
-            font-size: 12px;
-            color: #b0b0b0;
-        }
-
-        .hidden { display: none !important; }
-        
-        .loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            color: #ffffff;
-        }
-
-        @media (max-width: 400px) {
-            .sudoku-grid {
-                width: calc(100vw - 20px);
-                height: calc(100vw - 20px);
-                max-width: 360px;
-                max-height: 360px;
-            }
-            
-            .game-screen {
-                padding: 10px;
-                gap: 15px;
-            }
-            
-            .number-buttons {
-                gap: 2px;
-            }
-            
-            .number-button {
-                height: 45px;
-                font-size: 14px;
-            }
+            margin-top: 30px;
         }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <!-- Main Menu -->
-        <div id="menuScreen" class="screen">
-            <div class="app-bar">
-                <div>
-                    <div class="app-title">My Sudoku</div>
-                </div>
-            </div>
-            <div class="menu-screen">
-                <div class="main-title">SUDOKU</div>
-                <div class="warning-text">By Victor Burtman</div>
-                <div class="subtitle">Choose your level</div>
-                
-                <button class="option-button" onclick="showOptionsModal()">
-                    <span>⚙️</span>
-                    <span>Options</span>
-                </button>
-                
-                <button class="difficulty-button" style="background: #4caf50; color: white;" onclick="startGame(0.2, 'Very Easy')">Very Easy</button>
-                <button class="difficulty-button" style="background: #8bc34a; color: white;" onclick="startGame(0.35, 'Easy')">Easy</button>
-                <button class="difficulty-button" style="background: #ff9800; color: white;" onclick="startGame(0.5, 'Medium')">Medium</button>
-                <button class="difficulty-button" style="background: #ff5722; color: white;" onclick="startGame(0.65, 'Hard')">Hard</button>
-                <button class="difficulty-button" style="background: #f44336; color: white;" onclick="startGame(0.8, 'Expert')">Expert</button>
-            </div>
+    <div class="container">
+        <h1>🎨 Reconnaissance de Dessins</h1>
+        
+        <div class="tech-note">
+            <strong>📝 Note :</strong> ml5.js n'a pas de modèle MNIST intégré. Cette version utilise <strong>DoodleNet</strong> qui reconnaît des dessins, y compris les chiffres !
         </div>
-
-        <!-- Game Screen -->
-        <div id="gameScreen" class="screen hidden">
-            <div class="app-bar">
-                <div class="game-info">
-                    <button class="back-button" onclick="showScreen('menuScreen')">←</button>
-                    <div class="app-title" id="gameTitle">Sudoku</div>
-                    <div id="timerDisplay" class="timer-display hidden">
-                        <span>⏱️</span>
-                        <span id="timerText">0s</span>
-                    </div>
-                    <div id="errorDisplay" class="error-display hidden"></div>
-                </div>
-                <div class="game-actions">
-                    <button class="btn btn-secondary" onclick="resetGame()">🔄</button>
-                </div>
+        
+        <p>Dessinez quelque chose dans le carré blanc ci-dessous :</p>
+        
+        <canvas id="canvas" width="280" height="280"></canvas><br>
+        
+        <button onclick="clearCanvas()">🗑️ Effacer</button>
+        <button id="classifyBtn" onclick="classifyCanvas()" disabled>🔍 Reconnaître</button>
+        
+        <div id="result">📡 Chargement du modèle DoodleNet...</div>
+        
+        <div class="alternative">
+            <h3>🚀 Pour une vraie reconnaissance de chiffres MNIST :</h3>
+            <p><strong>Option 1 :</strong> Remplace dans ton code GitHub :</p>
+            <div style="background: #1a1a1a; color: #00ff00; padding: 10px; border-radius: 5px; font-family: monospace; text-align: left; margin: 10px 0;">
+// Remplace cette ligne :<br>
+classifier = ml5.imageClassifier('MNIST', canvas, callback);<br><br>
+// Par :<br>
+classifier = ml5.imageClassifier('DoodleNet', canvas, callback);
             </div>
             
-            <div class="game-screen">
-                <div class="sudoku-grid" id="sudokuGrid"></div>
-                
-                <div class="controls">
-                    <div class="action-buttons">
-                        <button class="action-button undo-button" id="undoButton" onclick="undoLastAction()">↶</button>
-                        <button class="action-button erase-button" onclick="placeNumber(0)">×</button>
-                        <button class="action-button notes-button" id="notesButton" onclick="toggleNotesMode()">✏️</button>
-                    </div>
-                    
-                    <div class="number-buttons" id="numberButtons"></div>
-                </div>
+            <p><strong>Option 2 :</strong> Utilise un modèle TensorFlow.js hébergé</p>
+            <div style="background: #1a1a1a; color: #00ff00; padding: 10px; border-radius: 5px; font-family: monospace; text-align: left; margin: 10px 0;">
+// Charge un vrai modèle MNIST :<br>
+const model = await tf.loadLayersModel(<br>
+&nbsp;&nbsp;'https://raw.githubusercontent.com/ml5js/ml5-data-and-models/main/models/MNIST/model.json'<br>
+);
             </div>
-        </div>
-
-        <!-- Modals -->
-        <div id="optionsModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-title">Game Options</div>
-                <div id="optionsContent"></div>
-                <div class="modal-actions">
-                    <button class="btn btn-primary" onclick="closeOptionsModal()">Close</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="gameOverModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-title" id="gameOverTitle"></div>
-                <div id="gameOverContent"></div>
-                <div class="modal-actions" id="gameOverActions"></div>
-            </div>
-        </div>
-
-        <div id="loadingModal" class="modal">
-            <div class="modal-content">
-                <div class="loading">
-                    <div style="margin-right: 10px;">⏳</div>
-                    <div>Generating grid...</div>
-                </div>
-            </div>
+            
+            <p><strong>Option 3 :</strong> Teachable Machine Google (recommandé)</p>
+            <ol style="text-align: left;">
+                <li>Va sur <strong>teachablemachine.withgoogle.com</strong></li>
+                <li>Crée un projet "Image"</li>
+                <li>Ajoute des exemples de chiffres 0-9</li>
+                <li>Entraîne le modèle</li>
+                <li>Exporte vers "TensorFlow.js"</li>
+                <li>Utilise l'URL générée dans ton code</li>
+            </ol>
         </div>
     </div>
 
     <script>
-        // Global variables
-        let gameState = {
-            currentGrid: [],
-            originalGrid: [],
-            errorGrid: [],
-            notesGrid: [],
-            selectedRow: null,
-            selectedCol: null,
-            errorCount: 0,
-            gameWon: false,
-            gameLost: false,
-            notesMode: false,
-            startTime: null,
-            elapsedTime: 0,
-            gameTimer: null,
-            difficulty: '',
-            source: '',
-            actionHistory: []
-        };
+        let canvas, ctx, classifier;
+        let isDrawing = false;
+        let modelReady = false;
 
-        let options = {
-            indicativeMode: false,
-            highlightMode: true,
-            showTimer: true
-        };
+        function setup() {
+            canvas = document.getElementById('canvas');
+            ctx = canvas.getContext('2d');
+            
+            // Configuration pour dessiner
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            ctx.lineJoin = 'round';
+            ctx.strokeStyle = 'black';
+            
+            // Charger DoodleNet (qui peut reconnaître quelques chiffres)
+            classifier = ml5.imageClassifier('DoodleNet', canvas, modelLoaded);
+            
+            setupEvents();
+            clearCanvas();
+        }
 
-        // Sudoku Generator
-        class SudokuGenerator {
-            constructor() {
-                this.SIZE = 9;
-                this.EMPTY = 0;
+        function modelLoaded() {
+            modelReady = true;
+            document.getElementById('classifyBtn').disabled = false;
+            document.getElementById('result').innerHTML = 
+                '✅ <strong>Modèle DoodleNet chargé !</strong><br>🎨 Reconnaît 345 catégories de dessins<br>Dessinez quelque chose et cliquez "Reconnaître"';
+        }
+
+        function setupEvents() {
+            canvas.addEventListener('mousedown', startDraw);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDraw);
+            canvas.addEventListener('mouseout', stopDraw);
+            
+            // Support tactile
+            canvas.addEventListener('touchstart', handleTouch, {passive: false});
+            canvas.addEventListener('touchmove', handleTouch, {passive: false});
+            canvas.addEventListener('touchend', stopDraw);
+        }
+
+        function startDraw(e) {
+            isDrawing = true;
+            const rect = canvas.getBoundingClientRect();
+            ctx.beginPath();
+            ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+        }
+
+        function draw(e) {
+            if (!isDrawing) return;
+            const rect = canvas.getBoundingClientRect();
+            ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+            ctx.stroke();
+        }
+
+        function stopDraw() {
+            isDrawing = false;
+        }
+
+        function handleTouch(e) {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const mouseEvent = new MouseEvent(
+                e.type === 'touchstart' ? 'mousedown' : 
+                e.type === 'touchmove' ? 'mousemove' : 'mouseup', {
+                clientX: touch.clientX,
+                clientY: touch.clientY
+            });
+            canvas.dispatchEvent(mouseEvent);
+        }
+
+        function clearCanvas() {
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        }
+
+        function classifyCanvas() {
+            if (!modelReady) {
+                document.getElementById('result').innerHTML = 
+                    '⏳ <strong>Modèle en cours de chargement...</strong>';
+                return;
             }
-
-            generate(difficulty = 0.5) {
-                const completeGrid = this.generateCompleteGrid();
-                return this.createPuzzle(completeGrid, difficulty);
-            }
-
-            generateCompleteGrid() {
-                const grid = Array(this.SIZE).fill().map(() => Array(this.SIZE).fill(this.EMPTY));
-                this.fillGrid(grid);
-                return grid;
-            }
-
-            fillGrid(grid) {
-                return this.fillGridRecursive(grid, 0, 0);
-            }
-
-            fillGridRecursive(grid, row, col) {
-                if (row === this.SIZE) return true;
+            
+            // DoodleNet classification
+            classifier.classify(canvas, (error, results) => {
+                if (error) {
+                    console.error(error);
+                    document.getElementById('result').innerHTML = 
+                        '❌ <strong>Erreur de classification</strong>';
+                    return;
+                }
                 
-                const nextRow = col === this.SIZE - 1 ? row + 1 : row;
-                const nextCol = col === this.SIZE - 1 ? 0 : col + 1;
-
-                if (grid[row][col] !== this.EMPTY) {
-                    return this.fillGridRecursive(grid, nextRow, nextCol);
-                }
-
-                const numbers = this.shuffleArray([1, 2, 3, 4, 5, 6, 7, 8, 9]);
-                for (const num of numbers) {
-                    if (this.isValid(grid, row, col, num)) {
-                        grid[row][col] = num;
-                        if (this.fillGridRecursive(grid, nextRow, nextCol)) {
-                            return true;
-                        }
-                        grid[row][col] = this.EMPTY;
-                    }
-                }
-                return false;
-            }
-
-            isValid(grid, row, col, num) {
-                // Check row
-                for (let c = 0; c < this.SIZE; c++) {
-                    if (grid[row][c] === num) return false;
-                }
-                // Check column
-                for (let r = 0; r < this.SIZE; r++) {
-                    if (grid[r][col] === num) return false;
-                }
-                // Check box
-                const boxRow = Math.floor(row / 3) * 3;
-                const boxCol = Math.floor(col / 3) * 3;
-                for (let r = boxRow; r < boxRow + 3; r++) {
-                    for (let c = boxCol; c < boxCol + 3; c++) {
-                        if (grid[r][c] === num) return false;
-                    }
-                }
-                return true;
-            }
-
-            createPuzzle(completeGrid, difficulty) {
-                const puzzle = completeGrid.map(row => [...row]);
-                const totalCells = this.SIZE * this.SIZE;
-                const cellsToRemove = Math.floor(totalCells * difficulty);
+                const topResult = results[0];
+                const confidence = (topResult.confidence * 100).toFixed(1);
                 
-                const positions = [];
-                for (let r = 0; r < this.SIZE; r++) {
-                    for (let c = 0; c < this.SIZE; c++) {
-                        positions.push([r, c]);
-                    }
+                // Chercher des chiffres dans les résultats
+                const digitResults = results.filter(r => 
+                    ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(r.label) ||
+                    r.label.includes('number') || 
+                    r.label.includes('digit')
+                );
+                
+                let resultHTML = `
+                    <div class="prediction">${topResult.label}</div>
+                    <div><strong>Confiance: ${confidence}%</strong></div>
+                `;
+                
+                if (digitResults.length > 0) {
+                    resultHTML += `
+                        <div style="margin-top: 15px; color: #90EE90;">
+                            <strong>🔢 Chiffres détectés :</strong><br>
+                            ${digitResults.map(r => 
+                                `${r.label}: ${(r.confidence * 100).toFixed(1)}%`
+                            ).join('<br>')}
+                        </div>
+                    `;
                 }
-                this.shuffleArray(positions);
-
-                for (let i = 0; i < cellsToRemove && i < positions.length; i++) {
-                    const [row, col] = positions[i];
-                    puzzle[row][col] = this.EMPTY;
-                }
-
-                return puzzle;
-            }
-
-            shuffleArray(array) {
-                for (let i = array.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [array[i], array[j]] = [array[j], array[i]];
-                }
-                return array;
-            }
-        }
-
-        const sudokuGenerator = new SudokuGenerator();
-
-        // Main functions
-        function showScreen(screenId) {
-            document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
-            document.getElementById(screenId).classList.remove('hidden');
-        }
-
-        function loadOptions() {
-            const saved = localStorage.getItem('sudoku_options');
-            if (saved) {
-                try {
-                    options = {...options, ...JSON.parse(saved)};
-                } catch (e) {
-                    console.log('Error loading options:', e);
-                }
-            }
-        }
-
-        function saveOptions() {
-            localStorage.setItem('sudoku_options', JSON.stringify(options));
-        }
-
-        function startGame(difficulty, label) {
-            document.getElementById('loadingModal').classList.add('show');
-            
-            setTimeout(() => {
-                try {
-                    const grid = sudokuGenerator.generate(difficulty);
-                    initializeGame(grid, label, difficulty);
-                    showScreen('gameScreen');
-                } catch (e) {
-                    alert('Error generating Sudoku grid. Please try again.');
-                    console.error('Sudoku generation error:', e);
-                } finally {
-                    document.getElementById('loadingModal').classList.remove('show');
-                }
-            }, 200);
-        }
-
-        function initializeGame(grid, difficultyLabel, difficulty) {
-            gameState.originalGrid = grid.map(row => [...row]);
-            gameState.currentGrid = grid.map(row => [...row]);
-            gameState.errorGrid = Array(9).fill().map(() => Array(9).fill(false));
-            gameState.notesGrid = Array(9).fill().map(() => Array(9).fill().map(() => new Set()));
-            gameState.selectedRow = null;
-            gameState.selectedCol = null;
-            gameState.errorCount = 0;
-            gameState.gameWon = false;
-            gameState.gameLost = false;
-            gameState.notesMode = false;
-            gameState.startTime = Date.now();
-            gameState.elapsedTime = 0;
-            gameState.difficulty = difficultyLabel;
-            gameState.source = 'Local Generator';
-            gameState.actionHistory = [];
-
-            document.getElementById('gameTitle').textContent = difficultyLabel;
-
-            clearInterval(gameState.gameTimer);
-            if (options.showTimer) {
-                startTimer();
-            }
-
-            renderGame();
-        }
-
-        function startTimer() {
-            gameState.gameTimer = setInterval(() => {
-                if (!gameState.gameWon && !gameState.gameLost) {
-                    gameState.elapsedTime = Date.now() - gameState.startTime;
-                    updateTimerDisplay();
-                }
-            }, 1000);
-        }
-
-        function updateTimerDisplay() {
-            const timerEl = document.getElementById('timerDisplay');
-            if (options.showTimer) {
-                timerEl.classList.remove('hidden');
-                document.getElementById('timerText').textContent = formatTime(gameState.elapsedTime);
-            } else {
-                timerEl.classList.add('hidden');
-            }
-        }
-
-        function formatTime(ms) {
-            const seconds = Math.floor(ms / 1000);
-            const minutes = Math.floor(seconds / 60);
-            const hours = Math.floor(minutes / 60);
-            
-            if (hours > 0) {
-                return `${hours}h ${(minutes % 60).toString().padStart(2, '0')}m ${(seconds % 60).toString().padStart(2, '0')}s`;
-            } else if (minutes > 0) {
-                return `${minutes}m ${(seconds % 60).toString().padStart(2, '0')}s`;
-            } else {
-                return `${seconds}s`;
-            }
-        }
-
-        function flashConflictingCells(row, col, number) {
-            const conflictCells = [];
-            
-            // Ligne
-            for (let c = 0; c < 9; c++) {
-                if (gameState.currentGrid[row][c] === number) {
-                    conflictCells.push([row, c]);
-                }
-            }
-            
-            // Colonne
-            for (let r = 0; r < 9; r++) {
-                if (gameState.currentGrid[r][col] === number) {
-                    conflictCells.push([r, col]);
-                }
-            }
-            
-            // Carré 3x3
-            const startRow = Math.floor(row / 3) * 3;
-            const startCol = Math.floor(col / 3) * 3;
-            for (let r = startRow; r < startRow + 3; r++) {
-                for (let c = startCol; c < startCol + 3; c++) {
-                    if (gameState.currentGrid[r][c] === number) {
-                        conflictCells.push([r, c]);
-                    }
-                }
-            }
-            
-            // Faire clignoter les cases en conflit
-            conflictCells.forEach(([r, c]) => {
-                const cellIndex = r * 9 + c;
-                const cell = document.getElementById('sudokuGrid').children[cellIndex];
-                if (cell) {
-                    cell.classList.add('flash-conflict');
-                    setTimeout(() => {
-                        cell.classList.remove('flash-conflict');
-                    }, 600);
-                }
+                
+                // Afficher le top 5 des résultats
+                resultHTML += '<div class="predictions-list">';
+                results.slice(0, 5).forEach((result, index) => {
+                    const conf = (result.confidence * 100).toFixed(1);
+                    resultHTML += `
+                        <div class="prediction-item ${index === 0 ? 'best' : ''}">
+                            ${result.label}<br>
+                            <small>${conf}%</small>
+                        </div>
+                    `;
+                });
+                resultHTML += '</div>';
+                
+                document.getElementById('result').innerHTML = resultHTML;
             });
         }
 
-        function renderGame() {
-            renderGrid();
-            renderNumberButtons();
-            updateErrorDisplay();
-            updateTimerDisplay();
-            updateUndoButton();
-        }
-
-        function renderGrid() {
-            const grid = document.getElementById('sudokuGrid');
-            grid.innerHTML = '';
-
-            for (let row = 0; row < 9; row++) {
-                for (let col = 0; col < 9; col++) {
-                    const cell = document.createElement('div');
-                    cell.className = 'sudoku-cell';
-                    
-                    if ((col + 1) % 3 === 0 && col !== 8) cell.classList.add('thick-right');
-                    if ((row + 1) % 3 === 0 && row !== 8) cell.classList.add('thick-bottom');
-                    
-                    if (gameState.selectedRow === row && gameState.selectedCol === col) {
-                        cell.classList.add('selected');
-                    }
-                    
-                    if (options.indicativeMode && gameState.errorGrid[row][col]) {
-                        cell.classList.add('error');
-                    }
-                    
-                    if (options.highlightMode && gameState.selectedRow !== null && gameState.selectedCol !== null) {
-                        const selectedValue = gameState.currentGrid[gameState.selectedRow][gameState.selectedCol];
-                        
-                        if (row === gameState.selectedRow || col === gameState.selectedCol) {
-                            cell.classList.add('highlight-area');
-                        }
-                        
-                        const selectedBlockRow = Math.floor(gameState.selectedRow / 3);
-                        const selectedBlockCol = Math.floor(gameState.selectedCol / 3);
-                        const currentBlockRow = Math.floor(row / 3);
-                        const currentBlockCol = Math.floor(col / 3);
-                        
-                        if (selectedBlockRow === currentBlockRow && selectedBlockCol === currentBlockCol) {
-                            cell.classList.add('highlight-area');
-                        }
-                        
-                        if (selectedValue !== 0 && gameState.currentGrid[row][col] === selectedValue) {
-                            cell.classList.add('highlight-number');
-                        }
-                    }
-                    
-                    cell.onclick = () => selectCell(row, col);
-                    
-                    if (gameState.currentGrid[row][col] !== 0) {
-                        cell.textContent = gameState.currentGrid[row][col];
-                        cell.classList.add(gameState.originalGrid[row][col] !== 0 ? 'original' : 'user');
-                    } else if (gameState.notesGrid[row][col].size > 0) {
-                        const notesContainer = document.createElement('div');
-                        notesContainer.className = 'notes-container';
-                        
-                        for (let notePos = 1; notePos <= 9; notePos++) {
-                            const noteEl = document.createElement('div');
-                            noteEl.className = 'note';
-                            
-                            if (gameState.notesGrid[row][col].has(notePos)) {
-                                noteEl.textContent = notePos;
-                                
-                                if (options.highlightMode && gameState.selectedRow !== null && gameState.selectedCol !== null) {
-                                    const selectedValue = gameState.currentGrid[gameState.selectedRow][gameState.selectedCol];
-                                    if (selectedValue !== 0 && notePos === selectedValue) {
-                                        noteEl.classList.add('highlighted');
-                                    }
-                                }
-                            }
-                            
-                            notesContainer.appendChild(noteEl);
-                        }
-                        
-                        cell.appendChild(notesContainer);
-                    }
-                    
-                    grid.appendChild(cell);
-                }
-            }
-        }
-
-        function selectCell(row, col) {
-            gameState.selectedRow = row;
-            gameState.selectedCol = col;
-            renderGame();
-        }
-
-        function renderNumberButtons() {
-            const container = document.getElementById('numberButtons');
-            container.innerHTML = '';
-            
-            const remaining = options.indicativeMode ? getRemainingNumbers() : {};
-            
-            let selectedCellNotes = new Set();
-            if (gameState.selectedRow !== null && gameState.selectedCol !== null && gameState.notesMode) {
-                selectedCellNotes = gameState.notesGrid[gameState.selectedRow][gameState.selectedCol];
-            }
-            
-            for (let i = 1; i <= 9; i++) {
-                const btn = document.createElement('button');
-                btn.className = 'number-button';
-                
-                // Cacher le bouton au lieu de le retirer si plus de chiffres disponibles
-                if (options.indicativeMode && (remaining[i] || 0) === 0) {
-                    btn.style.visibility = 'hidden';
-                } else {
-                    btn.style.visibility = 'visible';
-                }
-                
-                const shouldHighlight = selectedCellNotes && selectedCellNotes.has && selectedCellNotes.has(i);
-                
-                btn.onclick = () => placeNumber(i);
-                
-                const numberText = document.createElement('div');
-                numberText.textContent = i;
-                btn.appendChild(numberText);
-                
-                if (options.indicativeMode) {
-                    const countText = document.createElement('div');
-                    countText.className = 'remaining-count';
-                    countText.textContent = remaining[i] || 0;
-                    btn.appendChild(countText);
-                }
-                
-                container.appendChild(btn);
-                
-                if (shouldHighlight) {
-                    setTimeout(() => {
-                        btn.style.cssText += 'background: #ff9800 !important; border: 2px solid #ffb74d !important; transform: scale(1.05) !important; box-shadow: 0 0 8px rgba(255, 152, 0, 0.4) !important;';
-                    }, 10);
-                }
-            }
-        }
-
-        function getRemainingNumbers() {
-            const remaining = {};
-            for (let i = 1; i <= 9; i++) remaining[i] = 9;
-            
-            for (let row = 0; row < 9; row++) {
-                for (let col = 0; col < 9; col++) {
-                    const number = gameState.currentGrid[row][col];
-                    if (number !== 0) {
-                        remaining[number] = (remaining[number] || 0) - 1;
-                    }
-                }
-            }
-            
-            return remaining;
-        }
-
-        function placeNumber(number) {
-            if (gameState.selectedRow === null || gameState.selectedCol === null || gameState.gameWon || gameState.gameLost) return;
-            if (gameState.originalGrid[gameState.selectedRow][gameState.selectedCol] !== 0) return;
-
-            const row = gameState.selectedRow;
-            const col = gameState.selectedCol;
-
-            if (gameState.notesMode && number !== 0) {
-                // En mode hint, empêcher l'ajout de notes si le chiffre existe déjà dans la ligne, colonne ou carré
-                if (options.indicativeMode) {
-                    let hasConflict = false;
-                    
-                    // Vérifier la ligne
-                    for (let c = 0; c < 9; c++) {
-                        if (gameState.currentGrid[row][c] === number) {
-                            hasConflict = true;
-                            break;
-                        }
-                    }
-                    // Vérifier la colonne
-                    if (!hasConflict) {
-                        for (let r = 0; r < 9; r++) {
-                            if (gameState.currentGrid[r][col] === number) {
-                                hasConflict = true;
-                                break;
-                            }
-                        }
-                    }
-                    // Vérifier le carré 3x3
-                    if (!hasConflict) {
-                        const startRow = Math.floor(row / 3) * 3;
-                        const startCol = Math.floor(col / 3) * 3;
-                        for (let r = startRow; r < startRow + 3; r++) {
-                            for (let c = startCol; c < startCol + 3; c++) {
-                                if (gameState.currentGrid[r][c] === number) {
-                                    hasConflict = true;
-                                    break;
-                                }
-                            }
-                            if (hasConflict) break;
-                        }
-                    }
-                    
-                    if (hasConflict) {
-                        flashConflictingCells(row, col, number);
-                        return;
-                    }
-                }
-
-                const action = {
-                    type: 'note',
-                    row: row,
-                    col: col,
-                    number: number,
-                    action: gameState.notesGrid[row][col].has(number) ? 'remove' : 'add'
-                };
-                saveAction(action);
-
-                if (gameState.notesGrid[row][col].has(number)) {
-                    gameState.notesGrid[row][col].delete(number);
-                } else {
-                    gameState.notesGrid[row][col].add(number);
-                }
-            } else {
-                const action = {
-                    type: 'number',
-                    row: row,
-                    col: col,
-                    oldValue: gameState.currentGrid[row][col],
-                    newValue: number,
-                    oldNotes: gameState.notesGrid[row][col].size > 0 ? Array.from(gameState.notesGrid[row][col]) : null
-                };
-                saveAction(action);
-
-                gameState.currentGrid[row][col] = number;
-                if (number !== 0) {
-                    gameState.notesGrid[row][col].clear();
-                }
-            }
-
-            if (options.indicativeMode) {
-                updateErrors();
-                if (gameState.errorCount >= 3) {
-                    gameState.gameLost = true;
-                    gameState.elapsedTime = Date.now() - gameState.startTime;
-                    showGameOverModal(false);
-                    return;
-                }
-            }
-
-            if (isSudokuComplete()) {
-                gameState.gameWon = true;
-                gameState.elapsedTime = Date.now() - gameState.startTime;
-                showGameOverModal(true);
-            }
-
-            renderGame();
-        }
-
-        function saveAction(action) {
-            gameState.actionHistory.push(action);
-            if (gameState.actionHistory.length > 50) {
-                gameState.actionHistory.shift();
-            }
-            updateUndoButton();
-        }
-
-        function updateUndoButton() {
-            const undoButton = document.getElementById('undoButton');
-            undoButton.disabled = gameState.actionHistory.length === 0;
-        }
-
-        function undoLastAction() {
-            if (gameState.actionHistory.length === 0) return;
-            
-            const lastAction = gameState.actionHistory.pop();
-            
-            if (lastAction.type === 'number') {
-                gameState.currentGrid[lastAction.row][lastAction.col] = lastAction.oldValue;
-                if (lastAction.oldNotes) {
-                    gameState.notesGrid[lastAction.row][lastAction.col] = new Set(lastAction.oldNotes);
-                } else {
-                    gameState.notesGrid[lastAction.row][lastAction.col] = new Set();
-                }
-            } else if (lastAction.type === 'note') {
-                if (lastAction.action === 'add') {
-                    gameState.notesGrid[lastAction.row][lastAction.col].delete(lastAction.number);
-                } else {
-                    gameState.notesGrid[lastAction.row][lastAction.col].add(lastAction.number);
-                }
-            }
-            
-            if (options.indicativeMode) {
-                updateErrors();
-            }
-            
-            updateUndoButton();
-            renderGame();
-        }
-
-        function isValidMove(row, col, number) {
-            for (let c = 0; c < 9; c++) {
-                if (c !== col && gameState.currentGrid[row][c] === number) return false;
-            }
-            
-            for (let r = 0; r < 9; r++) {
-                if (r !== row && gameState.currentGrid[r][col] === number) return false;
-            }
-            
-            const startRow = Math.floor(row / 3) * 3;
-            const startCol = Math.floor(col / 3) * 3;
-            for (let r = startRow; r < startRow + 3; r++) {
-                for (let c = startCol; c < startCol + 3; c++) {
-                    if ((r !== row || c !== col) && gameState.currentGrid[r][c] === number) return false;
-                }
-            }
-            
-            return true;
-        }
-
-        function isSudokuComplete() {
-            for (let row = 0; row < 9; row++) {
-                for (let col = 0; col < 9; col++) {
-                    if (gameState.currentGrid[row][col] === 0) return false;
-                    if (!isValidMove(row, col, gameState.currentGrid[row][col])) return false;
-                }
-            }
-            return true;
-        }
-
-        function updateErrors() {
-            gameState.errorCount = 0;
-            for (let row = 0; row < 9; row++) {
-                for (let col = 0; col < 9; col++) {
-                    if (gameState.currentGrid[row][col] !== 0 && gameState.originalGrid[row][col] === 0) {
-                        gameState.errorGrid[row][col] = !isValidMove(row, col, gameState.currentGrid[row][col]);
-                        if (gameState.errorGrid[row][col]) gameState.errorCount++;
-                    } else {
-                        gameState.errorGrid[row][col] = false;
-                    }
-                }
-            }
-        }
-
-        function updateErrorDisplay() {
-            const errorEl = document.getElementById('errorDisplay');
-            if (options.indicativeMode) {
-                errorEl.classList.remove('hidden');
-                errorEl.textContent = `Errors: ${gameState.errorCount}/3`;
-                errorEl.style.color = gameState.errorCount >= 2 ? '#f44336' : '#ffffff';
-            } else {
-                errorEl.classList.add('hidden');
-            }
-        }
-
-        function toggleNotesMode() {
-            gameState.notesMode = !gameState.notesMode;
-            const button = document.getElementById('notesButton');
-            
-            if (gameState.notesMode) {
-                button.classList.add('active');
-            } else {
-                button.classList.remove('active');
-            }
-            
-            // Rafraîchir l'affichage des boutons pour mettre à jour la surbrillance
-            renderNumberButtons();
-        }
-
-        function resetGame() {
-            gameState.currentGrid = gameState.originalGrid.map(row => [...row]);
-            gameState.errorGrid = Array(9).fill().map(() => Array(9).fill(false));
-            gameState.notesGrid = Array(9).fill().map(() => Array(9).fill().map(() => new Set()));
-            gameState.selectedRow = null;
-            gameState.selectedCol = null;
-            gameState.errorCount = 0;
-            gameState.gameWon = false;
-            gameState.gameLost = false;
-            gameState.notesMode = false;
-            gameState.startTime = Date.now();
-            gameState.elapsedTime = 0;
-            gameState.actionHistory = [];
-
-            document.getElementById('notesButton').classList.remove('active');
-
-            clearInterval(gameState.gameTimer);
-            if (options.showTimer) {
-                startTimer();
-            }
-
-            renderGame();
-        }
-
-        function showGameOverModal(won) {
-            const modal = document.getElementById('gameOverModal');
-            const title = document.getElementById('gameOverTitle');
-            const content = document.getElementById('gameOverContent');
-            const actions = document.getElementById('gameOverActions');
-
-            clearInterval(gameState.gameTimer);
-
-            title.textContent = won ? 'Congratulations!' : 'Game Over';
-            
-            if (won) {
-                content.innerHTML = `
-                    <p>You solved the sudoku!</p>
-                    <div style="margin-top: 15px; padding: 12px; background: #1b5e20; border: 1px solid #4caf50; border-radius: 8px; display: flex; align-items: center; gap: 8px;">
-                        <span>⏱️</span>
-                        <strong>Time: ${formatTime(gameState.elapsedTime)}</strong>
-                    </div>
-                `;
-            } else {
-                content.innerHTML = '<p>You made too many errors (3 max).</p>';
-            }
-
-            actions.innerHTML = `
-                <button class="btn btn-secondary" onclick="closeGameOverModal(); showScreen('menuScreen')">Main Menu</button>
-                ${!won ? '<button class="btn btn-primary" onclick="closeGameOverModal(); resetGame()">Try Again</button>' : ''}
-            `;
-
-            modal.classList.add('show');
-        }
-
-        function closeGameOverModal() {
-            document.getElementById('gameOverModal').classList.remove('show');
-        }
-
-        function showOptionsModal() {
-            const modal = document.getElementById('optionsModal');
-            const content = document.getElementById('optionsContent');
-
-            content.innerHTML = `
-                <div class="option-item">
-                    <div class="checkbox ${options.indicativeMode ? 'checked' : ''}" 
-                         onclick="toggleOption('indicativeMode')">
-                        ${options.indicativeMode ? '✓' : ''}
-                    </div>
-                    <div class="option-details">
-                        <div class="option-title">Hint Mode</div>
-                        <div class="option-subtitle">Shows errors in red. 3 errors = game over</div>
-                    </div>
-                </div>
-                <div class="option-item">
-                    <div class="checkbox ${options.highlightMode ? 'checked' : ''}" 
-                         onclick="toggleOption('highlightMode')">
-                        ${options.highlightMode ? '✓' : ''}
-                    </div>
-                    <div class="option-details">
-                        <div class="option-title">Highlight</div>
-                        <div class="option-subtitle">Highlights row/column and identical numbers</div>
-                    </div>
-                </div>
-                <div class="option-item">
-                    <div class="checkbox ${options.showTimer ? 'checked' : ''}" 
-                         onclick="toggleOption('showTimer')">
-                        ${options.showTimer ? '✓' : ''}
-                    </div>
-                    <div class="option-details">
-                        <div class="option-title">Show Timer</div>
-                        <div class="option-subtitle">Shows elapsed time during game</div>
-                    </div>
-                </div>
-            `;
-
-            modal.classList.add('show');
-        }
-
-        function toggleOption(optionName) {
-            options[optionName] = !options[optionName];
-            saveOptions();
-            
-            if (optionName === 'showTimer') {
-                clearInterval(gameState.gameTimer);
-                if (options.showTimer && !gameState.gameWon && !gameState.gameLost) {
-                    startTimer();
-                }
-            }
-            
-            showOptionsModal();
-            if (document.getElementById('gameScreen').classList.contains('hidden') === false) {
-                renderGame();
-            }
-        }
-
-        function closeOptionsModal() {
-            document.getElementById('optionsModal').classList.remove('show');
-        }
-
-        // Initialize the app
-        document.addEventListener('DOMContentLoaded', () => {
-            try {
-                loadOptions();
-                showScreen('menuScreen');
-                console.log('App initialized successfully');
-            } catch (error) {
-                console.error('Initialization error:', error);
-                alert('Error initializing app: ' + error.message);
-            }
-        });
+        window.addEventListener('load', setup);
     </script>
 </body>
 </html>
