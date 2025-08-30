@@ -34,10 +34,38 @@
 
         .app-bar {
             background: #2d2d2d;
-            padding: 16px;
+            padding: 12px 16px;
             border-bottom: 1px solid #404040;
             display: flex;
             justify-content: space-between;
+            align-items: center;
+        }
+
+        .back-button {
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 4px;
+            margin-right: 8px;
+            opacity: 0.8;
+        }
+
+        .back-button:hover {
+            opacity: 1;
+        }
+
+        .game-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+        }
+
+        .game-actions {
+            display: flex;
+            gap: 8px;
             align-items: center;
         }
 
@@ -52,21 +80,15 @@
             color: #b0b0b0;
         }
 
-        .app-actions {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
         .timer-display {
             background: #1a237e;
             border: 1px solid #3f51b5;
             border-radius: 6px;
-            padding: 2px 6px;
+            padding: 2px 4px;
             display: flex;
             align-items: center;
-            gap: 4px;
-            font-size: 14px;
+            gap: 2px;
+            font-size: 12px;
             font-weight: bold;
             color: #90caf9;
         }
@@ -231,6 +253,18 @@
             transition: all 0.3s ease;
         }
 
+        .erase-button {
+            background: #d32f2f;
+            color: #ffffff;
+            border: 2px solid #f44336;
+            font-size: 18px;
+        }
+
+        .erase-button:hover:not(:disabled) {
+            background: #f44336;
+            border-color: #f66;
+        }
+
         .notes-button {
             background: #404040;
             color: #ffffff;
@@ -258,18 +292,6 @@
             border: 1px solid #ffffff;
         }
 
-        .erase-button {
-            background: #d32f2f;
-            color: #ffffff;
-            border: 2px solid #f44336;
-            font-size: 18px;
-        }
-
-        .erase-button:hover:not(:disabled) {
-            background: #f44336;
-            border-color: #f66;
-        }
-
         .undo-button {
             background: #404040;
             color: #ffffff;
@@ -294,15 +316,14 @@
             display: flex;
             flex-wrap: nowrap;
             gap: 4px;
-            justify-content: center;
-            overflow-x: auto;
+            justify-content: stretch;
             width: 100%;
-            max-width: 400px;
+            max-width: 480px;
+            padding: 0 10px;
         }
 
         .number-button {
             flex: 1;
-            min-width: 0;
             height: 50px;
             border: none;
             border-radius: 5px;
@@ -316,15 +337,6 @@
             align-items: center;
             justify-content: center;
             transition: all 0.2s ease;
-        }
-
-        .number-button.erase {
-            background: #d32f2f;
-            font-size: 18px;
-        }
-
-        .number-button.erase:hover {
-            background: #f44336;
         }
 
         .number-button:hover:not(.highlighted) {
@@ -473,15 +485,14 @@
                 gap: 15px;
             }
             
-            .number-button {
-                min-width: 32px;
-                width: 32px;
-                height: 45px;
-                font-size: 14px;
+            .number-buttons {
+                padding: 0 5px;
+                gap: 2px;
             }
             
-            .number-buttons {
-                gap: 2px;
+            .number-button {
+                height: 45px;
+                font-size: 14px;
             }
         }
     </style>
