@@ -571,8 +571,8 @@
                 </div>
             </div>
             
-            <div class="game-screen">
-                <div class="sudoku-grid" id="sudokuGrid" onclick="handleGridClick(event)"></div>
+            <div class="game-screen" onclick="handleGameAreaClick(event)">
+                <div class="sudoku-grid" id="sudokuGrid"></div>
                 
                 <div class="controls">
                     <div class="action-buttons">
@@ -962,9 +962,14 @@
             }
         }
 
-        function handleGridClick(event) {
-            // Si on clique sur la grille mais pas sur une case, déselectionner
-            if (event.target.classList.contains('sudoku-grid')) {
+        function handleGameAreaClick(event) {
+            // Si on clique en dehors d'une case sudoku (sur la game-screen mais pas sur une case)
+            if (!event.target.classList.contains('sudoku-cell') && 
+                !event.target.closest('.sudoku-cell') &&
+                !event.target.classList.contains('action-button') &&
+                !event.target.classList.contains('number-button') &&
+                !event.target.closest('.action-button') &&
+                !event.target.closest('.number-button')) {
                 gameState.selectedRow = null;
                 gameState.selectedCol = null;
                 renderGame();
@@ -1104,11 +1109,12 @@
                     gameState.notesGrid[row][col].add(number);
                 }
             } else {
+                const oldValue = gameState.currentGrid[row][col];
                 const action = {
                     type: 'number',
                     row: row,
                     col: col,
-                    oldValue: gameState.currentGrid[row][col],
+                    oldValue: oldValue,
                     newValue: number,
                     oldNotes: gameState.notesGrid[row][col].size > 0 ? Array.from(gameState.notesGrid[row][col]) : null
                 };
@@ -1118,16 +1124,23 @@
                 if (number !== 0) {
                     gameState.notesGrid[row][col].clear();
                 }
+
+                // En mode hint, vérifier si le nouveau chiffre crée une erreur
+                if (options.indicativeMode && number !== 0 && oldValue === 0) {
+                    if (!isValidMove(row, col, number)) {
+                        gameState.errorCount++;
+                        if (gameState.errorCount >= 3) {
+                            gameState.gameLost = true;
+                            gameState.elapsedTime = Date.now() - gameState.startTime;
+                            showGameOverModal(false);
+                            return;
+                        }
+                    }
+                }
             }
 
             if (options.indicativeMode) {
                 updateErrors();
-                if (gameState.errorCount >= 3) {
-                    gameState.gameLost = true;
-                    gameState.elapsedTime = Date.now() - gameState.startTime;
-                    showGameOverModal(false);
-                    return;
-                }
             }
 
             if (isSudokuComplete()) {
@@ -1211,12 +1224,12 @@
         }
 
         function updateErrors() {
-            gameState.errorCount = 0;
+            // Cette fonction met à jour uniquement l'affichage visuel des erreurs
+            // Le compteur d'erreurs n'est plus modifié ici
             for (let row = 0; row < 9; row++) {
                 for (let col = 0; col < 9; col++) {
                     if (gameState.currentGrid[row][col] !== 0 && gameState.originalGrid[row][col] === 0) {
                         gameState.errorGrid[row][col] = !isValidMove(row, col, gameState.currentGrid[row][col]);
-                        if (gameState.errorGrid[row][col]) gameState.errorCount++;
                     } else {
                         gameState.errorGrid[row][col] = false;
                     }
