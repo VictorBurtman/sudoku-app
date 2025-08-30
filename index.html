@@ -169,8 +169,11 @@
         }
 
         .sudoku-grid {
-            width: 360px;
-            height: 360px;
+            width: 100%;
+            max-width: 480px;
+            height: 100vw;
+            max-height: 480px;
+            aspect-ratio: 1;
             border: 3px solid #ffffff;
             display: grid;
             grid-template-columns: repeat(9, 1fr);
@@ -491,8 +494,10 @@
 
         @media (max-width: 400px) {
             .sudoku-grid {
-                width: 320px;
-                height: 320px;
+                width: calc(100vw - 20px);
+                height: calc(100vw - 20px);
+                max-width: 360px;
+                max-height: 360px;
             }
             
             .game-screen {
@@ -778,7 +783,7 @@
             gameState.source = 'Local Generator';
             gameState.actionHistory = [];
 
-            document.getElementById('gameTitle').textContent = `Sudoku - ${difficultyLabel}`;
+            document.getElementById('gameTitle').textContent = difficultyLabel;
 
             clearInterval(gameState.gameTimer);
             if (options.showTimer) {
