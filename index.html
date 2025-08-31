@@ -568,7 +568,6 @@
                     <div id="errorDisplay" class="error-display hidden"></div>
                 </div>
                 <div class="game-actions">
-                    <button class="btn btn-secondary" onclick="shareGrid()">📤</button>
                     <button class="btn btn-secondary" onclick="showOptionsModal()">⚙️</button>
                     <button class="btn btn-secondary" onclick="resetGame()">🔄</button>
                 </div>
@@ -1326,8 +1325,20 @@
         function showOptionsModal() {
             const modal = document.getElementById('optionsModal');
             const content = document.getElementById('optionsContent');
+            
+            // Check if we're in game to show share option
+            const inGame = !document.getElementById('gameScreen').classList.contains('hidden');
 
             content.innerHTML = `
+                ${inGame ? `
+                <div class="option-item" onclick="shareGrid(); closeOptionsModal();" style="cursor: pointer; border-bottom: 1px solid #404040;">
+                    <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 16px;">📤</div>
+                    <div class="option-details">
+                        <div class="option-title">Share This Grid</div>
+                        <div class="option-subtitle">Generate a link to share this puzzle with friends</div>
+                    </div>
+                </div>
+                ` : ''}
                 <div class="option-item">
                     <div class="checkbox ${options.indicativeMode ? 'checked' : ''}" 
                          onclick="toggleOption('indicativeMode')">
