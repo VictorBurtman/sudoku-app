@@ -1047,6 +1047,26 @@
             return remaining;
         }
 
+        function cleanObsoleteNotes() {
+            if (!options.indicativeMode) return;
+            
+            const remaining = getRemainingNumbers();
+            
+            // Pour chaque chiffre qui n'a plus de cases à remplir
+            for (let number = 1; number <= 9; number++) {
+                if (remaining[number] === 0) {
+                    // Supprimer toutes les notes de ce chiffre
+                    for (let row = 0; row < 9; row++) {
+                        for (let col = 0; col < 9; col++) {
+                            if (gameState.notesGrid[row][col].has(number)) {
+                                gameState.notesGrid[row][col].delete(number);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         function placeNumber(number) {
             if (gameState.selectedRow === null || gameState.selectedCol === null || gameState.gameWon || gameState.gameLost) return;
             if (gameState.originalGrid[gameState.selectedRow][gameState.selectedCol] !== 0) return;
@@ -1143,6 +1163,7 @@
 
             if (options.indicativeMode) {
                 updateErrors();
+                cleanObsoleteNotes(); // Nettoyer les notes obsolètes
             }
 
             if (isSudokuComplete()) {
