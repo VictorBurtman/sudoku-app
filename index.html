@@ -237,8 +237,8 @@
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(3, 1fr);
-            gap: 1px;
-            padding: 2px;
+            gap: 0;
+            padding: 1px;
         }
 
         .note {
@@ -1076,7 +1076,10 @@
 
             if (gameState.notesMode && number !== 0) {
                 // En mode hint, empêcher l'ajout de notes si le chiffre existe déjà dans la ligne, colonne ou carré
-                if (options.indicativeMode) {
+                // SAUF si on essaie de retirer une note existante
+                const hasExistingNote = gameState.notesGrid[row][col].has(number);
+                
+                if (options.indicativeMode && !hasExistingNote) {
                     let hasConflict = false;
                     
                     // Vérifier la ligne
