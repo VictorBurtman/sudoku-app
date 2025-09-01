@@ -635,7 +635,8 @@
             gameTimer: null,
             difficulty: '',
             source: '',
-            actionHistory: []
+            actionHistory: [],
+            highlightedNumber: null // Pour la surbrillance en mode désélectionné
         };
 
         let options = {
@@ -908,24 +909,33 @@
                         cell.classList.add('error');
                     }
                     
-                    if (options.highlightMode && gameState.selectedRow !== null && gameState.selectedCol !== null) {
-                        const selectedValue = gameState.currentGrid[gameState.selectedRow][gameState.selectedCol];
-                        
-                        if (row === gameState.selectedRow || col === gameState.selectedCol) {
-                            cell.classList.add('highlight-area');
+                    if (options.highlightMode) {
+                        // Mode surbrillance standard (case sélectionnée)
+                        if (gameState.selectedRow !== null && gameState.selectedCol !== null) {
+                            const selectedValue = gameState.currentGrid[gameState.selectedRow][gameState.selectedCol];
+                            
+                            if (row === gameState.selectedRow || col === gameState.selectedCol) {
+                                cell.classList.add('highlight-area');
+                            }
+                            
+                            const selectedBlockRow = Math.floor(gameState.selectedRow / 3);
+                            const selectedBlockCol = Math.floor(gameState.selectedCol / 3);
+                            const currentBlockRow = Math.floor(row / 3);
+                            const currentBlockCol = Math.floor(col / 3);
+                            
+                            if (selectedBlockRow === currentBlockRow && selectedBlockCol === currentBlockCol) {
+                                cell.classList.add('highlight-area');
+                            }
+                            
+                            if (selectedValue !== 0 && gameState.currentGrid[row][col] === selectedValue) {
+                                cell.classList.add('highlight-number');
+                            }
                         }
-                        
-                        const selectedBlockRow = Math.floor(gameState.selectedRow / 3);
-                        const selectedBlockCol = Math.floor(gameState.selectedCol / 3);
-                        const currentBlockRow = Math.floor(row / 3);
-                        const currentBlockCol = Math.floor(col / 3);
-                        
-                        if (selectedBlockRow === currentBlockRow && selectedBlockCol === currentBlockCol) {
-                            cell.classList.add('highlight-area');
-                        }
-                        
-                        if (selectedValue !== 0 && gameState.currentGrid[row][col] === selectedValue) {
-                            cell.classList.add('highlight-number');
+                        // Mode surbrillance par chiffre (aucune case sélectionnée)
+                        else if (gameState.highlightedNumber !== null) {
+                            if (gameState.currentGrid[row][col] === gameState.highlightedNumber) {
+                                cell.classList.add('highlight-number');
+                            }
                         }
                     }
                     
@@ -945,9 +955,16 @@
                             if (gameState.notesGrid[row][col].has(notePos)) {
                                 noteEl.textContent = notePos;
                                 
-                                if (options.highlightMode && gameState.selectedRow !== null && gameState.selectedCol !== null) {
-                                    const selectedValue = gameState.currentGrid[gameState.selectedRow][gameState.selectedCol];
-                                    if (selectedValue !== 0 && notePos === selectedValue) {
+                                if (options.highlightMode) {
+                                    // Surbrillance standard (case sélectionnée)
+                                    if (gameState.selectedRow !== null && gameState.selectedCol !== null) {
+                                        const selectedValue = gameState.currentGrid[gameState.selectedRow][gameState.selectedCol];
+                                        if (selectedValue !== 0 && notePos === selectedValue) {
+                                            noteEl.classList.add('highlighted');
+                                        }
+                                    }
+                                    // Surbrillance par chiffre (mode désélectionné)
+                                    else if (gameState.highlightedNumber !== null && notePos === gameState.highlightedNumber) {
                                         noteEl.classList.add('highlighted');
                                     }
                                 }
@@ -974,6 +991,7 @@
                 !event.target.closest('.number-button')) {
                 gameState.selectedRow = null;
                 gameState.selectedCol = null;
+                gameState.highlightedNumber = null; // Réinitialiser aussi la surbrillance par chiffre
                 renderGame();
             }
         }
@@ -981,6 +999,7 @@
         function selectCell(row, col) {
             gameState.selectedRow = row;
             gameState.selectedCol = col;
+            gameState.highlightedNumber = null; // Réinitialiser la surbrillance par chiffre
             renderGame();
         }
 
@@ -1068,7 +1087,16 @@
         }
 
         function placeNumber(number) {
-            if (gameState.selectedRow === null || gameState.selectedCol === null || gameState.gameWon || gameState.gameLost) return;
+            // Si aucune case n'est sélectionnée, activer la surbrillance du chiffre
+            if (gameState.selectedRow === null || gameState.selectedCol === null) {
+                if (number !== 0) {
+                    gameState.highlightedNumber = gameState.highlightedNumber === number ? null : number;
+                    renderGame();
+                }
+                return;
+            }
+            
+            if (gameState.gameWon || gameState.gameLost) return;
             if (gameState.originalGrid[gameState.selectedRow][gameState.selectedCol] !== 0) return;
 
             const row = gameState.selectedRow;
