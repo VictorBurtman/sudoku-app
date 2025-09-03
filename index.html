@@ -458,6 +458,15 @@
 
         .option-item:last-child { border-bottom: none; }
 
+        .option-item.clickable {
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .option-item.clickable:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
         .checkbox {
             width: 20px;
             height: 20px;
@@ -492,6 +501,20 @@
         .option-subtitle {
             font-size: 12px;
             color: #b0b0b0;
+        }
+
+        .export-textarea {
+            width: 100%;
+            height: 200px;
+            background: #1e1e1e;
+            border: 1px solid #404040;
+            border-radius: 5px;
+            color: #ffffff;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            padding: 10px;
+            margin: 10px 0;
+            resize: vertical;
         }
 
         .hidden { display: none !important; }
@@ -612,6 +635,17 @@
                 <div class="loading">
                     <div style="margin-right: 10px;">⏳</div>
                     <div>Generating grid...</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="exportModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-title">Export Current State</div>
+                <p>The current state of your Sudoku has been copied to your clipboard:</p>
+                <textarea class="export-textarea" id="exportTextarea" readonly></textarea>
+                <div class="modal-actions">
+                    <button class="btn btn-primary" onclick="closeExportModal()">Close</button>
                 </div>
             </div>
         </div>
@@ -1374,6 +1408,52 @@
             document.getElementById('gameOverModal').classList.remove('show');
         }
 
+        // Export function
+        function exportCurrentState() {
+            // Convert notesGrid Sets to arrays for JSON serialization
+            const notesGridForExport = gameState.notesGrid.map(row =>
+                row.map(noteSet => Array.from(noteSet).sort())
+            );
+
+            const exportData = {
+                difficulty: gameState.difficulty,
+                originalGrid: gameState.originalGrid,
+                currentGrid: gameState.currentGrid,
+                notesGrid: notesGridForExport
+            };
+
+            const jsonString = JSON.stringify(exportData, null, 2);
+            
+            // Try to copy to clipboard
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(jsonString).then(() => {
+                    showExportModal(jsonString, true);
+                }).catch(() => {
+                    showExportModal(jsonString, false);
+                });
+            } else {
+                showExportModal(jsonString, false);
+            }
+        }
+
+        function showExportModal(jsonString, copied) {
+            const modal = document.getElementById('exportModal');
+            const textarea = document.getElementById('exportTextarea');
+            
+            textarea.value = jsonString;
+            modal.classList.add('show');
+            
+            if (copied) {
+                document.querySelector('#exportModal .modal-title').textContent = 'Export Current State - ✓ Copied!';
+            } else {
+                document.querySelector('#exportModal .modal-title').textContent = 'Export Current State';
+            }
+        }
+
+        function closeExportModal() {
+            document.getElementById('exportModal').classList.remove('show');
+        }
+
         function showOptionsModal() {
             const modal = document.getElementById('optionsModal');
             const content = document.getElementById('optionsContent');
@@ -1383,11 +1463,18 @@
 
             content.innerHTML = `
                 ${inGame ? `
-                <div class="option-item" onclick="shareGrid(); closeOptionsModal();" style="cursor: pointer; border-bottom: 1px solid #404040;">
+                <div class="option-item clickable" onclick="shareGrid(); closeOptionsModal();">
                     <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 16px;">📤</div>
                     <div class="option-details">
                         <div class="option-title">Share This Grid</div>
                         <div class="option-subtitle">Generate a link to share this puzzle with friends</div>
+                    </div>
+                </div>
+                <div class="option-item clickable" onclick="exportCurrentState(); closeOptionsModal();">
+                    <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 16px;">📋</div>
+                    <div class="option-details">
+                        <div class="option-title">Export Current State</div>
+                        <div class="option-subtitle">Copy current grid state as JSON for AI assistance</div>
                     </div>
                 </div>
                 ` : ''}
