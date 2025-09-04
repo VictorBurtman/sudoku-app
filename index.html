@@ -670,7 +670,7 @@
             difficulty: '',
             source: '',
             actionHistory: [],
-            highlightedNumber: null // Pour la surbrillance en mode désélectionné
+            highlightedNumber: null
         };
 
         let options = {
@@ -678,6 +678,100 @@
             highlightMode: true,
             showTimer: true
         };
+
+        // Storage functions (defined first!)
+        function loadOptions() {
+            const saved = localStorage.getItem('sudoku_options');
+            if (saved) {
+                try {
+                    options = {...options, ...JSON.parse(saved)};
+                } catch (e) {
+                    console.log('Error loading options:', e);
+                }
+            }
+        }
+
+        function saveOptions() {
+            localStorage.setItem('sudoku_options', JSON.stringify(options));
+        }
+
+        function saveGameState() {
+            if (gameState.originalGrid.length === 0) return;
+            
+            const notesGridForSave = gameState.notesGrid.map(row =>
+                row.map(noteSet => Array.from(noteSet))
+            );
+            
+            const saveData = {
+                originalGrid: gameState.originalGrid,
+                currentGrid: gameState.currentGrid,
+                notesGrid: notesGridForSave,
+                selectedRow: gameState.selectedRow,
+                selectedCol: gameState.selectedCol,
+                errorCount: gameState.errorCount,
+                gameWon: gameState.gameWon,
+                gameLost: gameState.gameLost,
+                notesMode: gameState.notesMode,
+                startTime: gameState.startTime,
+                elapsedTime: gameState.elapsedTime,
+                difficulty: gameState.difficulty,
+                source: gameState.source,
+                actionHistory: gameState.actionHistory,
+                highlightedNumber: gameState.highlightedNumber
+            };
+            
+            localStorage.setItem('sudoku_saved_game', JSON.stringify(saveData));
+        }
+
+        function loadSavedGame() {
+            const saved = localStorage.getItem('sudoku_saved_game');
+            if (!saved) return false;
+            
+            try {
+                const saveData = JSON.parse(saved);
+                
+                gameState.originalGrid = saveData.originalGrid;
+                gameState.currentGrid = saveData.currentGrid;
+                gameState.selectedRow = saveData.selectedRow;
+                gameState.selectedCol = saveData.selectedCol;
+                gameState.errorCount = saveData.errorCount || 0;
+                gameState.gameWon = saveData.gameWon || false;
+                gameState.gameLost = saveData.gameLost || false;
+                gameState.notesMode = saveData.notesMode || false;
+                gameState.startTime = saveData.startTime;
+                gameState.elapsedTime = saveData.elapsedTime || 0;
+                gameState.difficulty = saveData.difficulty || '';
+                gameState.source = saveData.source || 'Local Generator';
+                gameState.actionHistory = saveData.actionHistory || [];
+                gameState.highlightedNumber = saveData.highlightedNumber;
+                
+                gameState.notesGrid = saveData.notesGrid.map(row =>
+                    row.map(noteArray => new Set(noteArray))
+                );
+                
+                gameState.errorGrid = Array(9).fill().map(() => Array(9).fill(false));
+                if (options.indicativeMode) {
+                    updateErrors();
+                }
+                
+                document.getElementById('gameTitle').textContent = gameState.difficulty;
+                if (gameState.notesMode) {
+                    document.getElementById('notesButton').classList.add('active');
+                } else {
+                    document.getElementById('notesButton').classList.remove('active');
+                }
+                
+                return true;
+            } catch (e) {
+                console.error('Error loading saved game:', e);
+                localStorage.removeItem('sudoku_saved_game');
+                return false;
+            }
+        }
+
+        function clearSavedGame() {
+            localStorage.removeItem('sudoku_saved_game');
+        }
 
         // Sudoku Generator
         class SudokuGenerator {
@@ -725,15 +819,12 @@
             }
 
             isValid(grid, row, col, num) {
-                // Check row
                 for (let c = 0; c < this.SIZE; c++) {
                     if (grid[row][c] === num) return false;
                 }
-                // Check column
                 for (let r = 0; r < this.SIZE; r++) {
                     if (grid[r][col] === num) return false;
                 }
-                // Check box
                 const boxRow = Math.floor(row / 3) * 3;
                 const boxCol = Math.floor(col / 3) * 3;
                 for (let r = boxRow; r < boxRow + 3; r++) {
@@ -782,21 +873,6 @@
             document.getElementById(screenId).classList.remove('hidden');
         }
 
-        function loadOptions() {
-            const saved = localStorage.getItem('sudoku_options');
-            if (saved) {
-                try {
-                    options = {...options, ...JSON.parse(saved)};
-                } catch (e) {
-                    console.log('Error loading options:', e);
-                }
-            }
-        }
-
-        function saveOptions() {
-            localStorage.setItem('sudoku_options', JSON.stringify(options));
-        }
-
         function startGame(difficulty, label) {
             document.getElementById('loadingModal').classList.add('show');
             
@@ -838,6 +914,7 @@
                 startTimer();
             }
 
+            saveGameState();
             renderGame();
         }
 
@@ -877,21 +954,18 @@
         function flashConflictingCells(row, col, number) {
             const conflictCells = [];
             
-            // Ligne
             for (let c = 0; c < 9; c++) {
                 if (gameState.currentGrid[row][c] === number) {
                     conflictCells.push([row, c]);
                 }
             }
             
-            // Colonne
             for (let r = 0; r < 9; r++) {
                 if (gameState.currentGrid[r][col] === number) {
                     conflictCells.push([r, col]);
                 }
             }
             
-            // Carré 3x3
             const startRow = Math.floor(row / 3) * 3;
             const startCol = Math.floor(col / 3) * 3;
             for (let r = startRow; r < startRow + 3; r++) {
@@ -902,7 +976,6 @@
                 }
             }
             
-            // Faire clignoter les cases en conflit
             conflictCells.forEach(([r, c]) => {
                 const cellIndex = r * 9 + c;
                 const cell = document.getElementById('sudokuGrid').children[cellIndex];
@@ -944,7 +1017,6 @@
                     }
                     
                     if (options.highlightMode) {
-                        // Mode surbrillance standard (case sélectionnée)
                         if (gameState.selectedRow !== null && gameState.selectedCol !== null) {
                             const selectedValue = gameState.currentGrid[gameState.selectedRow][gameState.selectedCol];
                             
@@ -965,7 +1037,6 @@
                                 cell.classList.add('highlight-number');
                             }
                         }
-                        // Mode surbrillance par chiffre (aucune case sélectionnée)
                         else if (gameState.highlightedNumber !== null) {
                             if (gameState.currentGrid[row][col] === gameState.highlightedNumber) {
                                 cell.classList.add('highlight-number');
@@ -990,14 +1061,12 @@
                                 noteEl.textContent = notePos;
                                 
                                 if (options.highlightMode) {
-                                    // Surbrillance standard (case sélectionnée)
                                     if (gameState.selectedRow !== null && gameState.selectedCol !== null) {
                                         const selectedValue = gameState.currentGrid[gameState.selectedRow][gameState.selectedCol];
                                         if (selectedValue !== 0 && notePos === selectedValue) {
                                             noteEl.classList.add('highlighted');
                                         }
                                     }
-                                    // Surbrillance par chiffre (mode désélectionné)
                                     else if (gameState.highlightedNumber !== null && notePos === gameState.highlightedNumber) {
                                         noteEl.classList.add('highlighted');
                                     }
@@ -1016,7 +1085,6 @@
         }
 
         function handleGameAreaClick(event) {
-            // Si on clique en dehors d'une case sudoku (sur la game-screen mais pas sur une case)
             if (!event.target.classList.contains('sudoku-cell') && 
                 !event.target.closest('.sudoku-cell') &&
                 !event.target.classList.contains('action-button') &&
@@ -1025,7 +1093,7 @@
                 !event.target.closest('.number-button')) {
                 gameState.selectedRow = null;
                 gameState.selectedCol = null;
-                gameState.highlightedNumber = null; // Réinitialiser aussi la surbrillance par chiffre
+                gameState.highlightedNumber = null;
                 renderGame();
             }
         }
@@ -1033,7 +1101,7 @@
         function selectCell(row, col) {
             gameState.selectedRow = row;
             gameState.selectedCol = col;
-            gameState.highlightedNumber = null; // Réinitialiser la surbrillance par chiffre
+            gameState.highlightedNumber = null;
             renderGame();
         }
 
@@ -1052,7 +1120,6 @@
                 const btn = document.createElement('button');
                 btn.className = 'number-button';
                 
-                // Cacher le bouton au lieu de le retirer si plus de chiffres disponibles
                 if (options.indicativeMode && (remaining[i] || 0) === 0) {
                     btn.style.visibility = 'hidden';
                 } else {
@@ -1105,10 +1172,8 @@
             
             const remaining = getRemainingNumbers();
             
-            // Pour chaque chiffre qui n'a plus de cases à remplir
             for (let number = 1; number <= 9; number++) {
                 if (remaining[number] === 0) {
-                    // Supprimer toutes les notes de ce chiffre
                     for (let row = 0; row < 9; row++) {
                         for (let col = 0; col < 9; col++) {
                             if (gameState.notesGrid[row][col].has(number)) {
@@ -1121,7 +1186,6 @@
         }
 
         function placeNumber(number) {
-            // Si aucune case n'est sélectionnée, activer la surbrillance du chiffre
             if (gameState.selectedRow === null || gameState.selectedCol === null) {
                 if (number !== 0) {
                     gameState.highlightedNumber = gameState.highlightedNumber === number ? null : number;
@@ -1137,21 +1201,17 @@
             const col = gameState.selectedCol;
 
             if (gameState.notesMode && number !== 0) {
-                // En mode hint, empêcher l'ajout de notes si le chiffre existe déjà dans la ligne, colonne ou carré
-                // SAUF si on essaie de retirer une note existante
                 const hasExistingNote = gameState.notesGrid[row][col].has(number);
                 
                 if (options.indicativeMode && !hasExistingNote) {
                     let hasConflict = false;
                     
-                    // Vérifier la ligne
                     for (let c = 0; c < 9; c++) {
                         if (gameState.currentGrid[row][c] === number) {
                             hasConflict = true;
                             break;
                         }
                     }
-                    // Vérifier la colonne
                     if (!hasConflict) {
                         for (let r = 0; r < 9; r++) {
                             if (gameState.currentGrid[r][col] === number) {
@@ -1160,7 +1220,6 @@
                             }
                         }
                     }
-                    // Vérifier le carré 3x3
                     if (!hasConflict) {
                         const startRow = Math.floor(row / 3) * 3;
                         const startCol = Math.floor(col / 3) * 3;
@@ -1212,7 +1271,6 @@
                     gameState.notesGrid[row][col].clear();
                 }
 
-                // En mode hint, vérifier si le nouveau chiffre crée une erreur
                 if (options.indicativeMode && number !== 0 && oldValue === 0) {
                     if (!isValidMove(row, col, number)) {
                         gameState.errorCount++;
@@ -1228,7 +1286,7 @@
 
             if (options.indicativeMode) {
                 updateErrors();
-                cleanObsoleteNotes(); // Nettoyer les notes obsolètes
+                cleanObsoleteNotes();
             }
 
             if (isSudokuComplete()) {
@@ -1238,6 +1296,7 @@
             }
 
             renderGame();
+            saveGameState();
         }
 
         function saveAction(action) {
@@ -1279,6 +1338,7 @@
             
             updateUndoButton();
             renderGame();
+            saveGameState();
         }
 
         function isValidMove(row, col, number) {
@@ -1312,8 +1372,6 @@
         }
 
         function updateErrors() {
-            // Cette fonction met à jour uniquement l'affichage visuel des erreurs
-            // Le compteur d'erreurs n'est plus modifié ici
             for (let row = 0; row < 9; row++) {
                 for (let col = 0; col < 9; col++) {
                     if (gameState.currentGrid[row][col] !== 0 && gameState.originalGrid[row][col] === 0) {
@@ -1346,7 +1404,6 @@
                 button.classList.remove('active');
             }
             
-            // Rafraîchir l'affichage des boutons pour mettre à jour la surbrillance
             renderNumberButtons();
         }
 
@@ -1371,6 +1428,7 @@
                 startTimer();
             }
 
+            saveGameState();
             renderGame();
         }
 
@@ -1408,9 +1466,7 @@
             document.getElementById('gameOverModal').classList.remove('show');
         }
 
-        // Export function
         function exportCurrentState() {
-            // Convert notesGrid Sets to arrays for JSON serialization
             const notesGridForExport = gameState.notesGrid.map(row =>
                 row.map(noteSet => Array.from(noteSet).sort())
             );
@@ -1424,7 +1480,6 @@
 
             const jsonString = JSON.stringify(exportData, null, 2);
             
-            // Try to copy to clipboard
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(jsonString).then(() => {
                     showExportModal(jsonString, true);
@@ -1458,7 +1513,6 @@
             const modal = document.getElementById('optionsModal');
             const content = document.getElementById('optionsContent');
             
-            // Check if we're in game to show share option
             const inGame = !document.getElementById('gameScreen').classList.contains('hidden');
 
             content.innerHTML = `
@@ -1534,7 +1588,6 @@
             document.getElementById('optionsModal').classList.remove('show');
         }
 
-        // Grid sharing functions
         function encodeGrid(originalGrid, difficulty, difficultyLabel) {
             const gridData = {
                 grid: originalGrid,
@@ -1563,7 +1616,6 @@
             const encodedGrid = encodeGrid(gameState.originalGrid, gameState.difficulty, gameState.difficulty);
             const shareUrl = window.location.origin + window.location.pathname + '?grid=' + encodedGrid;
             
-            // Try to copy to clipboard
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(shareUrl).then(() => {
                     showShareModal(shareUrl, true);
@@ -1610,14 +1662,11 @@
             try {
                 loadOptions();
                 
-                // Check if there's a shared grid in the URL
                 const sharedGrid = loadFromURL();
                 if (sharedGrid) {
-                    // Load the shared grid
                     initializeGame(sharedGrid.grid, sharedGrid.label, sharedGrid.difficulty);
                     showScreen('gameScreen');
                     
-                    // Show a message that this is a shared grid
                     setTimeout(() => {
                         const modal = document.createElement('div');
                         modal.className = 'modal show';
@@ -1633,6 +1682,31 @@
                         `;
                         document.body.appendChild(modal);
                     }, 500);
+                } else if (loadSavedGame()) {
+                    showScreen('gameScreen');
+                    
+                    if (options.showTimer && !gameState.gameWon && !gameState.gameLost) {
+                        startTimer();
+                    }
+                    
+                    renderGame();
+                    
+                    setTimeout(() => {
+                        const modal = document.createElement('div');
+                        modal.className = 'modal show';
+                        modal.innerHTML = `
+                            <div class="modal-content">
+                                <div class="modal-title">💾 Game Restored!</div>
+                                <p>Your ${gameState.difficulty} game has been restored.</p>
+                                <p>Continue where you left off!</p>
+                                <div class="modal-actions">
+                                    <button class="btn btn-secondary" onclick="this.closest('.modal').remove(); clearSavedGame(); showScreen('menuScreen');">Start New Game</button>
+                                    <button class="btn btn-primary" onclick="this.closest('.modal').remove();">Continue</button>
+                                </div>
+                            </div>
+                        `;
+                        document.body.appendChild(modal);
+                    }, 300);
                 } else {
                     showScreen('menuScreen');
                 }
