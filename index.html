@@ -773,6 +773,55 @@
             localStorage.removeItem('sudoku_saved_game');
         }
 
+        // Sudoku solver for shared grids
+        function solveSudoku(grid) {
+            const solution = grid.map(row => [...row]);
+            if (solveSudokuRecursive(solution)) {
+                return solution;
+            }
+            return null; // No solution found
+        }
+
+        function solveSudokuRecursive(grid) {
+            for (let row = 0; row < 9; row++) {
+                for (let col = 0; col < 9; col++) {
+                    if (grid[row][col] === 0) {
+                        for (let num = 1; num <= 9; num++) {
+                            if (isValidPlacement(grid, row, col, num)) {
+                                grid[row][col] = num;
+                                if (solveSudokuRecursive(grid)) {
+                                    return true;
+                                }
+                                grid[row][col] = 0;
+                            }
+                        }
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function isValidPlacement(grid, row, col, num) {
+            // Check row
+            for (let c = 0; c < 9; c++) {
+                if (grid[row][c] === num) return false;
+            }
+            // Check column
+            for (let r = 0; r < 9; r++) {
+                if (grid[r][col] === num) return false;
+            }
+            // Check 3x3 box
+            const boxRow = Math.floor(row / 3) * 3;
+            const boxCol = Math.floor(col / 3) * 3;
+            for (let r = boxRow; r < boxRow + 3; r++) {
+                for (let c = boxCol; c < boxCol + 3; c++) {
+                    if (grid[r][c] === num) return false;
+                }
+            }
+            return true;
+        }
+
         // Sudoku Generator
         class SudokuGenerator {
             constructor() {
