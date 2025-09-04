@@ -562,7 +562,7 @@
             </div>
             <div class="menu-screen">
                 <div class="main-title">SUDOKU</div>
-                <div class="warning-text">By Victor Burtman</div>
+                <div class="warning-text">By Victor Burtman - Improved Error Detection</div>
                 <div class="subtitle">Choose your level</div>
                 
                 <button class="option-button" onclick="showOptionsModal()">
@@ -656,6 +656,7 @@
         let gameState = {
             currentGrid: [],
             originalGrid: [],
+            solvedGrid: [], // NOUVELLE: Grille résolue pour comparaison
             errorGrid: [],
             notesGrid: [],
             selectedRow: null,
@@ -679,7 +680,7 @@
             showTimer: true
         };
 
-        // Storage functions (defined first!)
+        // Storage functions
         function loadOptions() {
             const saved = localStorage.getItem('sudoku_options');
             if (saved) {
@@ -705,6 +706,7 @@
             const saveData = {
                 originalGrid: gameState.originalGrid,
                 currentGrid: gameState.currentGrid,
+                solvedGrid: gameState.solvedGrid,
                 notesGrid: notesGridForSave,
                 selectedRow: gameState.selectedRow,
                 selectedCol: gameState.selectedCol,
@@ -732,6 +734,7 @@
                 
                 gameState.originalGrid = saveData.originalGrid;
                 gameState.currentGrid = saveData.currentGrid;
+                gameState.solvedGrid = saveData.solvedGrid || [];
                 gameState.selectedRow = saveData.selectedRow;
                 gameState.selectedCol = saveData.selectedCol;
                 gameState.errorCount = saveData.errorCount || 0;
@@ -773,55 +776,6 @@
             localStorage.removeItem('sudoku_saved_game');
         }
 
-        // Sudoku solver for shared grids
-        function solveSudoku(grid) {
-            const solution = grid.map(row => [...row]);
-            if (solveSudokuRecursive(solution)) {
-                return solution;
-            }
-            return null; // No solution found
-        }
-
-        function solveSudokuRecursive(grid) {
-            for (let row = 0; row < 9; row++) {
-                for (let col = 0; col < 9; col++) {
-                    if (grid[row][col] === 0) {
-                        for (let num = 1; num <= 9; num++) {
-                            if (isValidPlacement(grid, row, col, num)) {
-                                grid[row][col] = num;
-                                if (solveSudokuRecursive(grid)) {
-                                    return true;
-                                }
-                                grid[row][col] = 0;
-                            }
-                        }
-                        return false;
-                    }
-                }
-            }
-            return true;
-        }
-
-        function isValidPlacement(grid, row, col, num) {
-            // Check row
-            for (let c = 0; c < 9; c++) {
-                if (grid[row][c] === num) return false;
-            }
-            // Check column
-            for (let r = 0; r < 9; r++) {
-                if (grid[r][col] === num) return false;
-            }
-            // Check 3x3 box
-            const boxRow = Math.floor(row / 3) * 3;
-            const boxCol = Math.floor(col / 3) * 3;
-            for (let r = boxRow; r < boxRow + 3; r++) {
-                for (let c = boxCol; c < boxCol + 3; c++) {
-                    if (grid[r][c] === num) return false;
-                }
-            }
-            return true;
-        }
-
         // Sudoku Generator
         class SudokuGenerator {
             constructor() {
@@ -831,7 +785,11 @@
 
             generate(difficulty = 0.5) {
                 const completeGrid = this.generateCompleteGrid();
-                return this.createPuzzle(completeGrid, difficulty);
+                const puzzle = this.createPuzzle(completeGrid, difficulty);
+                return {
+                    puzzle: puzzle,
+                    solution: completeGrid
+                };
             }
 
             generateCompleteGrid() {
@@ -916,7 +874,7 @@
 
         const sudokuGenerator = new SudokuGenerator();
 
-        // Main functions
+        // Main functions - DECLARED GLOBALLY
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
             document.getElementById(screenId).classList.remove('hidden');
@@ -927,8 +885,8 @@
             
             setTimeout(() => {
                 try {
-                    const grid = sudokuGenerator.generate(difficulty);
-                    initializeGame(grid, label, difficulty);
+                    const result = sudokuGenerator.generate(difficulty);
+                    initializeGame(result.puzzle, result.solution, label, difficulty);
                     showScreen('gameScreen');
                 } catch (e) {
                     alert('Error generating Sudoku grid. Please try again.');
@@ -939,9 +897,10 @@
             }, 200);
         }
 
-        function initializeGame(grid, difficultyLabel, difficulty) {
+        function initializeGame(grid, solution, difficultyLabel, difficulty) {
             gameState.originalGrid = grid.map(row => [...row]);
             gameState.currentGrid = grid.map(row => [...row]);
+            gameState.solvedGrid = solution.map(row => [...row]);
             gameState.errorGrid = Array(9).fill().map(() => Array(9).fill(false));
             gameState.notesGrid = Array(9).fill().map(() => Array(9).fill().map(() => new Set()));
             gameState.selectedRow = null;
@@ -1252,7 +1211,10 @@
             if (gameState.notesMode && number !== 0) {
                 const hasExistingNote = gameState.notesGrid[row][col].has(number);
                 
+                // CORRIGÉ: Les notes ne devraient pas être bloquées par la solution
+                // On laisse le joueur explorer toutes les possibilités en mode notes
                 if (options.indicativeMode && !hasExistingNote) {
+                    // Vérification basique des conflits uniquement (pas de la solution)
                     let hasConflict = false;
                     
                     for (let c = 0; c < 9; c++) {
@@ -1320,8 +1282,9 @@
                     gameState.notesGrid[row][col].clear();
                 }
 
+                // AMÉLIORÉ: Détection d'erreurs basée sur la solution
                 if (options.indicativeMode && number !== 0 && oldValue === 0) {
-                    if (!isValidMove(row, col, number)) {
+                    if (!isCorrectMove(row, col, number)) {
                         gameState.errorCount++;
                         if (gameState.errorCount >= 3) {
                             gameState.gameLost = true;
@@ -1390,6 +1353,16 @@
             saveGameState();
         }
 
+        // NOUVELLE FONCTION: Vérifie si le mouvement correspond à la solution
+        function isCorrectMove(row, col, number) {
+            if (gameState.solvedGrid.length === 0) {
+                // Fallback vers l'ancienne méthode si pas de solution
+                return isValidMove(row, col, number);
+            }
+            return gameState.solvedGrid[row][col] === number;
+        }
+
+        // ANCIENNE FONCTION: Maintenue pour compatibilité et fallback
         function isValidMove(row, col, number) {
             for (let c = 0; c < 9; c++) {
                 if (c !== col && gameState.currentGrid[row][c] === number) return false;
@@ -1420,11 +1393,18 @@
             return true;
         }
 
+        // AMÉLIORÉE: Détection d'erreurs basée sur la solution
         function updateErrors() {
             for (let row = 0; row < 9; row++) {
                 for (let col = 0; col < 9; col++) {
                     if (gameState.currentGrid[row][col] !== 0 && gameState.originalGrid[row][col] === 0) {
-                        gameState.errorGrid[row][col] = !isValidMove(row, col, gameState.currentGrid[row][col]);
+                        if (gameState.solvedGrid.length > 0) {
+                            // Nouvelle méthode: compare avec la solution
+                            gameState.errorGrid[row][col] = gameState.currentGrid[row][col] !== gameState.solvedGrid[row][col];
+                        } else {
+                            // Fallback vers l'ancienne méthode
+                            gameState.errorGrid[row][col] = !isValidMove(row, col, gameState.currentGrid[row][col]);
+                        }
                     } else {
                         gameState.errorGrid[row][col] = false;
                     }
@@ -1587,8 +1567,8 @@
                         ${options.indicativeMode ? '✓' : ''}
                     </div>
                     <div class="option-details">
-                        <div class="option-title">Hint Mode</div>
-                        <div class="option-subtitle">Shows errors in red. 3 errors = game over</div>
+                        <div class="option-title">Smart Hint Mode</div>
+                        <div class="option-subtitle">Shows errors in red based on correct solution. 3 errors = game over</div>
                     </div>
                 </div>
                 <div class="option-item">
@@ -1713,7 +1693,8 @@
                 
                 const sharedGrid = loadFromURL();
                 if (sharedGrid) {
-                    initializeGame(sharedGrid.grid, sharedGrid.label, sharedGrid.difficulty);
+                    // Pour les grilles partagées, pas de solution disponible
+                    initializeGame(sharedGrid.grid, [], sharedGrid.label, sharedGrid.difficulty);
                     showScreen('gameScreen');
                     
                     setTimeout(() => {
@@ -1723,6 +1704,7 @@
                             <div class="modal-content">
                                 <div class="modal-title">🎯 Shared Grid Loaded!</div>
                                 <p>You're playing a ${sharedGrid.label} grid shared by someone else.</p>
+                                <p>Note: Smart Hint Mode may not work perfectly with shared grids.</p>
                                 <p>Good luck and have fun! 🍀</p>
                                 <div class="modal-actions">
                                     <button class="btn btn-primary" onclick="this.closest('.modal').remove()">Let's Play!</button>
