@@ -587,6 +587,13 @@
             color: #ffffff;
         }
 
+        .loading-progress {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #b0b0b0;
+            text-align: center;
+        }
+
         @media (max-width: 400px) {
             .sudoku-grid {
                 width: calc(100vw - 20px);
@@ -643,7 +650,7 @@
             </div>
             <div class="menu-screen">
                 <div class="main-title">SUDOKU</div>
-                <div class="warning-text">By Victor Burtman - Improved Error Detection</div>
+                <div class="warning-text">By Victor Burtman - Improved Generator</div>
                 <div class="subtitle">Choose your level</div>
                 
                 <button class="option-button" onclick="showOptionsModal()">
@@ -743,8 +750,9 @@
             <div class="modal-content">
                 <div class="loading">
                     <div style="margin-right: 10px;">⏳</div>
-                    <div>Generating grid...</div>
+                    <div id="loadingText">Generating grid...</div>
                 </div>
+                <div class="loading-progress" id="loadingProgress"></div>
             </div>
         </div>
 
@@ -765,7 +773,7 @@
         let gameState = {
             currentGrid: [],
             originalGrid: [],
-            solvedGrid: [], // NOUVELLE: Grille résolue pour comparaison
+            solvedGrid: [],
             errorGrid: [],
             notesGrid: [],
             selectedRow: null,
@@ -787,8 +795,202 @@
             indicativeMode: false,
             highlightMode: true,
             showTimer: true,
-            showCoordinates: false // NOUVELLE OPTION
+            showCoordinates: false
         };
+
+        // Sudoku Generator - IMPROVED VERSION
+        class SudokuGenerator {
+            constructor() {
+                this.SIZE = 9;
+                this.EMPTY = 0;
+            }
+
+            generate(difficulty = 0.5) {
+                this.updateLoadingProgress("Generating complete grid...");
+                const completeGrid = this.generateCompleteGrid();
+                
+                this.updateLoadingProgress("Creating puzzle with unique solution...");
+                const puzzle = this.createPuzzleWithUniqueCheck(completeGrid, difficulty);
+                
+                this.updateLoadingProgress("Validating puzzle...");
+                return {
+                    puzzle: puzzle,
+                    solution: completeGrid
+                };
+            }
+
+            updateLoadingProgress(text) {
+                const progressEl = document.getElementById('loadingProgress');
+                if (progressEl) {
+                    progressEl.textContent = text;
+                }
+            }
+
+            generateCompleteGrid() {
+                const grid = Array(this.SIZE).fill().map(() => Array(this.SIZE).fill(this.EMPTY));
+                this.fillGrid(grid);
+                return grid;
+            }
+
+            fillGrid(grid) {
+                return this.fillGridRecursive(grid, 0, 0);
+            }
+
+            fillGridRecursive(grid, row, col) {
+                if (row === this.SIZE) return true;
+                
+                const nextRow = col === this.SIZE - 1 ? row + 1 : row;
+                const nextCol = col === this.SIZE - 1 ? 0 : col + 1;
+
+                if (grid[row][col] !== this.EMPTY) {
+                    return this.fillGridRecursive(grid, nextRow, nextCol);
+                }
+
+                const numbers = this.shuffleArray([1, 2, 3, 4, 5, 6, 7, 8, 9]);
+                for (const num of numbers) {
+                    if (this.isValid(grid, row, col, num)) {
+                        grid[row][col] = num;
+                        if (this.fillGridRecursive(grid, nextRow, nextCol)) {
+                            return true;
+                        }
+                        grid[row][col] = this.EMPTY;
+                    }
+                }
+                return false;
+            }
+
+            isValid(grid, row, col, num) {
+                // Check row
+                for (let c = 0; c < this.SIZE; c++) {
+                    if (grid[row][c] === num) return false;
+                }
+                
+                // Check column
+                for (let r = 0; r < this.SIZE; r++) {
+                    if (grid[r][col] === num) return false;
+                }
+                
+                // Check 3x3 box
+                const boxRow = Math.floor(row / 3) * 3;
+                const boxCol = Math.floor(col / 3) * 3;
+                for (let r = boxRow; r < boxRow + 3; r++) {
+                    for (let c = boxCol; c < boxCol + 3; c++) {
+                        if (grid[r][c] === num) return false;
+                    }
+                }
+                return true;
+            }
+
+            // IMPROVED: Creates puzzle with unique solution verification
+            createPuzzleWithUniqueCheck(completeGrid, difficulty) {
+                const puzzle = completeGrid.map(row => [...row]);
+                const positions = this.getAllPositions();
+                this.shuffleArray(positions);
+
+                const targetEmpty = Math.floor(81 * difficulty);
+                let removedCount = 0;
+                let attempts = 0;
+                const maxAttempts = positions.length;
+
+                for (let i = 0; i < positions.length && removedCount < targetEmpty && attempts < maxAttempts; i++) {
+                    const [row, col] = positions[i];
+                    const backup = puzzle[row][col];
+                    puzzle[row][col] = this.EMPTY;
+                    attempts++;
+
+                    // Check if puzzle still has unique solution
+                    if (this.hasUniqueSolution(puzzle)) {
+                        removedCount++;
+                    } else {
+                        // Restore if multiple solutions exist
+                        puzzle[row][col] = backup;
+                    }
+
+                    // Update progress periodically
+                    if (attempts % 10 === 0) {
+                        this.updateLoadingProgress(`Testing cell ${attempts}/${maxAttempts}...`);
+                    }
+                }
+
+                return puzzle;
+            }
+
+            getAllPositions() {
+                const positions = [];
+                for (let r = 0; r < this.SIZE; r++) {
+                    for (let c = 0; c < this.SIZE; c++) {
+                        positions.push([r, c]);
+                    }
+                }
+                return positions;
+            }
+
+            // NEW: Checks if puzzle has exactly one solution
+            hasUniqueSolution(grid) {
+                const gridCopy = grid.map(row => [...row]);
+                let solutionCount = 0;
+                
+                const solve = (g, row = 0, col = 0) => {
+                    if (solutionCount > 1) return false; // Early exit if multiple solutions found
+                    
+                    if (row === this.SIZE) {
+                        solutionCount++;
+                        return solutionCount === 1; // Continue only if this is the first solution
+                    }
+                    
+                    const nextRow = col === this.SIZE - 1 ? row + 1 : row;
+                    const nextCol = col === this.SIZE - 1 ? 0 : col + 1;
+
+                    if (g[row][col] !== this.EMPTY) {
+                        return solve(g, nextRow, nextCol);
+                    }
+
+                    for (let num = 1; num <= 9; num++) {
+                        if (this.isValid(g, row, col, num)) {
+                            g[row][col] = num;
+                            solve(g, nextRow, nextCol);
+                            g[row][col] = this.EMPTY;
+                        }
+                    }
+                    return false;
+                };
+
+                solve(gridCopy);
+                return solutionCount === 1;
+            }
+
+            // OLD METHOD: Kept as fallback for simple puzzles
+            createPuzzle(completeGrid, difficulty) {
+                const puzzle = completeGrid.map(row => [...row]);
+                const totalCells = this.SIZE * this.SIZE;
+                const cellsToRemove = Math.floor(totalCells * difficulty);
+                
+                const positions = [];
+                for (let r = 0; r < this.SIZE; r++) {
+                    for (let c = 0; c < this.SIZE; c++) {
+                        positions.push([r, c]);
+                    }
+                }
+                this.shuffleArray(positions);
+
+                for (let i = 0; i < cellsToRemove && i < positions.length; i++) {
+                    const [row, col] = positions[i];
+                    puzzle[row][col] = this.EMPTY;
+                }
+
+                return puzzle;
+            }
+
+            shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+        }
+
+        const sudokuGenerator = new SudokuGenerator();
 
         // Storage functions
         function loadOptions() {
@@ -886,105 +1088,6 @@
             localStorage.removeItem('sudoku_saved_game');
         }
 
-        // Sudoku Generator
-        class SudokuGenerator {
-            constructor() {
-                this.SIZE = 9;
-                this.EMPTY = 0;
-            }
-
-            generate(difficulty = 0.5) {
-                const completeGrid = this.generateCompleteGrid();
-                const puzzle = this.createPuzzle(completeGrid, difficulty);
-                return {
-                    puzzle: puzzle,
-                    solution: completeGrid
-                };
-            }
-
-            generateCompleteGrid() {
-                const grid = Array(this.SIZE).fill().map(() => Array(this.SIZE).fill(this.EMPTY));
-                this.fillGrid(grid);
-                return grid;
-            }
-
-            fillGrid(grid) {
-                return this.fillGridRecursive(grid, 0, 0);
-            }
-
-            fillGridRecursive(grid, row, col) {
-                if (row === this.SIZE) return true;
-                
-                const nextRow = col === this.SIZE - 1 ? row + 1 : row;
-                const nextCol = col === this.SIZE - 1 ? 0 : col + 1;
-
-                if (grid[row][col] !== this.EMPTY) {
-                    return this.fillGridRecursive(grid, nextRow, nextCol);
-                }
-
-                const numbers = this.shuffleArray([1, 2, 3, 4, 5, 6, 7, 8, 9]);
-                for (const num of numbers) {
-                    if (this.isValid(grid, row, col, num)) {
-                        grid[row][col] = num;
-                        if (this.fillGridRecursive(grid, nextRow, nextCol)) {
-                            return true;
-                        }
-                        grid[row][col] = this.EMPTY;
-                    }
-                }
-                return false;
-            }
-
-            isValid(grid, row, col, num) {
-                for (let c = 0; c < this.SIZE; c++) {
-                    if (grid[row][c] === num) return false;
-                }
-                for (let r = 0; r < this.SIZE; r++) {
-                    if (grid[r][col] === num) return false;
-                }
-                const boxRow = Math.floor(row / 3) * 3;
-                const boxCol = Math.floor(col / 3) * 3;
-                for (let r = boxRow; r < boxRow + 3; r++) {
-                    for (let c = boxCol; c < boxCol + 3; c++) {
-                        if (grid[r][c] === num) return false;
-                    }
-                }
-                return true;
-            }
-
-            createPuzzle(completeGrid, difficulty) {
-                const puzzle = completeGrid.map(row => [...row]);
-                const totalCells = this.SIZE * this.SIZE;
-                const cellsToRemove = Math.floor(totalCells * difficulty);
-                
-                const positions = [];
-                for (let r = 0; r < this.SIZE; r++) {
-                    for (let c = 0; c < this.SIZE; c++) {
-                        positions.push([r, c]);
-                    }
-                }
-                this.shuffleArray(positions);
-
-                for (let i = 0; i < cellsToRemove && i < positions.length; i++) {
-                    const [row, col] = positions[i];
-                    puzzle[row][col] = this.EMPTY;
-                }
-
-                return puzzle;
-            }
-
-            shuffleArray(array) {
-                for (let i = array.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [array[i], array[j]] = [array[j], array[i]];
-                }
-                return array;
-            }
-        }
-
-        const sudokuGenerator = new SudokuGenerator();
-
-        // NOUVELLE FONCTION: Gère l'affichage des coordonnées
         function updateCoordinatesDisplay() {
             const coordinatesContainer = document.getElementById('coordinatesContainer');
             if (options.showCoordinates) {
@@ -1002,6 +1105,8 @@
 
         function startGame(difficulty, label) {
             document.getElementById('loadingModal').classList.add('show');
+            document.getElementById('loadingText').textContent = 'Generating grid...';
+            document.getElementById('loadingProgress').textContent = '';
             
             setTimeout(() => {
                 try {
@@ -1042,7 +1147,7 @@
                 startTimer();
             }
 
-            updateCoordinatesDisplay(); // NOUVEAU: Met à jour l'affichage des coordonnées
+            updateCoordinatesDisplay();
 
             saveGameState();
             renderGame();
@@ -1124,7 +1229,7 @@
             updateErrorDisplay();
             updateTimerDisplay();
             updateUndoButton();
-            updateCoordinatesDisplay(); // NOUVEAU: Met à jour l'affichage des coordonnées
+            updateCoordinatesDisplay();
         }
 
         function renderGrid() {
@@ -1334,10 +1439,7 @@
             if (gameState.notesMode && number !== 0) {
                 const hasExistingNote = gameState.notesGrid[row][col].has(number);
                 
-                // CORRIGÉ: Les notes ne devraient pas être bloquées par la solution
-                // On laisse le joueur explorer toutes les possibilités en mode notes
                 if (options.indicativeMode && !hasExistingNote) {
-                    // Vérification basique des conflits uniquement (pas de la solution)
                     let hasConflict = false;
                     
                     for (let c = 0; c < 9; c++) {
@@ -1405,7 +1507,6 @@
                     gameState.notesGrid[row][col].clear();
                 }
 
-                // AMÉLIORÉ: Détection d'erreurs basée sur la solution
                 if (options.indicativeMode && number !== 0 && oldValue === 0) {
                     if (!isCorrectMove(row, col, number)) {
                         gameState.errorCount++;
@@ -1476,16 +1577,13 @@
             saveGameState();
         }
 
-        // NOUVELLE FONCTION: Vérifie si le mouvement correspond à la solution
         function isCorrectMove(row, col, number) {
             if (gameState.solvedGrid.length === 0) {
-                // Fallback vers l'ancienne méthode si pas de solution
                 return isValidMove(row, col, number);
             }
             return gameState.solvedGrid[row][col] === number;
         }
 
-        // ANCIENNE FONCTION: Maintenue pour compatibilité et fallback
         function isValidMove(row, col, number) {
             for (let c = 0; c < 9; c++) {
                 if (c !== col && gameState.currentGrid[row][c] === number) return false;
@@ -1516,16 +1614,13 @@
             return true;
         }
 
-        // AMÉLIORÉE: Détection d'erreurs basée sur la solution
         function updateErrors() {
             for (let row = 0; row < 9; row++) {
                 for (let col = 0; col < 9; col++) {
                     if (gameState.currentGrid[row][col] !== 0 && gameState.originalGrid[row][col] === 0) {
                         if (gameState.solvedGrid.length > 0) {
-                            // Nouvelle méthode: compare avec la solution
                             gameState.errorGrid[row][col] = gameState.currentGrid[row][col] !== gameState.solvedGrid[row][col];
                         } else {
-                            // Fallback vers l'ancienne méthode
                             gameState.errorGrid[row][col] = !isValidMove(row, col, gameState.currentGrid[row][col]);
                         }
                     } else {
