@@ -171,6 +171,66 @@
             gap: 12px;
         }
 
+        .sudoku-container {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .sudoku-grid-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        .coordinates-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .row-coordinates {
+            position: absolute;
+            left: -25px;
+            top: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            align-items: center;
+            width: 20px;
+        }
+
+        .col-coordinates {
+            position: absolute;
+            top: -25px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 20px;
+        }
+
+        .coordinate-label {
+            font-size: 12px;
+            font-weight: bold;
+            color: #90caf9;
+            background: #1a237e;
+            border: 1px solid #3f51b5;
+            border-radius: 3px;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
         .sudoku-grid {
             width: 100%;
             max-width: 480px;
@@ -548,6 +608,22 @@
                 height: 45px;
                 font-size: 14px;
             }
+
+            .coordinate-label {
+                font-size: 10px;
+                width: 16px;
+                height: 16px;
+            }
+
+            .row-coordinates {
+                left: -20px;
+                width: 16px;
+            }
+
+            .col-coordinates {
+                top: -20px;
+                height: 16px;
+            }
         }
     </style>
 </head>
@@ -597,7 +673,35 @@
             </div>
             
             <div class="game-screen" onclick="handleGameAreaClick(event)">
-                <div class="sudoku-grid" id="sudokuGrid"></div>
+                <div class="sudoku-container">
+                    <div class="sudoku-grid-wrapper">
+                        <div id="coordinatesContainer" class="coordinates-container hidden">
+                            <div class="row-coordinates">
+                                <div class="coordinate-label">R1</div>
+                                <div class="coordinate-label">R2</div>
+                                <div class="coordinate-label">R3</div>
+                                <div class="coordinate-label">R4</div>
+                                <div class="coordinate-label">R5</div>
+                                <div class="coordinate-label">R6</div>
+                                <div class="coordinate-label">R7</div>
+                                <div class="coordinate-label">R8</div>
+                                <div class="coordinate-label">R9</div>
+                            </div>
+                            <div class="col-coordinates">
+                                <div class="coordinate-label">C1</div>
+                                <div class="coordinate-label">C2</div>
+                                <div class="coordinate-label">C3</div>
+                                <div class="coordinate-label">C4</div>
+                                <div class="coordinate-label">C5</div>
+                                <div class="coordinate-label">C6</div>
+                                <div class="coordinate-label">C7</div>
+                                <div class="coordinate-label">C8</div>
+                                <div class="coordinate-label">C9</div>
+                            </div>
+                        </div>
+                        <div class="sudoku-grid" id="sudokuGrid"></div>
+                    </div>
+                </div>
                 
                 <div class="controls">
                     <div class="action-buttons">
@@ -677,7 +781,8 @@
         let options = {
             indicativeMode: false,
             highlightMode: true,
-            showTimer: true
+            showTimer: true,
+            showCoordinates: false // NOUVELLE OPTION
         };
 
         // Storage functions
@@ -874,6 +979,16 @@
 
         const sudokuGenerator = new SudokuGenerator();
 
+        // NOUVELLE FONCTION: Gère l'affichage des coordonnées
+        function updateCoordinatesDisplay() {
+            const coordinatesContainer = document.getElementById('coordinatesContainer');
+            if (options.showCoordinates) {
+                coordinatesContainer.classList.remove('hidden');
+            } else {
+                coordinatesContainer.classList.add('hidden');
+            }
+        }
+
         // Main functions - DECLARED GLOBALLY
         function showScreen(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
@@ -921,6 +1036,8 @@
             if (options.showTimer) {
                 startTimer();
             }
+
+            updateCoordinatesDisplay(); // NOUVEAU: Met à jour l'affichage des coordonnées
 
             saveGameState();
             renderGame();
@@ -1002,6 +1119,7 @@
             updateErrorDisplay();
             updateTimerDisplay();
             updateUndoButton();
+            updateCoordinatesDisplay(); // NOUVEAU: Met à jour l'affichage des coordonnées
         }
 
         function renderGrid() {
@@ -1591,6 +1709,16 @@
                         <div class="option-subtitle">Shows elapsed time during game</div>
                     </div>
                 </div>
+                <div class="option-item">
+                    <div class="checkbox ${options.showCoordinates ? 'checked' : ''}" 
+                         onclick="toggleOption('showCoordinates')">
+                        ${options.showCoordinates ? '✓' : ''}
+                    </div>
+                    <div class="option-details">
+                        <div class="option-title">Show Coordinates</div>
+                        <div class="option-subtitle">Display row/column numbers for easier debugging</div>
+                    </div>
+                </div>
             `;
 
             modal.classList.add('show');
@@ -1605,6 +1733,10 @@
                 if (options.showTimer && !gameState.gameWon && !gameState.gameLost) {
                     startTimer();
                 }
+            }
+            
+            if (optionName === 'showCoordinates') {
+                updateCoordinatesDisplay();
             }
             
             showOptionsModal();
