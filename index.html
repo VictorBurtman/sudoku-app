@@ -414,7 +414,7 @@
         .number-button {
             flex: 1;
             height: 50px;
-            border: none;
+            border: 2px solid transparent;
             border-radius: 5px;
             font-size: 16px;
             font-weight: bold;
@@ -435,6 +435,12 @@
         .number-button:disabled {
             opacity: 0.3;
             cursor: not-allowed;
+        }
+
+        .number-button.highlighted {
+            background: #ff9800 !important;
+            border: 2px solid #ffb74d !important;
+            box-shadow: inset 0 0 8px rgba(255, 193, 7, 0.3) !important;
         }
 
         .remaining-count {
@@ -1133,7 +1139,7 @@
             gameState.errorCount = 0;
             gameState.gameWon = false;
             gameState.gameLost = false;
-            gameState.notesMode = false;
+            gameState.notesMode = false; // Désactiver le mode note à chaque début de partie
             gameState.startTime = Date.now();
             gameState.elapsedTime = 0;
             gameState.difficulty = difficultyLabel;
@@ -1141,6 +1147,9 @@
             gameState.actionHistory = [];
 
             document.getElementById('gameTitle').textContent = difficultyLabel;
+            
+            // S'assurer que le bouton notes n'est pas actif au début
+            document.getElementById('notesButton').classList.remove('active');
 
             clearInterval(gameState.gameTimer);
             if (options.showTimer) {
@@ -1377,13 +1386,12 @@
                     btn.appendChild(countText);
                 }
                 
-                container.appendChild(btn);
-                
+                // Utilisation de la classe CSS au lieu de setTimeout et styles inline
                 if (shouldHighlight) {
-                    setTimeout(() => {
-                        btn.style.cssText += 'background: #ff9800 !important; border: 2px solid #ffb74d !important; box-shadow: inset 0 0 8px rgba(255, 193, 7, 0.3) !important;';
-                    }, 10);
+                    btn.classList.add('highlighted');
                 }
+                
+                container.appendChild(btn);
             }
         }
 
@@ -1663,7 +1671,7 @@
             gameState.errorCount = 0;
             gameState.gameWon = false;
             gameState.gameLost = false;
-            gameState.notesMode = false;
+            gameState.notesMode = false; // Désactiver le mode note lors du reset
             gameState.startTime = Date.now();
             gameState.elapsedTime = 0;
             gameState.actionHistory = [];
