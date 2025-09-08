@@ -515,6 +515,15 @@
             background: #505050; 
         }
 
+        .btn-danger {
+            background: #d32f2f;
+            color: #ffffff;
+        }
+
+        .btn-danger:hover {
+            background: #f44336;
+        }
+
         .option-item {
             display: flex;
             align-items: center;
@@ -656,7 +665,7 @@
             </div>
             <div class="menu-screen">
                 <div class="main-title">SUDOKU</div>
-                <div class="warning-text">By Victor Burtman - Improved Generator</div>
+                <div class="warning-text">By Victor Burtman</div>
                 <div class="subtitle">Choose your level</div>
                 
                 <button class="option-button" onclick="showOptionsModal()">
@@ -676,7 +685,7 @@
         <div id="gameScreen" class="screen hidden">
             <div class="app-bar">
                 <div class="game-info">
-                    <button class="back-button" onclick="showScreen('menuScreen')">←</button>
+                    <button class="back-button" onclick="showScreen('menuScreen')">🔙</button>
                     <div class="app-title" id="gameTitle">Sudoku</div>
                     <div id="timerDisplay" class="timer-display hidden">
                         <span>⏱️</span>
@@ -686,7 +695,7 @@
                 </div>
                 <div class="game-actions">
                     <button class="btn btn-secondary" onclick="showOptionsModal()">⚙️</button>
-                    <button class="btn btn-secondary" onclick="resetGame()">🔄</button>
+                    <button class="btn btn-secondary" onclick="confirmResetGame()">🔄</button>
                 </div>
             </div>
             
@@ -723,7 +732,7 @@
                 
                 <div class="controls">
                     <div class="action-buttons">
-                        <button class="action-button undo-button" id="undoButton" onclick="undoLastAction()">↶</button>
+                        <button class="action-button undo-button" id="undoButton" onclick="undoLastAction()">⟲</button>
                         <button class="action-button erase-button" onclick="placeNumber(0)">×</button>
                         <button class="action-button notes-button" id="notesButton" onclick="toggleNotesMode()">✏️</button>
                     </div>
@@ -769,6 +778,18 @@
                 <textarea class="export-textarea" id="exportTextarea" readonly></textarea>
                 <div class="modal-actions">
                     <button class="btn btn-primary" onclick="closeExportModal()">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="resetConfirmModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-title">⚠️ Reset Game</div>
+                <p>Are you sure you want to reset the current game?</p>
+                <p style="color: #ff9800; font-size: 14px; margin-top: 10px;">All your progress will be lost!</p>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="closeResetConfirmModal()">Cancel</button>
+                    <button class="btn btn-danger" onclick="confirmReset()">Reset Game</button>
                 </div>
             </div>
         </div>
@@ -1660,6 +1681,20 @@
             }
             
             renderNumberButtons();
+        }
+
+        // Nouvelle fonction pour demander confirmation avant de reset
+        function confirmResetGame() {
+            document.getElementById('resetConfirmModal').classList.add('show');
+        }
+
+        function closeResetConfirmModal() {
+            document.getElementById('resetConfirmModal').classList.remove('show');
+        }
+
+        function confirmReset() {
+            closeResetConfirmModal();
+            resetGame();
         }
 
         function resetGame() {
