@@ -1137,16 +1137,16 @@
         function updateCoordinatesDisplay() {
             const coordinatesContainer = document.getElementById('coordinatesContainer');
             const sudokuGrid = document.getElementById('sudokuGrid');
-            const sudokuContainer = document.querySelector('.sudoku-container');
+            const sudokuWrapper = document.querySelector('.sudoku-grid-wrapper');
             
             if (options.showCoordinates) {
                 coordinatesContainer.classList.remove('hidden');
                 sudokuGrid.classList.add('with-coordinates');
-                sudokuContainer.classList.add('with-coordinates');
+                sudokuWrapper.classList.add('with-coordinates');
             } else {
                 coordinatesContainer.classList.add('hidden');
                 sudokuGrid.classList.remove('with-coordinates');
-                sudokuContainer.classList.remove('with-coordinates');
+                sudokuWrapper.classList.remove('with-coordinates');
             }
         }
 
