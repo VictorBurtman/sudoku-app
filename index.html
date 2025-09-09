@@ -40,12 +40,26 @@
 
         .app-bar {
             background: #2d2d2d;
-            padding: 8px 16px;
+            padding: 8px 16px 12px;
             border-bottom: 1px solid #404040;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .app-bar-top-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            min-height: 48px;
+            width: 100%;
+        }
+        
+        .app-bar-bottom-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            width: 100%;
         }
 
         .back-button {
@@ -779,18 +793,22 @@
         <!-- Game Screen -->
         <div id="gameScreen" class="screen hidden">
             <div class="app-bar">
-                <div class="game-info">
-                    <button class="back-button" onclick="showScreen('menuScreen')">←</button>
-                    <div class="app-title" id="gameTitle">Sudoku</div>
+                <div class="app-bar-top-row">
+                    <div class="game-info">
+                        <button class="back-button" onclick="showScreen('menuScreen')">←</button>
+                        <div class="app-title" id="gameTitle">Sudoku</div>
+                    </div>
+                    <div class="game-actions">
+                        <button class="btn btn-secondary" onclick="showOptionsModal()">⚙️</button>
+                        <button class="btn btn-secondary" onclick="confirmResetGame()">🔄</button>
+                    </div>
+                </div>
+                <div class="app-bar-bottom-row">
                     <div id="timerDisplay" class="timer-display hidden">
                         <span>⏱️</span>
                         <span id="timerText">0s</span>
                     </div>
                     <div id="errorDisplay" class="error-display hidden"></div>
-                </div>
-                <div class="game-actions">
-                    <button class="btn btn-secondary" onclick="showOptionsModal()">⚙️</button>
-                    <button class="btn btn-secondary" onclick="confirmResetGame()">🔄</button>
                 </div>
             </div>
             
@@ -1105,6 +1123,11 @@
         function saveGameState() {
             if (gameState.originalGrid.length === 0) return;
             
+            // On s'assure que le temps écoulé est bien à jour avant de sauvegarder
+            if (gameState.startTime && !gameState.gameWon && !gameState.gameLost) {
+                gameState.elapsedTime = Date.now() - gameState.startTime;
+            }
+
             const notesGridForSave = gameState.notesGrid.map(row =>
                 row.map(noteSet => Array.from(noteSet))
             );
@@ -1154,6 +1177,9 @@
                 gameState.actionHistory = saveData.actionHistory || [];
                 gameState.highlightedNumber = saveData.highlightedNumber;
                 
+                // Correction: on recalcule le startTime pour que le timer reprenne correctement
+                gameState.startTime = Date.now() - gameState.elapsedTime;
+
                 gameState.notesGrid = saveData.notesGrid.map(row =>
                     row.map(noteArray => new Set(noteArray))
                 );
@@ -1744,6 +1770,26 @@
             return completedUnits;
         }
 
+        function handleVisibilityChange() {
+            // Si la page est cachée (changement d'onglet, mise en veille, etc.)
+            if (document.hidden) {
+                if (gameState.gameTimer) {
+                    clearInterval(gameState.gameTimer);
+                    // On s'assure que le temps écoulé est à jour avant de pauser
+                    gameState.elapsedTime = Date.now() - gameState.startTime;
+                }
+            } 
+            // Si la page redevient visible
+            else {
+                // On ne relance le timer que si le jeu est en cours
+                if (!gameState.gameWon && !gameState.gameLost && gameState.startTime) {
+                    // On met à jour le point de départ pour compenser le temps de pause
+                    gameState.startTime = Date.now() - gameState.elapsedTime;
+                    startTimer();
+                }
+            }
+        }
+
         function animateUnitsSequentially(completedUnits) {
              if (completedUnits.length > 0) {
                 let cumulativeDelay = 0;
@@ -2207,6 +2253,9 @@
         document.addEventListener('DOMContentLoaded', () => {
             try {
                 loadOptions();
+
+                // Ajout de l'écouteur pour la visibilité de la page
+                document.addEventListener('visibilitychange', handleVisibilityChange);
                 
                 const sharedGrid = loadFromURL();
                 if (sharedGrid) {
@@ -2267,6 +2316,4 @@
     </script>
 </body>
 </html>
-
-
 
