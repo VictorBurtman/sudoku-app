@@ -235,10 +235,10 @@
         }
 
         .sudoku-grid {
-            width: 100%;
-            max-width: 480px;
-            height: 100vw;
-            max-height: 480px;
+            width: calc(100vw - 40px);
+            max-width: 440px;
+            height: calc(100vw - 40px);
+            max-height: 440px;
             aspect-ratio: 1;
             border: 3px solid #ffffff;
             display: grid;
@@ -251,13 +251,21 @@
             -webkit-touch-callout: none;
         }
 
+        /* Grille plus petite quand les coordonnées sont affichées */
+        .sudoku-grid.with-coordinates {
+            width: 100%;
+            max-width: 480px;
+            height: 100vw;
+            max-height: 480px;
+        }
+
         .sudoku-cell {
             border: 0.5px solid #666666;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
-            font-weight: bold;
+            font-size: 32px;
+            font-weight: 300;
             cursor: pointer;
             position: relative;
             background: #2d2d2d;
@@ -416,10 +424,10 @@
 
         .number-button {
             flex: 1;
-            height: 50px;
+            height: 70px;
             border: 2px solid transparent;
             border-radius: 5px;
-            font-size: 16px;
+            font-size: 22px;
             font-weight: bold;
             cursor: pointer;
             background: #404040;
@@ -616,6 +624,13 @@
             .sudoku-grid {
                 width: calc(100vw - 20px);
                 height: calc(100vw - 20px);
+                max-width: 380px;
+                max-height: 380px;
+            }
+            
+            .sudoku-grid.with-coordinates {
+                width: calc(100vw - 20px);
+                height: calc(100vw - 20px);
                 max-width: 360px;
                 max-height: 360px;
             }
@@ -630,8 +645,8 @@
             }
             
             .number-button {
-                height: 45px;
-                font-size: 14px;
+                height: 60px;
+                font-size: 18px;
             }
 
             .coordinate-label {
@@ -653,6 +668,10 @@
             .sudoku-container {
                 margin-left: 10px;
                 margin-top: 10px;
+            }
+            
+            .sudoku-cell {
+                font-size: 28px;
             }
         }
     </style>
@@ -1115,10 +1134,14 @@
 
         function updateCoordinatesDisplay() {
             const coordinatesContainer = document.getElementById('coordinatesContainer');
+            const sudokuGrid = document.getElementById('sudokuGrid');
+            
             if (options.showCoordinates) {
                 coordinatesContainer.classList.remove('hidden');
+                sudokuGrid.classList.add('with-coordinates');
             } else {
                 coordinatesContainer.classList.add('hidden');
+                sudokuGrid.classList.remove('with-coordinates');
             }
         }
 
@@ -1158,7 +1181,7 @@
             gameState.errorCount = 0;
             gameState.gameWon = false;
             gameState.gameLost = false;
-            gameState.notesMode = false; // Désactiver le mode note à chaque début de partie
+            gameState.notesMode = false;
             gameState.startTime = Date.now();
             gameState.elapsedTime = 0;
             gameState.difficulty = difficultyLabel;
@@ -1166,8 +1189,6 @@
             gameState.actionHistory = [];
 
             document.getElementById('gameTitle').textContent = difficultyLabel;
-            
-            // S'assurer que le bouton notes n'est pas actif au début
             document.getElementById('notesButton').classList.remove('active');
 
             clearInterval(gameState.gameTimer);
@@ -1176,7 +1197,6 @@
             }
 
             updateCoordinatesDisplay();
-
             saveGameState();
             renderGame();
         }
@@ -1405,7 +1425,6 @@
                     btn.appendChild(countText);
                 }
                 
-                // Utilisation de la classe CSS au lieu de setTimeout et styles inline
                 if (shouldHighlight) {
                     btn.classList.add('highlighted');
                 }
@@ -1681,7 +1700,6 @@
             renderNumberButtons();
         }
 
-        // Nouvelle fonction pour demander confirmation avant de reset
         function confirmResetGame() {
             document.getElementById('resetConfirmModal').classList.add('show');
         }
@@ -1704,7 +1722,7 @@
             gameState.errorCount = 0;
             gameState.gameWon = false;
             gameState.gameLost = false;
-            gameState.notesMode = false; // Désactiver le mode note lors du reset
+            gameState.notesMode = false;
             gameState.startTime = Date.now();
             gameState.elapsedTime = 0;
             gameState.actionHistory = [];
@@ -1966,7 +1984,6 @@
                 
                 const sharedGrid = loadFromURL();
                 if (sharedGrid) {
-                    // Pour les grilles partagées, pas de solution disponible
                     initializeGame(sharedGrid.grid, [], sharedGrid.label, sharedGrid.difficulty);
                     showScreen('gameScreen');
                     
