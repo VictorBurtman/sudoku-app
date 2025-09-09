@@ -174,11 +174,16 @@
             gap: 12px;
         }
 
+        .game-screen.with-coordinates {
+            padding-top: 50px;
+        }
+
         .sudoku-container {
             position: relative;
             display: flex;
             flex-direction: column;
             align-items: center;
+            width: 100%;
         }
 
         .sudoku-grid-wrapper {
@@ -235,10 +240,10 @@
         }
 
         .sudoku-grid {
-            width: calc(100vw - 40px);
-            max-width: 440px;
-            height: calc(100vw - 40px);
-            max-height: 440px;
+            width: calc(100vw - 30px);
+            max-width: 450px;
+            height: calc(100vw - 30px);
+            max-height: 450px;
             aspect-ratio: 1;
             border: 3px solid #ffffff;
             display: grid;
@@ -249,14 +254,14 @@
             -moz-user-select: none;
             -ms-user-select: none;
             -webkit-touch-callout: none;
+            margin: 0 auto;
         }
 
-        /* Grille plus petite quand les coordonnées sont affichées */
         .sudoku-grid.with-coordinates {
-            width: 100%;
-            max-width: 480px;
-            height: 100vw;
-            max-height: 480px;
+            width: calc(100vw - 80px);
+            max-width: 400px;
+            height: calc(100vw - 80px);
+            max-height: 400px;
         }
 
         .sudoku-cell {
@@ -626,7 +631,6 @@
                 height: calc(100vw - 15px);
                 max-width: 385px;
                 max-height: 385px;
-                margin: 0 auto;
             }
             
             .sudoku-grid.with-coordinates {
@@ -634,12 +638,15 @@
                 height: calc(100vw - 50px);
                 max-width: 350px;
                 max-height: 350px;
-                margin: 25px auto 0 auto;
             }
             
             .game-screen {
                 padding: 10px;
                 gap: 15px;
+            }
+
+            .game-screen.with-coordinates {
+                padding-top: 40px;
             }
             
             .number-buttons {
@@ -844,7 +851,7 @@
             showCoordinates: false
         };
 
-        // Sudoku Generator - IMPROVED VERSION
+        // Sudoku Generator
         class SudokuGenerator {
             constructor() {
                 this.SIZE = 9;
@@ -906,17 +913,14 @@
             }
 
             isValid(grid, row, col, num) {
-                // Check row
                 for (let c = 0; c < this.SIZE; c++) {
                     if (grid[row][c] === num) return false;
                 }
                 
-                // Check column
                 for (let r = 0; r < this.SIZE; r++) {
                     if (grid[r][col] === num) return false;
                 }
                 
-                // Check 3x3 box
                 const boxRow = Math.floor(row / 3) * 3;
                 const boxCol = Math.floor(col / 3) * 3;
                 for (let r = boxRow; r < boxRow + 3; r++) {
@@ -927,7 +931,6 @@
                 return true;
             }
 
-            // IMPROVED: Creates puzzle with unique solution verification
             createPuzzleWithUniqueCheck(completeGrid, difficulty) {
                 const puzzle = completeGrid.map(row => [...row]);
                 const positions = this.getAllPositions();
@@ -944,15 +947,12 @@
                     puzzle[row][col] = this.EMPTY;
                     attempts++;
 
-                    // Check if puzzle still has unique solution
                     if (this.hasUniqueSolution(puzzle)) {
                         removedCount++;
                     } else {
-                        // Restore if multiple solutions exist
                         puzzle[row][col] = backup;
                     }
 
-                    // Update progress periodically
                     if (attempts % 10 === 0) {
                         this.updateLoadingProgress(`Testing cell ${attempts}/${maxAttempts}...`);
                     }
@@ -971,17 +971,16 @@
                 return positions;
             }
 
-            // NEW: Checks if puzzle has exactly one solution
             hasUniqueSolution(grid) {
                 const gridCopy = grid.map(row => [...row]);
                 let solutionCount = 0;
                 
                 const solve = (g, row = 0, col = 0) => {
-                    if (solutionCount > 1) return false; // Early exit if multiple solutions found
+                    if (solutionCount > 1) return false;
                     
                     if (row === this.SIZE) {
                         solutionCount++;
-                        return solutionCount === 1; // Continue only if this is the first solution
+                        return solutionCount === 1;
                     }
                     
                     const nextRow = col === this.SIZE - 1 ? row + 1 : row;
@@ -1003,28 +1002,6 @@
 
                 solve(gridCopy);
                 return solutionCount === 1;
-            }
-
-            // OLD METHOD: Kept as fallback for simple puzzles
-            createPuzzle(completeGrid, difficulty) {
-                const puzzle = completeGrid.map(row => [...row]);
-                const totalCells = this.SIZE * this.SIZE;
-                const cellsToRemove = Math.floor(totalCells * difficulty);
-                
-                const positions = [];
-                for (let r = 0; r < this.SIZE; r++) {
-                    for (let c = 0; c < this.SIZE; c++) {
-                        positions.push([r, c]);
-                    }
-                }
-                this.shuffleArray(positions);
-
-                for (let i = 0; i < cellsToRemove && i < positions.length; i++) {
-                    const [row, col] = positions[i];
-                    puzzle[row][col] = this.EMPTY;
-                }
-
-                return puzzle;
             }
 
             shuffleArray(array) {
@@ -1150,13 +1127,13 @@
             }
         }
 
-        // Main functions - DECLARED GLOBALLY
-        function showScreen(screenId) {
+        // Main functions - declared globally
+        window.showScreen = function(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
             document.getElementById(screenId).classList.remove('hidden');
         }
 
-        function startGame(difficulty, label) {
+        window.startGame = function(difficulty, label) {
             document.getElementById('loadingModal').classList.add('show');
             document.getElementById('loadingText').textContent = 'Generating grid...';
             document.getElementById('loadingProgress').textContent = '';
@@ -1173,6 +1150,335 @@
                     document.getElementById('loadingModal').classList.remove('show');
                 }
             }, 200);
+        }
+
+        window.showOptionsModal = function() {
+            const modal = document.getElementById('optionsModal');
+            const content = document.getElementById('optionsContent');
+            
+            const inGame = !document.getElementById('gameScreen').classList.contains('hidden');
+
+            content.innerHTML = `
+                ${inGame ? `
+                <div class="option-item clickable" onclick="shareGrid(); closeOptionsModal();">
+                    <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 16px;">📤</div>
+                    <div class="option-details">
+                        <div class="option-title">Share This Grid</div>
+                        <div class="option-subtitle">Generate a link to share this puzzle with friends</div>
+                    </div>
+                </div>
+                <div class="option-item clickable" onclick="exportCurrentState(); closeOptionsModal();">
+                    <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 16px;">📋</div>
+                    <div class="option-details">
+                        <div class="option-title">Export Current State</div>
+                        <div class="option-subtitle">Copy current grid state as JSON for AI assistance</div>
+                    </div>
+                </div>
+                ` : ''}
+                <div class="option-item">
+                    <div class="checkbox ${options.indicativeMode ? 'checked' : ''}" 
+                         onclick="toggleOption('indicativeMode')">
+                        ${options.indicativeMode ? '✓' : ''}
+                    </div>
+                    <div class="option-details">
+                        <div class="option-title">Smart Hint Mode</div>
+                        <div class="option-subtitle">Shows errors in red based on correct solution. 3 errors = game over</div>
+                    </div>
+                </div>
+                <div class="option-item">
+                    <div class="checkbox ${options.highlightMode ? 'checked' : ''}" 
+                         onclick="toggleOption('highlightMode')">
+                        ${options.highlightMode ? '✓' : ''}
+                    </div>
+                    <div class="option-details">
+                        <div class="option-title">Highlight</div>
+                        <div class="option-subtitle">Highlights row/column and identical numbers</div>
+                    </div>
+                </div>
+                <div class="option-item">
+                    <div class="checkbox ${options.showTimer ? 'checked' : ''}" 
+                         onclick="toggleOption('showTimer')">
+                        ${options.showTimer ? '✓' : ''}
+                    </div>
+                    <div class="option-details">
+                        <div class="option-title">Show Timer</div>
+                        <div class="option-subtitle">Shows elapsed time during game</div>
+                    </div>
+                </div>
+                <div class="option-item">
+                    <div class="checkbox ${options.showCoordinates ? 'checked' : ''}" 
+                         onclick="toggleOption('showCoordinates')">
+                        ${options.showCoordinates ? '✓' : ''}
+                    </div>
+                    <div class="option-details">
+                        <div class="option-title">Show Coordinates</div>
+                        <div class="option-subtitle">Display row/column numbers for easier debugging</div>
+                    </div>
+                </div>
+            `;
+
+            modal.classList.add('show');
+        }
+
+        window.closeOptionsModal = function() {
+            document.getElementById('optionsModal').classList.remove('show');
+        }
+
+        window.toggleOption = function(optionName) {
+            options[optionName] = !options[optionName];
+            saveOptions();
+            
+            if (optionName === 'showTimer') {
+                clearInterval(gameState.gameTimer);
+                if (options.showTimer && !gameState.gameWon && !gameState.gameLost) {
+                    startTimer();
+                }
+            }
+            
+            if (optionName === 'showCoordinates') {
+                updateCoordinatesDisplay();
+            }
+            
+            showOptionsModal();
+            if (document.getElementById('gameScreen').classList.contains('hidden') === false) {
+                renderGame();
+            }
+        }
+
+        window.confirmResetGame = function() {
+            document.getElementById('resetConfirmModal').classList.add('show');
+        }
+
+        window.closeResetConfirmModal = function() {
+            document.getElementById('resetConfirmModal').classList.remove('show');
+        }
+
+        window.confirmReset = function() {
+            closeResetConfirmModal();
+            resetGame();
+        }
+
+        window.undoLastAction = function() {
+            if (gameState.actionHistory.length === 0) return;
+            
+            const lastAction = gameState.actionHistory.pop();
+            
+            if (lastAction.type === 'number') {
+                gameState.currentGrid[lastAction.row][lastAction.col] = lastAction.oldValue;
+                if (lastAction.oldNotes) {
+                    gameState.notesGrid[lastAction.row][lastAction.col] = new Set(lastAction.oldNotes);
+                } else {
+                    gameState.notesGrid[lastAction.row][lastAction.col] = new Set();
+                }
+            } else if (lastAction.type === 'note') {
+                if (lastAction.action === 'add') {
+                    gameState.notesGrid[lastAction.row][lastAction.col].delete(lastAction.number);
+                } else {
+                    gameState.notesGrid[lastAction.row][lastAction.col].add(lastAction.number);
+                }
+            }
+            
+            if (options.indicativeMode) {
+                updateErrors();
+            }
+            
+            updateUndoButton();
+            renderGame();
+            saveGameState();
+        }
+
+        window.placeNumber = function(number) {
+            if (gameState.selectedRow === null || gameState.selectedCol === null) {
+                if (number !== 0) {
+                    gameState.highlightedNumber = gameState.highlightedNumber === number ? null : number;
+                    renderGame();
+                }
+                return;
+            }
+            
+            if (gameState.gameWon || gameState.gameLost) return;
+            if (gameState.originalGrid[gameState.selectedRow][gameState.selectedCol] !== 0) return;
+
+            const row = gameState.selectedRow;
+            const col = gameState.selectedCol;
+
+            if (gameState.notesMode && number !== 0) {
+                const hasExistingNote = gameState.notesGrid[row][col].has(number);
+                
+                if (options.indicativeMode && !hasExistingNote) {
+                    let hasConflict = false;
+                    
+                    for (let c = 0; c < 9; c++) {
+                        if (gameState.currentGrid[row][c] === number) {
+                            hasConflict = true;
+                            break;
+                        }
+                    }
+                    if (!hasConflict) {
+                        for (let r = 0; r < 9; r++) {
+                            if (gameState.currentGrid[r][col] === number) {
+                                hasConflict = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!hasConflict) {
+                        const startRow = Math.floor(row / 3) * 3;
+                        const startCol = Math.floor(col / 3) * 3;
+                        for (let r = startRow; r < startRow + 3; r++) {
+                            for (let c = startCol; c < startCol + 3; c++) {
+                                if (gameState.currentGrid[r][c] === number) {
+                                    hasConflict = true;
+                                    break;
+                                }
+                            }
+                            if (hasConflict) break;
+                        }
+                    }
+                    
+                    if (hasConflict) {
+                        flashConflictingCells(row, col, number);
+                        return;
+                    }
+                }
+
+                const action = {
+                    type: 'note',
+                    row: row,
+                    col: col,
+                    number: number,
+                    action: gameState.notesGrid[row][col].has(number) ? 'remove' : 'add'
+                };
+                saveAction(action);
+
+                if (gameState.notesGrid[row][col].has(number)) {
+                    gameState.notesGrid[row][col].delete(number);
+                } else {
+                    gameState.notesGrid[row][col].add(number);
+                }
+            } else {
+                const oldValue = gameState.currentGrid[row][col];
+                const action = {
+                    type: 'number',
+                    row: row,
+                    col: col,
+                    oldValue: oldValue,
+                    newValue: number,
+                    oldNotes: gameState.notesGrid[row][col].size > 0 ? Array.from(gameState.notesGrid[row][col]) : null
+                };
+                saveAction(action);
+
+                gameState.currentGrid[row][col] = number;
+                if (number !== 0) {
+                    gameState.notesGrid[row][col].clear();
+                }
+
+                if (options.indicativeMode && number !== 0 && oldValue === 0) {
+                    if (!isCorrectMove(row, col, number)) {
+                        gameState.errorCount++;
+                        if (gameState.errorCount >= 3) {
+                            gameState.gameLost = true;
+                            gameState.elapsedTime = Date.now() - gameState.startTime;
+                            showGameOverModal(false);
+                            return;
+                        }
+                    }
+                }
+            }
+
+            if (options.indicativeMode) {
+                updateErrors();
+                cleanObsoleteNotes();
+            }
+
+            if (isSudokuComplete()) {
+                gameState.gameWon = true;
+                gameState.elapsedTime = Date.now() - gameState.startTime;
+                showGameOverModal(true);
+            }
+
+            renderGame();
+            saveGameState();
+        }
+
+        window.toggleNotesMode = function() {
+            gameState.notesMode = !gameState.notesMode;
+            const button = document.getElementById('notesButton');
+            
+            if (gameState.notesMode) {
+                button.classList.add('active');
+            } else {
+                button.classList.remove('active');
+            }
+            
+            renderNumberButtons();
+        }
+
+        window.handleGameAreaClick = function(event) {
+            if (!event.target.classList.contains('sudoku-cell') && 
+                !event.target.closest('.sudoku-cell') &&
+                !event.target.classList.contains('action-button') &&
+                !event.target.classList.contains('number-button') &&
+                !event.target.closest('.action-button') &&
+                !event.target.closest('.number-button')) {
+                gameState.selectedRow = null;
+                gameState.selectedCol = null;
+                gameState.highlightedNumber = null;
+                renderGame();
+            }
+        }
+
+        window.closeGameOverModal = function() {
+            document.getElementById('gameOverModal').classList.remove('show');
+        }
+
+        window.exportCurrentState = function() {
+            const notesGridForExport = gameState.notesGrid.map(row =>
+                row.map(noteSet => Array.from(noteSet).sort())
+            );
+
+            const exportData = {
+                difficulty: gameState.difficulty,
+                originalGrid: gameState.originalGrid,
+                currentGrid: gameState.currentGrid,
+                notesGrid: notesGridForExport
+            };
+
+            const jsonString = JSON.stringify(exportData, null, 2);
+            
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(jsonString).then(() => {
+                    showExportModal(jsonString, true);
+                }).catch(() => {
+                    showExportModal(jsonString, false);
+                });
+            } else {
+                showExportModal(jsonString, false);
+            }
+        }
+
+        window.closeExportModal = function() {
+            document.getElementById('exportModal').classList.remove('show');
+        }
+
+        window.shareGrid = function() {
+            if (!gameState.originalGrid || gameState.originalGrid.length === 0) {
+                alert('No grid to share!');
+                return;
+            }
+
+            const encodedGrid = encodeGrid(gameState.originalGrid, gameState.difficulty, gameState.difficulty);
+            const shareUrl = window.location.origin + window.location.pathname + '?grid=' + encodedGrid;
+            
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(shareUrl).then(() => {
+                    showShareModal(shareUrl, true);
+                }).catch(() => {
+                    showShareModal(shareUrl, false);
+                });
+            } else {
+                showShareModal(shareUrl, false);
+            }
         }
 
         function initializeGame(grid, solution, difficultyLabel, difficulty) {
@@ -1370,20 +1676,6 @@
                     
                     grid.appendChild(cell);
                 }
-            }
-        }
-
-        function handleGameAreaClick(event) {
-            if (!event.target.classList.contains('sudoku-cell') && 
-                !event.target.closest('.sudoku-cell') &&
-                !event.target.classList.contains('action-button') &&
-                !event.target.classList.contains('number-button') &&
-                !event.target.closest('.action-button') &&
-                !event.target.closest('.number-button')) {
-                gameState.selectedRow = null;
-                gameState.selectedCol = null;
-                gameState.highlightedNumber = null;
-                renderGame();
             }
         }
 
@@ -1888,6 +2180,10 @@
             modal.classList.add('show');
         }
 
+        function closeOptionsModal() {
+            document.getElementById('optionsModal').classList.remove('show');
+        }
+
         function toggleOption(optionName) {
             options[optionName] = !options[optionName];
             saveOptions();
@@ -1909,8 +2205,18 @@
             }
         }
 
-        function closeOptionsModal() {
-            document.getElementById('optionsModal').classList.remove('show');
+        function handleGameAreaClick(event) {
+            if (!event.target.classList.contains('sudoku-cell') && 
+                !event.target.closest('.sudoku-cell') &&
+                !event.target.classList.contains('action-button') &&
+                !event.target.classList.contains('number-button') &&
+                !event.target.closest('.action-button') &&
+                !event.target.closest('.number-button')) {
+                gameState.selectedRow = null;
+                gameState.selectedCol = null;
+                gameState.highlightedNumber = null;
+                renderGame();
+            }
         }
 
         function encodeGrid(originalGrid, difficulty, difficultyLabel) {
