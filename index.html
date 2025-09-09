@@ -56,7 +56,7 @@
         
         .app-bar-bottom-row {
             display: flex;
-            justify-content: center;
+            justify-content: flex-start; /* MODIFIÉ: Aligné à gauche */
             align-items: center;
             gap: 16px;
             width: 100%;
@@ -123,6 +123,7 @@
             color: #ffffff;
             white-space: nowrap;
             flex-shrink: 0;
+            margin-right: 8px; /* AJOUTÉ: Pour l'espacement */
         }
 
         .menu-screen {
@@ -313,8 +314,8 @@
         .sudoku-cell.user { color: #90caf9; }
         
         .sudoku-cell span {
-            position: relative; /* Assure que le z-index est appliqué */
-            z-index: 2; /* Place le chiffre au-dessus de l'animation de complétion */
+            position: relative;
+            z-index: 2;
         }
 
         .sudoku-cell.flash-conflict {
@@ -327,10 +328,9 @@
             100% { background-color: #2d2d2d; }
         }
         
-        /* --- Animation d'apparition initiale --- */
         .sudoku-cell.initial-fade-in {
             animation: fadeIn 0.5s ease-in forwards;
-            opacity: 0; /* Démarre invisible */
+            opacity: 0;
         }
 
         @keyframes fadeIn {
@@ -338,7 +338,6 @@
             to { opacity: 1; }
         }
 
-        /* --- Animation de victoire --- */
         .sudoku-cell.win-animate {
             animation: winSpreadText 0.8s ease-in-out forwards;
         }
@@ -347,7 +346,7 @@
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
             border-radius: 50%;
-            z-index: 20; /* High z-index to paint over everything */
+            z-index: 20;
             animation: winSpreadEffect 0.8s ease-in-out forwards;
         }
 
@@ -358,21 +357,20 @@
         }
 
         @keyframes winSpreadText {
-            0%, 49% { /* Keep original text color */ }
+            0%, 49% { }
             50%, 100% { color: #ffffff; }
         }
 
-        /* --- Animation de complétion --- */
         .sudoku-cell::after {
             content: '';
             position: absolute;
             top: 2px; left: 2px; right: 2px; bottom: 2px;
-            background-color: #f57c00; /* La couleur de surbrillance des chiffres sur la grille */
+            background-color: #f57c00;
             transform: scale(0);
             border-radius: 50%;
             pointer-events: none;
             opacity: 0;
-            z-index: 1; /* Pour être au-dessus des autres surlignages */
+            z-index: 1;
         }
 
         .sudoku-cell.animate-complete::after {
@@ -382,11 +380,9 @@
         @keyframes growAndShrink {
             0% { transform: scale(0); opacity: 1; }
             50% { transform: scale(1.1); opacity: 1; border-radius: 15%; }
-            90% { transform: scale(1.1); opacity: 1; border-radius: 15%; } /* Pause allongée */
+            90% { transform: scale(1.1); opacity: 1; border-radius: 15%; }
             100% { transform: scale(0); opacity: 0; }
         }
-
-        /* --- Fin de l'animation de complétion --- */
 
         .notes-container {
             position: absolute;
@@ -398,7 +394,7 @@
             grid-template-columns: repeat(3, 1fr);
             grid-template-rows: repeat(3, 1fr);
             gap: 0;
-            padding: 1px;
+            padding: 0; /* MODIFIÉ: Corrigé de 1px à 0 */
         }
 
         .note {
@@ -771,7 +767,6 @@
 </head>
 <body>
     <div class="app-container">
-        <!-- Main Menu -->
         <div id="menuScreen" class="screen">
             <div class="menu-screen">
                 <div class="main-title">SUDOKU</div>
@@ -790,7 +785,6 @@
             </div>
         </div>
 
-        <!-- Game Screen -->
         <div id="gameScreen" class="screen hidden">
             <div class="app-bar">
                 <div class="app-bar-top-row">
@@ -799,6 +793,7 @@
                         <div class="app-title" id="gameTitle">Sudoku</div>
                     </div>
                     <div class="game-actions">
+                        <div id="errorDisplay" class="error-display hidden"></div>
                         <button class="btn btn-secondary" onclick="showOptionsModal()">⚙️</button>
                         <button class="btn btn-secondary" onclick="confirmResetGame()">🔄</button>
                     </div>
@@ -808,7 +803,6 @@
                         <span>⏱️</span>
                         <span id="timerText">0s</span>
                     </div>
-                    <div id="errorDisplay" class="error-display hidden"></div>
                 </div>
             </div>
             
@@ -855,7 +849,6 @@
             </div>
         </div>
 
-        <!-- Modals -->
         <div id="optionsModal" class="modal">
             <div class="modal-content">
                 <div class="modal-title">Game Options</div>
@@ -1123,7 +1116,6 @@
         function saveGameState() {
             if (gameState.originalGrid.length === 0) return;
             
-            // On s'assure que le temps écoulé est bien à jour avant de sauvegarder
             if (gameState.startTime && !gameState.gameWon && !gameState.gameLost) {
                 gameState.elapsedTime = Date.now() - gameState.startTime;
             }
@@ -1177,7 +1169,6 @@
                 gameState.actionHistory = saveData.actionHistory || [];
                 gameState.highlightedNumber = saveData.highlightedNumber;
                 
-                // Correction: on recalcule le startTime pour que le timer reprenne correctement
                 gameState.startTime = Date.now() - gameState.elapsedTime;
 
                 gameState.notesGrid = saveData.notesGrid.map(row =>
@@ -1224,7 +1215,7 @@
             }
         }
 
-        // Main functions - declared globally
+        // Main functions
         window.showScreen = function(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
             document.getElementById(screenId).classList.remove('hidden');
@@ -1410,15 +1401,13 @@
 
             if (gameState.originalGrid[row][col] !== 0) return;
 
-            // Verrouille la case si elle est déjà correcte en mode hint
             if (options.indicativeMode && 
                 gameState.currentGrid[row][col] !== 0 && 
                 gameState.solvedGrid.length > 0 && 
                 gameState.currentGrid[row][col] === gameState.solvedGrid[row][col]) {
-                return; // La case est correcte et verrouillée
+                return;
             }
 
-            // Handle Notes Mode
             if (gameState.notesMode && number !== 0) {
                 const hasExistingNote = gameState.notesGrid[row][col].has(number);
                 
@@ -1452,7 +1441,6 @@
                     gameState.notesGrid[row][col].add(number);
                 }
             } 
-            // Handle Number Placement
             else {
                 const oldValue = gameState.currentGrid[row][col];
                 if (oldValue === number && number !== 0) return;
@@ -1497,22 +1485,19 @@
                 gameState.elapsedTime = Date.now() - gameState.startTime;
                 clearInterval(gameState.gameTimer);
 
-                renderGame(); // Render the last move
+                renderGame();
                 saveGameState();
                 
                 let completionAnimTime = 0;
-                // Only play completion animation if the option is enabled
                 if (options.useAnimations && unitsToAnimate.length > 0) {
                     animateUnitsSequentially(unitsToAnimate);
                     completionAnimTime = Math.max(0, unitsToAnimate.length - 1) * 700 + 1200;
                 }
                 
-                // Always trigger win animation, but delay it based on whether completion anim played
                 setTimeout(triggerWinAnimation, completionAnimTime + 100);
                 
                 return;
             } else {
-                 // If not a win, just animate any completed units
                  if (options.useAnimations) {
                     animateUnitsSequentially(unitsToAnimate);
                  }
@@ -1536,7 +1521,7 @@
         }
 
         window.handleGameAreaClick = function(event) {
-            if (gameState.isInitialRender) return; // Ignore les clics pendant l'animation initiale
+            if (gameState.isInitialRender) return;
 
             if (!event.target.classList.contains('sudoku-cell') && 
                 !event.target.closest('.sudoku-cell') &&
@@ -1621,7 +1606,7 @@
             gameState.difficulty = difficultyLabel;
             gameState.source = 'Local Generator';
             gameState.actionHistory = [];
-            gameState.isInitialRender = true; // Set flag for animation, always true now
+            gameState.isInitialRender = true;
 
             document.getElementById('gameTitle').textContent = difficultyLabel;
             document.getElementById('notesButton').classList.remove('active');
@@ -1715,13 +1700,11 @@
             updateCoordinatesDisplay();
         }
 
-        // --- Fonctions pour les animations ---
         function getCompletedUnits(row, col) {
             if (!options.indicativeMode || !gameState.solvedGrid.length) return [];
             
             const completedUnits = [];
 
-            // Vérifier la ligne
             let rowComplete = true;
             for (let c = 0; c < 9; c++) {
                 if (gameState.currentGrid[row][c] === 0 || gameState.currentGrid[row][c] !== gameState.solvedGrid[row][c]) {
@@ -1734,7 +1717,6 @@
                 completedUnits.push(cells);
             }
 
-            // Vérifier la colonne
             let colComplete = true;
             for (let r = 0; r < 9; r++) {
                 if (gameState.currentGrid[r][col] === 0 || gameState.currentGrid[r][col] !== gameState.solvedGrid[r][col]) {
@@ -1747,7 +1729,6 @@
                 completedUnits.push(cells);
             }
 
-            // Vérifier le bloc
             const startRow = Math.floor(row / 3) * 3;
             const startCol = Math.floor(col / 3) * 3;
             let boxComplete = true;
@@ -1771,19 +1752,14 @@
         }
 
         function handleVisibilityChange() {
-            // Si la page est cachée (changement d'onglet, mise en veille, etc.)
             if (document.hidden) {
                 if (gameState.gameTimer) {
                     clearInterval(gameState.gameTimer);
-                    // On s'assure que le temps écoulé est à jour avant de pauser
                     gameState.elapsedTime = Date.now() - gameState.startTime;
                 }
             } 
-            // Si la page redevient visible
             else {
-                // On ne relance le timer que si le jeu est en cours
                 if (!gameState.gameWon && !gameState.gameLost && gameState.startTime) {
-                    // On met à jour le point de départ pour compenser le temps de pause
                     gameState.startTime = Date.now() - gameState.elapsedTime;
                     startTimer();
                 }
@@ -1796,8 +1772,8 @@
                 completedUnits.forEach(unit => {
                     setTimeout(() => {
                         triggerCompletionAnimation(unit);
-                    }, cumulativeDelay); // Décale le début de l'animation de l'unité suivante
-                    cumulativeDelay += 700; // 600ms anim + 100ms délai
+                    }, cumulativeDelay);
+                    cumulativeDelay += 700;
                 });
             }
         }
@@ -1814,22 +1790,19 @@
                             cell.removeEventListener('animationend', onAnimationEnd);
                         };
                         cell.addEventListener('animationend', onAnimationEnd);
-
-                        // Force le redéclenchement de l'animation
                         cell.classList.remove('animate-complete');
-                        void cell.offsetWidth; // Force le "reflow" du DOM
+                        void cell.offsetWidth;
                         cell.classList.add('animate-complete');
                     }
-                }, index * 50); // Délai de 50ms entre chaque animation de case
+                }, index * 50);
             });
         }
 
         function triggerWinAnimation() {
             const gridEl = document.getElementById('sudokuGrid');
-            const animationDuration = 800; // Doit correspondre à la durée de l'animation CSS
-            const staggerDelay = 50; // Délai pour l'effet de vague
+            const animationDuration = 800;
+            const staggerDelay = 50;
 
-            // Désélectionne la case pour un rendu propre
             gameState.selectedRow = null;
             gameState.selectedCol = null;
             renderGrid();
@@ -1849,8 +1822,6 @@
                 showGameOverModal(true);
             }, totalAnimationTime);
         }
-        // --- Fin des fonctions d'animation ---
-
 
         function renderGrid() {
             const grid = document.getElementById('sudokuGrid');
@@ -1909,7 +1880,6 @@
 
                         cell.classList.add(gameState.originalGrid[row][col] !== 0 ? 'original' : 'user');
 
-                        // Animation d'apparition des chiffres initiaux
                         if (gameState.isInitialRender && gameState.originalGrid[row][col] !== 0) {
                             cell.classList.add('initial-fade-in');
                             cell.style.animationDelay = `${(row + col) * 0.04}s`;
@@ -1951,7 +1921,6 @@
             if (gameState.isInitialRender) {
                 const gridEl = document.getElementById('sudokuGrid');
                 gridEl.classList.add('no-events');
-                // Réinitialise le flag et réactive les clics après que les animations soient terminées
                 setTimeout(() => {
                     gameState.isInitialRender = false;
                     gridEl.classList.remove('no-events');
@@ -1960,7 +1929,7 @@
         }
 
         function selectCell(row, col) {
-            if (gameState.isInitialRender) return; // Ignore les clics pendant l'animation
+            if (gameState.isInitialRender) return;
             gameState.selectedRow = row;
             gameState.selectedCol = col;
             gameState.highlightedNumber = null;
@@ -2143,7 +2112,7 @@
             gameState.startTime = Date.now();
             gameState.elapsedTime = 0;
             gameState.actionHistory = [];
-            gameState.isInitialRender = true; // Pour animer la nouvelle grille
+            gameState.isInitialRender = true;
 
             document.getElementById('notesButton').classList.remove('active');
 
@@ -2254,7 +2223,6 @@
             try {
                 loadOptions();
 
-                // Ajout de l'écouteur pour la visibilité de la page
                 document.addEventListener('visibilitychange', handleVisibilityChange);
                 
                 const sharedGrid = loadFromURL();
@@ -2316,4 +2284,3 @@
     </script>
 </body>
 </html>
-
