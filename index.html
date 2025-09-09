@@ -684,7 +684,7 @@
         <div id="menuScreen" class="screen">
             <div class="menu-screen">
                 <div class="main-title">SUDOKU</div>
-                <div class="warning-text">By Victor Burtmannnn</div>
+                <div class="warning-text">By Victor Burtman</div>
                 <div class="subtitle">Choose your level</div>
                 
                 <button class="option-button" onclick="showOptionsModal()">
@@ -1137,16 +1137,16 @@
         function updateCoordinatesDisplay() {
             const coordinatesContainer = document.getElementById('coordinatesContainer');
             const sudokuGrid = document.getElementById('sudokuGrid');
-            const sudokuWrapper = document.querySelector('.sudoku-grid-wrapper');
+            const gameScreen = document.querySelector('.game-screen');
             
             if (options.showCoordinates) {
                 coordinatesContainer.classList.remove('hidden');
                 sudokuGrid.classList.add('with-coordinates');
-                sudokuWrapper.classList.add('with-coordinates');
+                gameScreen.classList.add('with-coordinates');
             } else {
                 coordinatesContainer.classList.add('hidden');
                 sudokuGrid.classList.remove('with-coordinates');
-                sudokuWrapper.classList.remove('with-coordinates');
+                gameScreen.classList.remove('with-coordinates');
             }
         }
 
