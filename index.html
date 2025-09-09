@@ -264,6 +264,10 @@
             max-height: 400px;
         }
 
+        .sudoku-grid.no-events {
+            pointer-events: none;
+        }
+
         .sudoku-cell {
             border: 0.5px solid #666666;
             display: flex;
@@ -303,6 +307,41 @@
             50% { background-color: #f44336; }
             100% { background-color: #2d2d2d; }
         }
+        
+        /* --- Animation d'apparition initiale --- */
+        .sudoku-cell.initial-fade-in {
+            animation: fadeIn 0.5s ease-in forwards;
+            opacity: 0; /* Démarre invisible */
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* --- Animation de victoire --- */
+        .sudoku-cell.win-animate {
+            animation: winSpreadText 0.8s ease-in-out forwards;
+        }
+        .sudoku-cell.win-animate::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            border-radius: 50%;
+            z-index: 20; /* High z-index to paint over everything */
+            animation: winSpreadEffect 0.8s ease-in-out forwards;
+        }
+
+        @keyframes winSpreadEffect {
+            0% { transform: scale(0); background-color: #ff9800; opacity: 1; }
+            50% { transform: scale(1.2); background-color: #ff9800; opacity: 1; border-radius: 10%; }
+            100% { transform: scale(1); background-color: #424242; opacity: 1; border-radius: 0; }
+        }
+
+        @keyframes winSpreadText {
+            0%, 49% { /* Keep original text color */ }
+            50%, 100% { color: #ffffff; }
+        }
 
         /* --- Animation de complétion --- */
         .sudoku-cell::after {
@@ -323,9 +362,11 @@
 
         @keyframes growAndShrink {
             0% { transform: scale(0); opacity: 0.8; }
-            60% { transform: scale(1.1); opacity: 0.8; border-radius: 15%; }
+            50% { transform: scale(1.1); opacity: 0.8; border-radius: 15%; }
+            80% { transform: scale(1.1); opacity: 0.8; border-radius: 15%; } /* Ajout de la pause */
             100% { transform: scale(0); opacity: 0; }
         }
+
         /* --- Fin de l'animation de complétion --- */
 
         .notes-container {
@@ -716,7 +757,6 @@
             <div class="menu-screen">
                 <div class="main-title">SUDOKU</div>
                 <div class="warning-text">By Victor Burtman</div>
-                <div class="subtitle">Choose your level</div>
                 
                 <button class="option-button" onclick="showOptionsModal()">
                     <span>⚙️</span>
@@ -865,7 +905,8 @@
             difficulty: '',
             source: '',
             actionHistory: [],
-            highlightedNumber: null
+            highlightedNumber: null,
+            isInitialRender: false // Flag for initial fade-in animation
         };
 
         let options = {
@@ -1321,10 +1362,19 @@
             }
             
             if (gameState.gameWon || gameState.gameLost) return;
-            if (gameState.originalGrid[gameState.selectedRow][gameState.selectedCol] !== 0) return;
-
+            
             const row = gameState.selectedRow;
             const col = gameState.selectedCol;
+
+            if (gameState.originalGrid[row][col] !== 0) return;
+
+            // Verrouille la case si elle est déjà correcte en mode hint
+            if (options.indicativeMode && 
+                gameState.currentGrid[row][col] !== 0 && 
+                gameState.solvedGrid.length > 0 && 
+                gameState.currentGrid[row][col] === gameState.solvedGrid[row][col]) {
+                return; // La case est correcte et verrouillée
+            }
 
             // Handle Notes Mode
             if (gameState.notesMode && number !== 0) {
@@ -1375,7 +1425,7 @@
 
                 if (options.indicativeMode && number !== 0) {
                     if (isCorrectMove(row, col, number)) {
-                        checkForCompletedUnits(row, col);
+                        // Animations will be handled after the win check
                     } else {
                         if (oldValue === 0) { 
                             gameState.errorCount++;
@@ -1384,6 +1434,7 @@
                                 gameState.elapsedTime = Date.now() - gameState.startTime;
                                 showGameOverModal(false);
                                 renderGame();
+                                saveGameState();
                                 return;
                             }
                         }
@@ -1396,10 +1447,29 @@
                 cleanObsoleteNotes();
             }
 
-            if (isSudokuComplete()) {
+            const isNowComplete = isSudokuComplete();
+            const unitsToAnimate = options.indicativeMode ? getCompletedUnits(row, col) : [];
+
+            if (isNowComplete) {
                 gameState.gameWon = true;
                 gameState.elapsedTime = Date.now() - gameState.startTime;
-                showGameOverModal(true);
+                clearInterval(gameState.gameTimer);
+
+                // Play the final completion animation
+                animateUnitsSequentially(unitsToAnimate);
+
+                // Calculate time for completion animations to finish
+                const completionAnimTime = Math.max(0, unitsToAnimate.length - 1) * 700 + (unitsToAnimate.length > 0 ? 1200 : 0);
+
+                renderGame(); // Render the last move
+                saveGameState();
+
+                // Schedule win animation after completion anims
+                setTimeout(triggerWinAnimation, completionAnimTime + 200);
+                return;
+            } else {
+                 // If not a win, just animate any completed units
+                 animateUnitsSequentially(unitsToAnimate);
             }
 
             renderGame();
@@ -1420,6 +1490,8 @@
         }
 
         window.handleGameAreaClick = function(event) {
+            if (gameState.isInitialRender) return; // Ignore les clics pendant l'animation initiale
+
             if (!event.target.classList.contains('sudoku-cell') && 
                 !event.target.closest('.sudoku-cell') &&
                 !event.target.classList.contains('action-button') &&
@@ -1503,6 +1575,7 @@
             gameState.difficulty = difficultyLabel;
             gameState.source = 'Local Generator';
             gameState.actionHistory = [];
+            gameState.isInitialRender = true; // Set flag for animation
 
             document.getElementById('gameTitle').textContent = difficultyLabel;
             document.getElementById('notesButton').classList.remove('active');
@@ -1596,34 +1669,36 @@
             updateCoordinatesDisplay();
         }
 
-        // --- Fonctions pour l'animation de complétion ---
-        function checkForCompletedUnits(row, col) {
-            if (!options.indicativeMode || !gameState.solvedGrid.length) return;
-
-            const unitsToCheck = new Set();
+        // --- Fonctions pour les animations ---
+        function getCompletedUnits(row, col) {
+            if (!options.indicativeMode || !gameState.solvedGrid.length) return [];
+            
+            const completedUnits = [];
 
             // Vérifier la ligne
             let rowComplete = true;
             for (let c = 0; c < 9; c++) {
-                if (gameState.currentGrid[row][c] !== gameState.solvedGrid[row][c]) {
-                    rowComplete = false;
-                    break;
+                if (gameState.currentGrid[row][c] === 0 || gameState.currentGrid[row][c] !== gameState.solvedGrid[row][c]) {
+                    rowComplete = false; break;
                 }
             }
             if (rowComplete) {
-                for (let c = 0; c < 9; c++) unitsToCheck.add(`${row}-${c}`);
+                const cells = [];
+                for (let c = 0; c < 9; c++) cells.push([row, c]);
+                completedUnits.push(cells);
             }
 
             // Vérifier la colonne
             let colComplete = true;
             for (let r = 0; r < 9; r++) {
-                if (gameState.currentGrid[r][col] !== gameState.solvedGrid[r][col]) {
-                    colComplete = false;
-                    break;
+                if (gameState.currentGrid[r][col] === 0 || gameState.currentGrid[r][col] !== gameState.solvedGrid[r][col]) {
+                    colComplete = false; break;
                 }
             }
             if (colComplete) {
-                for (let r = 0; r < 9; r++) unitsToCheck.add(`${r}-${col}`);
+                const cells = [];
+                for (let r = 0; r < 9; r++) cells.push([r, col]);
+                completedUnits.push(cells);
             }
 
             // Vérifier le bloc
@@ -1632,22 +1707,32 @@
             let boxComplete = true;
             for (let r = startRow; r < startRow + 3; r++) {
                 for (let c = startCol; c < startCol + 3; c++) {
-                    if (gameState.currentGrid[r][c] !== gameState.solvedGrid[r][c]) {
-                        boxComplete = false;
-                        break;
+                    if (gameState.currentGrid[r][c] === 0 || gameState.currentGrid[r][c] !== gameState.solvedGrid[r][c]) {
+                        boxComplete = false; break;
                     }
                 }
                 if (!boxComplete) break;
             }
             if (boxComplete) {
+                const cells = [];
                 for (let r = startRow; r < startRow + 3; r++) {
-                    for (let c = startCol; c < startCol + 3; c++) unitsToCheck.add(`${r}-${c}`);
+                    for (let c = startCol; c < startCol + 3; c++) cells.push([r, c]);
                 }
+                completedUnits.push(cells);
             }
+            
+            return completedUnits;
+        }
 
-            if (unitsToCheck.size > 0) {
-                const cellsToAnimate = Array.from(unitsToCheck).map(s => s.split('-').map(Number));
-                triggerCompletionAnimation(cellsToAnimate);
+        function animateUnitsSequentially(completedUnits) {
+             if (completedUnits.length > 0) {
+                let cumulativeDelay = 0;
+                completedUnits.forEach(unit => {
+                    setTimeout(() => {
+                        triggerCompletionAnimation(unit);
+                    }, cumulativeDelay); // Décale le début de l'animation de l'unité suivante
+                    cumulativeDelay += 700; // 600ms anim + 100ms délai
+                });
             }
         }
 
@@ -1658,13 +1743,45 @@
                     const cellIndex = row * 9 + col;
                     const cell = gridEl.children[cellIndex];
                     if (cell) {
-                        cell.classList.add('animate-complete');
-                        cell.addEventListener('animationend', () => {
+                        const onAnimationEnd = () => {
                             cell.classList.remove('animate-complete');
-                        }, { once: true });
+                            cell.removeEventListener('animationend', onAnimationEnd);
+                        };
+                        cell.addEventListener('animationend', onAnimationEnd);
+
+                        // Force le redéclenchement de l'animation
+                        cell.classList.remove('animate-complete');
+                        void cell.offsetWidth; // Force le "reflow" du DOM
+                        cell.classList.add('animate-complete');
                     }
-                }, index * 50); // Délai de 50ms entre chaque animation
+                }, index * 50); // Délai de 50ms entre chaque animation de case
             });
+        }
+
+        function triggerWinAnimation() {
+            const gridEl = document.getElementById('sudokuGrid');
+            const animationDuration = 800; // Doit correspondre à la durée de l'animation CSS
+            const staggerDelay = 50; // Délai pour l'effet de vague
+
+            // Désélectionne la case pour un rendu propre
+            gameState.selectedRow = null;
+            gameState.selectedCol = null;
+            renderGrid();
+
+            for (let i = 0; i < 81; i++) {
+                const row = Math.floor(i / 9);
+                const col = i % 9;
+                const cell = gridEl.children[i];
+                if (cell) {
+                    cell.style.animationDelay = `${(row + col) * staggerDelay}ms`;
+                    cell.classList.add('win-animate');
+                }
+            }
+
+            const totalAnimationTime = ((9 - 1) + (9 - 1)) * staggerDelay + animationDuration;
+            setTimeout(() => {
+                showGameOverModal(true);
+            }, totalAnimationTime + 500);
         }
         // --- Fin des fonctions d'animation ---
 
@@ -1720,8 +1837,17 @@
                     cell.onclick = () => selectCell(row, col);
                     
                     if (gameState.currentGrid[row][col] !== 0) {
-                        cell.textContent = gameState.currentGrid[row][col];
+                        const numberSpan = document.createElement('span');
+                        numberSpan.textContent = gameState.currentGrid[row][col];
+                        cell.appendChild(numberSpan);
+
                         cell.classList.add(gameState.originalGrid[row][col] !== 0 ? 'original' : 'user');
+
+                        // Animation d'apparition des chiffres initiaux
+                        if (gameState.isInitialRender && gameState.originalGrid[row][col] !== 0) {
+                            cell.classList.add('initial-fade-in');
+                            cell.style.animationDelay = `${(row + col) * 0.04}s`;
+                        }
                     } else if (gameState.notesGrid[row][col].size > 0) {
                         const notesContainer = document.createElement('div');
                         notesContainer.className = 'notes-container';
@@ -1755,9 +1881,20 @@
                     grid.appendChild(cell);
                 }
             }
+
+            if (gameState.isInitialRender) {
+                const gridEl = document.getElementById('sudokuGrid');
+                gridEl.classList.add('no-events');
+                // Réinitialise le flag et réactive les clics après que les animations soient terminées
+                setTimeout(() => {
+                    gameState.isInitialRender = false;
+                    gridEl.classList.remove('no-events');
+                }, 1500);
+            }
         }
 
         function selectCell(row, col) {
+            if (gameState.isInitialRender) return; // Ignore les clics pendant l'animation
             gameState.selectedRow = row;
             gameState.selectedCol = col;
             gameState.highlightedNumber = null;
@@ -1940,6 +2077,7 @@
             gameState.startTime = Date.now();
             gameState.elapsedTime = 0;
             gameState.actionHistory = [];
+            gameState.isInitialRender = true; // Pour animer la nouvelle grille
 
             document.getElementById('notesButton').classList.remove('active');
 
@@ -2109,5 +2247,9 @@
     </script>
 </body>
 </html>
+
+
+
+
 
 
