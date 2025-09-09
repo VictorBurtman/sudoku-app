@@ -298,6 +298,11 @@
         .sudoku-cell.original { color: #ffffff; }
         .sudoku-cell.user { color: #90caf9; }
         
+        .sudoku-cell span {
+            position: relative; /* Assure que le z-index est appliqué */
+            z-index: 2; /* Place le chiffre au-dessus de l'animation de complétion */
+        }
+
         .sudoku-cell.flash-conflict {
             animation: flashRed 0.6s ease-in-out;
         }
@@ -333,8 +338,8 @@
         }
 
         @keyframes winSpreadEffect {
-            0% { transform: scale(0); background-color: #ff9800; opacity: 1; }
-            50% { transform: scale(1.2); background-color: #ff9800; opacity: 1; border-radius: 10%; }
+            0% { transform: scale(0); background-color: #f57c00; opacity: 1; }
+            50% { transform: scale(1.2); background-color: #f57c00; opacity: 1; border-radius: 10%; }
             100% { transform: scale(1); background-color: #424242; opacity: 1; border-radius: 0; }
         }
 
@@ -348,7 +353,7 @@
             content: '';
             position: absolute;
             top: 2px; left: 2px; right: 2px; bottom: 2px;
-            background-color: #ff9800; /* Même orange que les nombres surlignés */
+            background-color: #f57c00; /* La couleur de surbrillance des chiffres sur la grille */
             transform: scale(0);
             border-radius: 50%;
             pointer-events: none;
@@ -361,9 +366,9 @@
         }
 
         @keyframes growAndShrink {
-            0% { transform: scale(0); opacity: 0.8; }
-            50% { transform: scale(1.1); opacity: 0.8; border-radius: 15%; }
-            80% { transform: scale(1.1); opacity: 0.8; border-radius: 15%; } /* Ajout de la pause */
+            0% { transform: scale(0); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 1; border-radius: 15%; }
+            90% { transform: scale(1.1); opacity: 1; border-radius: 15%; } /* Pause allongée */
             100% { transform: scale(0); opacity: 0; }
         }
 
@@ -913,7 +918,8 @@
             indicativeMode: false,
             highlightMode: true,
             showTimer: true,
-            showCoordinates: false
+            showCoordinates: false,
+            useAnimations: true
         };
 
         // Sudoku Generator
@@ -1280,6 +1286,16 @@
                         <div class="option-subtitle">Display row/column numbers for easier debugging</div>
                     </div>
                 </div>
+                <div class="option-item">
+                    <div class="checkbox ${options.useAnimations ? 'checked' : ''}" 
+                         onclick="toggleOption('useAnimations')">
+                        ${options.useAnimations ? '✓' : ''}
+                    </div>
+                    <div class="option-details">
+                        <div class="option-title">Enable Animations</div>
+                        <div class="option-subtitle">Enables visual effects for various actions</div>
+                    </div>
+                </div>
             `;
 
             modal.classList.add('show');
@@ -1455,21 +1471,22 @@
                 gameState.elapsedTime = Date.now() - gameState.startTime;
                 clearInterval(gameState.gameTimer);
 
-                // Play the final completion animation
-                animateUnitsSequentially(unitsToAnimate);
-
-                // Calculate time for completion animations to finish
-                const completionAnimTime = Math.max(0, unitsToAnimate.length - 1) * 700 + (unitsToAnimate.length > 0 ? 1200 : 0);
-
                 renderGame(); // Render the last move
                 saveGameState();
 
-                // Schedule win animation after completion anims
-                setTimeout(triggerWinAnimation, completionAnimTime + 200);
+                if (options.useAnimations) {
+                    animateUnitsSequentially(unitsToAnimate);
+                    const completionAnimTime = Math.max(0, unitsToAnimate.length - 1) * 700 + (unitsToAnimate.length > 0 ? 1200 : 0);
+                    setTimeout(triggerWinAnimation, completionAnimTime + 200);
+                } else {
+                    setTimeout(() => showGameOverModal(true), 100);
+                }
                 return;
             } else {
                  // If not a win, just animate any completed units
-                 animateUnitsSequentially(unitsToAnimate);
+                 if (options.useAnimations) {
+                    animateUnitsSequentially(unitsToAnimate);
+                 }
             }
 
             renderGame();
@@ -1575,7 +1592,7 @@
             gameState.difficulty = difficultyLabel;
             gameState.source = 'Local Generator';
             gameState.actionHistory = [];
-            gameState.isInitialRender = true; // Set flag for animation
+            gameState.isInitialRender = options.useAnimations; // Set flag for animation based on option
 
             document.getElementById('gameTitle').textContent = difficultyLabel;
             document.getElementById('notesButton').classList.remove('active');
@@ -1781,7 +1798,7 @@
             const totalAnimationTime = ((9 - 1) + (9 - 1)) * staggerDelay + animationDuration;
             setTimeout(() => {
                 showGameOverModal(true);
-            }, totalAnimationTime + 500);
+            }, totalAnimationTime + 100);
         }
         // --- Fin des fonctions d'animation ---
 
@@ -2247,6 +2264,7 @@
     </script>
 </body>
 </html>
+
 
 
 
