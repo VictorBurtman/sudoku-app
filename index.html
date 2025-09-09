@@ -1292,7 +1292,7 @@
                         ${options.useAnimations ? '✓' : ''}
                     </div>
                     <div class="option-details">
-                        <div class="option-title">Enable Completion Animations</div>
+                        <div class="option-title">Enable Animations</div>
                         <div class="option-subtitle">Enables visual effects for completed rows, columns & blocks</div>
                     </div>
                 </div>
@@ -1801,7 +1801,7 @@
             const totalAnimationTime = ((9 - 1) + (9 - 1)) * staggerDelay + animationDuration;
             setTimeout(() => {
                 showGameOverModal(true);
-            }, totalAnimationTime + 100);
+            }, totalAnimationTime);
         }
         // --- Fin des fonctions d'animation ---
 
@@ -2267,4 +2267,6 @@
     </script>
 </body>
 </html>
+
+
 
