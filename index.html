@@ -1292,8 +1292,8 @@
                         ${options.useAnimations ? '✓' : ''}
                     </div>
                     <div class="option-details">
-                        <div class="option-title">Enable Animations</div>
-                        <div class="option-subtitle">Enables visual effects for various actions</div>
+                        <div class="option-title">Enable Completion Animations</div>
+                        <div class="option-subtitle">Enables visual effects for completed rows, columns & blocks</div>
                     </div>
                 </div>
             `;
@@ -1473,14 +1473,17 @@
 
                 renderGame(); // Render the last move
                 saveGameState();
-
-                if (options.useAnimations) {
+                
+                let completionAnimTime = 0;
+                // Only play completion animation if the option is enabled
+                if (options.useAnimations && unitsToAnimate.length > 0) {
                     animateUnitsSequentially(unitsToAnimate);
-                    const completionAnimTime = Math.max(0, unitsToAnimate.length - 1) * 700 + (unitsToAnimate.length > 0 ? 1200 : 0);
-                    setTimeout(triggerWinAnimation, completionAnimTime + 200);
-                } else {
-                    setTimeout(() => showGameOverModal(true), 100);
+                    completionAnimTime = Math.max(0, unitsToAnimate.length - 1) * 700 + 1200;
                 }
+                
+                // Always trigger win animation, but delay it based on whether completion anim played
+                setTimeout(triggerWinAnimation, completionAnimTime + 100);
+                
                 return;
             } else {
                  // If not a win, just animate any completed units
@@ -1592,7 +1595,7 @@
             gameState.difficulty = difficultyLabel;
             gameState.source = 'Local Generator';
             gameState.actionHistory = [];
-            gameState.isInitialRender = options.useAnimations; // Set flag for animation based on option
+            gameState.isInitialRender = true; // Set flag for animation, always true now
 
             document.getElementById('gameTitle').textContent = difficultyLabel;
             document.getElementById('notesButton').classList.remove('active');
@@ -2264,10 +2267,4 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
 
