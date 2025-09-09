@@ -304,54 +304,6 @@
             100% { background-color: #2d2d2d; }
         }
 
-        /* Nouvelle animation pour lignes/colonnes/blocs complétés */
-        .sudoku-cell.flash-complete {
-            animation: flashOrange 0.5s ease-in-out forwards;
-        }
-
-        @keyframes flashOrange {
-            0% {
-                background-color: #2d2d2d;
-                transform: scale(1);
-            }
-            30% {
-                background-color: #f57c00;
-                transform: scale(1.15);
-            }
-            70% {
-                background-color: #f57c00;
-                transform: scale(1);
-            }
-            100% {
-                background-color: #2d2d2d;
-                transform: scale(1);
-            }
-        }
-
-        /* Nouvelle animation de vibration pour erreurs */
-        .sudoku-cell.shake-error {
-            animation: shakeError 0.4s ease;
-        }
-
-        @keyframes shakeError {
-            0% { transform: translateX(0); }
-            20% { transform: translateX(-5px); }
-            40% { transform: translateX(5px); }
-            60% { transform: translateX(-5px); }
-            80% { transform: translateX(5px); }
-            100% { transform: translateX(0); }
-        }
-
-        .sudoku-cell.flash-conflict {
-            animation: flashRed 0.6s ease-in-out;
-        }
-
-        @keyframes flashRed {
-            0% { background-color: #2d2d2d; }
-            50% { background-color: #f44336; }
-            100% { background-color: #2d2d2d; }
-        }
-
         .notes-container {
             position: absolute;
             top: 0;
@@ -731,6 +683,33 @@
                 font-size: 28px;
             }
         }
+    
+        /* Animation pour lignes/colonnes/blocs complétés */
+        .sudoku-cell.flash-complete {
+            animation: flashOrange 0.5s ease-in-out forwards;
+        }
+
+        @keyframes flashOrange {
+            0%   { background-color: #2d2d2d; transform: scale(1); }
+            30%  { background-color: #f57c00; transform: scale(1.15); }
+            70%  { background-color: #f57c00; transform: scale(1); }
+            100% { background-color: #2d2d2d; transform: scale(1); }
+        }
+
+        /* Animation de vibration pour erreurs */
+        .sudoku-cell.shake-error {
+            animation: shakeError 0.4s ease;
+        }
+
+        @keyframes shakeError {
+            0%   { transform: translateX(0); }
+            20%  { transform: translateX(-5px); }
+            40%  { transform: translateX(5px); }
+            60%  { transform: translateX(-5px); }
+            80%  { transform: translateX(5px); }
+            100% { transform: translateX(0); }
+        }
+
     </style>
 </head>
 <body>
@@ -739,7 +718,7 @@
         <div id="menuScreen" class="screen">
             <div class="menu-screen">
                 <div class="main-title">SUDOKU</div>
-                <div class="warning-text">By Victor Burtman</div>
+                <div class="warning-text">By Victor Burtman2</div>
                 <div class="subtitle">Choose your level</div>
                 
                 <button class="option-button" onclick="showOptionsModal()">
@@ -2397,6 +2376,80 @@
                 alert('Error initializing app: ' + error.message);
             }
         });
+    
+        function animateCompletion(cells) {
+            cells.forEach((cell, index) => {
+                setTimeout(() => {
+                    cell.classList.add("flash-complete");
+                    cell.addEventListener("animationend", () => {
+                        cell.classList.remove("flash-complete");
+                    }, { once: true });
+                }, index * 80);
+            });
+        }
+
+        function checkCompletionAnimations(row, col) {
+            const gridEl = document.getElementById("sudokuGrid").children;
+
+            if (gameState.currentGrid[row].every((val, c) => val !== 0 && isCorrectMove(row, c, val))) {
+                animateCompletion([...Array(9)].map((_, c) => gridEl[row * 9 + c]));
+            }
+
+            const colComplete = [...Array(9)].every(r => {
+                const val = gameState.currentGrid[r][col];
+                return val !== 0 && isCorrectMove(r, col, val);
+            });
+            if (colComplete) {
+                animateCompletion([...Array(9)].map((_, r) => gridEl[r * 9 + col]));
+            }
+
+            const startRow = Math.floor(row / 3) * 3;
+            const startCol = Math.floor(col / 3) * 3;
+            let blockCells = [];
+            let blockComplete = true;
+            for (let r = startRow; r < startRow + 3; r++) {
+                for (let c = startCol; c < startCol + 3; c++) {
+                    const val = gameState.currentGrid[r][c];
+                    blockCells.push(gridEl[r * 9 + c]);
+                    if (val === 0 || !isCorrectMove(r, c, val)) {
+                        blockComplete = false;
+                    }
+                }
+            }
+            if (blockComplete) {
+                animateCompletion(blockCells);
+            }
+        }
+
+        function shakeCell(row, col) {
+            const gridEl = document.getElementById("sudokuGrid").children;
+            const cell = gridEl[row * 9 + col];
+            if (cell) {
+                cell.classList.add("shake-error");
+                if (navigator.vibrate) navigator.vibrate(200);
+                cell.addEventListener("animationend", () => {
+                    cell.classList.remove("shake-error");
+                }, { once: true });
+            }
+        }
+
+        const originalPlaceNumber = window.placeNumber;
+        window.placeNumber = function(number) {
+            const prevRow = gameState.selectedRow;
+            const prevCol = gameState.selectedCol;
+            const prevErrors = gameState.errorCount;
+
+            originalPlaceNumber.call(this, number);
+
+            if (prevRow !== null && prevCol !== null && number !== 0) {
+                checkCompletionAnimations(prevRow, prevCol);
+            }
+
+            if (options.indicativeMode && gameState.errorCount > prevErrors && prevRow !== null && prevCol !== null) {
+                shakeCell(prevRow, prevCol);
+            }
+        }
+
     </script>
 </body>
 </html>
