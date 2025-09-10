@@ -941,7 +941,7 @@
 
     <script>
         // --- App Config ---
-        const appVersion = '1.0.2'; // Version updated
+        const appVersion = '1.0.3'; // Version updated
 
         // --- Global State ---
         let gameState = {
@@ -1144,8 +1144,8 @@
             soundBuffers: {},
             popSoundBuffers: [],
             isInitialized: false,
-            // CORRECTIF SON : Ajout d'un indicateur pour savoir si les sons sont chargés
             soundsLoaded: false,
+            loadingPromise: null, // CORRECTIF SON: Pour suivre le chargement
             soundConfig: {
                 intro: 'sounds/intro.mp3',
                 error: 'sounds/error.mp3',
@@ -1157,28 +1157,40 @@
 
             init: function() {
                 if (this.isInitialized) return;
-                // CORRECTIF SON : S'assurer que l'indicateur est bien à `false` au début
+                this.isInitialized = true;
                 this.soundsLoaded = false;
                 try {
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
                     this.audioContext = new AudioContext();
-                    this.loadSounds();
-                    this.isInitialized = true;
-                    console.log('Sound manager initialized with Web Audio API.');
+                    // CORRECTIF SON: On lance le chargement et on stocke la promesse
+                    this.loadingPromise = this.loadSounds(); 
+                    console.log('Sound manager initialized.');
                 } catch(e) {
                     console.error('Web Audio API is not supported in this browser.');
                 }
             },
 
+            // CORRECTIF SON: Fonction pour débloquer l'audio sur iOS
+            unlockAudio: function() {
+                if (!this.audioContext || this.audioContext.state !== 'suspended') return;
+                
+                const emptyBuffer = this.audioContext.createBuffer(1, 1, 22050);
+                const source = this.audioContext.createBufferSource();
+                source.buffer = emptyBuffer;
+                source.connect(this.audioContext.destination);
+                source.start(0);
+                
+                this.audioContext.resume().then(() => {
+                    console.log("AudioContext resumed successfully!");
+                });
+            },
+
             async loadSound(url) {
                 try {
                     const response = await fetch(url);
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                     const arrayBuffer = await response.arrayBuffer();
-                    const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-                    return audioBuffer;
+                    return await this.audioContext.decodeAudioData(arrayBuffer);
                 } catch (e) {
                     console.error(`Failed to load sound: ${url}`, e);
                     return null;
@@ -1187,7 +1199,6 @@
 
             async loadSounds() {
                 const allSoundPromises = [];
-
                 for (const key in this.soundConfig) {
                     if (key !== 'popFiles') {
                         const promise = this.loadSound(this.soundConfig[key]).then(buffer => {
@@ -1196,7 +1207,6 @@
                         allSoundPromises.push(promise);
                     }
                 }
-
                 this.soundConfig.popFiles.forEach(file => {
                     const promise = this.loadSound(file).then(buffer => {
                         if (buffer) this.popSoundBuffers.push(buffer);
@@ -1206,14 +1216,15 @@
 
                 await Promise.all(allSoundPromises);
                 console.log('All sounds pre-loaded and decoded.');
-                // CORRECTIF SON : Mettre l'indicateur à `true` une fois que TOUT est chargé
                 this.soundsLoaded = true;
             },
             
             playSound: async function(name) {
-                // CORRECTIF SON : Vérifier aussi que les sons sont chargés pour éviter une "race condition"
-                if (!options.soundEnabled || !this.isInitialized || !this.soundsLoaded || !this.audioContext) return;
+                if (!options.soundEnabled || !this.isInitialized || !this.audioContext) return;
                 
+                // CORRECTIF SON: Attendre que le chargement soit terminé avant de jouer
+                await this.loadingPromise; 
+
                 if (this.audioContext.state === 'suspended') {
                     await this.audioContext.resume();
                 }
@@ -1797,7 +1808,6 @@
             }
 
             if (isNowComplete) {
-                // CORRECTIF ANIMATION : Jouer l'animation de succès aussi pour la toute dernière case
                 if (options.useAnimations && unitsToAnimate.length > 0) {
                     animationManager.playSuccessAnimation(row, col);
                 }
@@ -1815,7 +1825,6 @@
                     completionAnimTime = Math.max(0, unitsToAnimate.length - 1) * 700 + 1200;
                 }
                 
-                // Délai légèrement augmenté pour laisser l'animation de succès se terminer
                 setTimeout(triggerWinAnimation, completionAnimTime + 300);
                 
                 return;
@@ -2560,8 +2569,13 @@
 
             const initInteractions = () => {
                 if (soundManager.isInitialized) return;
+                
+                // On initialise les deux managers
                 soundManager.init();
                 animationManager.init();
+
+                // CORRECTIF SON : On débloque l'audio sur la première interaction
+                soundManager.unlockAudio();
             };
             document.body.addEventListener('click', initInteractions, { once: true });
             document.body.addEventListener('touchstart', initInteractions, { once: true });
