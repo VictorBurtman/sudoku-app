@@ -367,7 +367,6 @@
         .sudoku-cell::after {
             content: '';
             position: absolute;
-            top: 2px; left: 2px; right: 2px; bottom: 2px;
             background-color: #f57c00; 
             transform: scale(0);
             border-radius: 50%;
@@ -377,13 +376,26 @@
         }
 
         .sudoku-cell.animate-complete::after {
+            top: 2px; left: 2px; right: 2px; bottom: 2px;
             animation: growAndShrink 0.8s ease-in-out;
+        }
+
+        .sudoku-cell.animate-complete-selected::after {
+            top: 0; left: 0; right: 0; bottom: 0;
+            animation: growAndShrinkFull 0.8s ease-in-out;
         }
 
         @keyframes growAndShrink {
             0% { transform: scale(0); opacity: 1; }
             50% { transform: scale(1.1); opacity: 1; border-radius: 15%; }
             90% { transform: scale(1.1); opacity: 1; border-radius: 15%; } 
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        @keyframes growAndShrinkFull {
+            0% { transform: scale(0); opacity: 1; border-radius: 50%; }
+            50% { transform: scale(1); opacity: 1; border-radius: 0; }
+            90% { transform: scale(1); opacity: 1; border-radius: 0; }
             100% { transform: scale(0); opacity: 0; }
         }
 
@@ -1219,7 +1231,8 @@
             isInitialized: false,
             config: {
                 successFiles: [
-                    'anims/success1.json'
+                    'anims/success1.json',
+                    // Ajoutez d'autres fichiers success ici, ex: 'anims/success2.json'
                 ],
                 victoryFile: 'anims/victory.json',
                 defeatFile: 'anims/Defeat.json',
@@ -1274,7 +1287,7 @@
                 if(this.victoryPlayer) this.victoryPlayer.style.display = 'none';
                 if(this.defeatPlayer) this.defeatPlayer.style.display = 'none';
 
-                const animSize = 80;
+                const animSize = 95; // Slightly larger animation
                 player.style.width = `${animSize}px`;
                 player.style.height = `${animSize}px`;
                 player.style.left = `${rect.left + rect.width / 2}px`;
@@ -2071,15 +2084,18 @@
                     const cellIndex = row * 9 + col;
                     const cell = gridEl.children[cellIndex];
                     if (cell) {
+                        const isSelectedTriggerCell = (row === gameState.selectedRow && col === gameState.selectedCol);
+                        const animClass = isSelectedTriggerCell ? 'animate-complete-selected' : 'animate-complete';
+
                         const onAnimationEnd = () => {
-                            cell.classList.remove('animate-complete');
+                            cell.classList.remove(animClass);
                             cell.removeEventListener('animationend', onAnimationEnd);
                         };
                         cell.addEventListener('animationend', onAnimationEnd);
 
-                        cell.classList.remove('animate-complete');
+                        cell.classList.remove('animate-complete', 'animate-complete-selected');
                         void cell.offsetWidth;
-                        cell.classList.add('animate-complete');
+                        cell.classList.add(animClass);
                     }
                 }, index * 50);
             });
