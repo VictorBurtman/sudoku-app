@@ -1239,9 +1239,8 @@
             isInitialized: false,
             config: {
                 successFiles: [
-                    'anims/success1.json',
-                    'anims/success2.json',
-                    'anims/success3.json'
+                    { src: 'anims/success1.json', taille: 95 },
+                    { src: 'anims/success2.json', taille: 120 }
                 ],
                 victoryFile: 'anims/victory.json',
                 defeatFile: 'anims/Defeat.json',
@@ -1254,9 +1253,9 @@
                 this.overlay.className = 'animation-overlay';
                 document.body.appendChild(this.overlay);
 
-                this.config.successFiles.forEach(file => {
+                this.config.successFiles.forEach(animConfig => {
                     const player = document.createElement('lottie-player');
-                    player.setAttribute('src', file);
+                    player.setAttribute('src', animConfig.src);
                     player.style.display = 'none';
                     player.addEventListener('complete', () => {
                         player.style.display = 'none';
@@ -1289,14 +1288,15 @@
                 if (!cellEl) return;
 
                 const rect = cellEl.getBoundingClientRect();
-                const randomIndex = Math.floor(Math.random() * this.successPlayers.length);
+                const randomIndex = Math.floor(Math.random() * this.config.successFiles.length);
+                const animConfig = this.config.successFiles[randomIndex];
                 const player = this.successPlayers[randomIndex];
 
                 this.successPlayers.forEach(p => p.style.display = 'none');
                 if(this.victoryPlayer) this.victoryPlayer.style.display = 'none';
                 if(this.defeatPlayer) this.defeatPlayer.style.display = 'none';
 
-                const animSize = 95; // Slightly larger animation
+                const animSize = animConfig.taille || 95;
                 player.style.width = `${animSize}px`;
                 player.style.height = `${animSize}px`;
                 player.style.left = `${rect.left + rect.width / 2}px`;
@@ -2118,16 +2118,18 @@
             gameState.selectedCol = null;
             renderGrid();
 
-            const gridEl = document.getElementById('sudokuGrid');
-            const staggerDelay = 50;
+            if (options.useAnimations) {
+                const gridEl = document.getElementById('sudokuGrid');
+                const staggerDelay = 50;
 
-            for (let i = 0; i < 81; i++) {
-                const row = Math.floor(i / 9);
-                const col = i % 9;
-                const cell = gridEl.children[i];
-                if (cell) {
-                    cell.style.animationDelay = `${(row + col) * staggerDelay}ms`;
-                    cell.classList.add('win-animate');
+                for (let i = 0; i < 81; i++) {
+                    const row = Math.floor(i / 9);
+                    const col = i % 9;
+                    const cell = gridEl.children[i];
+                    if (cell) {
+                        cell.style.animationDelay = `${(row + col) * staggerDelay}ms`;
+                        cell.classList.add('win-animate');
+                    }
                 }
             }
 
@@ -2609,4 +2611,5 @@
     </script>
 </body>
 </html>
+"
 
