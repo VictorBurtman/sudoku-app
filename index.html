@@ -281,7 +281,7 @@
             max-height: 400px;
         }
 
-        .sudoku-grid.no-events {
+        .sudoku-grid.no-events, .controls.no-events {
             pointer-events: none;
         }
 
@@ -875,7 +875,7 @@
                     </div>
                 </div>
                 
-                <div class="controls">
+                <div class="controls" id="gameControls">
                     <div class="action-buttons">
                         <button class="action-button undo-button" id="undoButton" onclick="undoLastAction()">⟲</button>
                         <button class="action-button erase-button" onclick="placeNumber(0)">×</button>
@@ -1232,7 +1232,7 @@
             config: {
                 successFiles: [
                     'anims/success1.json',
-                    // Ajoutez d'autres fichiers success ici, ex: 'anims/success2.json'
+                    // 'anims/success2.json' // Example of how to add more
                 ],
                 victoryFile: 'anims/victory.json',
                 defeatFile: 'anims/Defeat.json',
@@ -2210,10 +2210,14 @@
 
             if (gameState.isInitialRender) {
                 const gridEl = document.getElementById('sudokuGrid');
+                const controlsEl = document.getElementById('gameControls');
                 gridEl.classList.add('no-events');
+                if(controlsEl) controlsEl.classList.add('no-events');
+
                 setTimeout(() => {
                     gameState.isInitialRender = false;
                     gridEl.classList.remove('no-events');
+                    if(controlsEl) controlsEl.classList.remove('no-events');
                 }, 1500);
             }
         }
@@ -2580,4 +2584,5 @@
     </script>
 </body>
 </html>
+"
 
