@@ -1171,8 +1171,6 @@
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
                     this.audioContext = new AudioContext();
                     
-                    // The "unlock" trick for iOS and other browsers.
-                    // Play a silent buffer on the first user interaction.
                     const buffer = this.audioContext.createBuffer(1, 1, 22050);
                     const source = this.audioContext.createBufferSource();
                     source.buffer = buffer;
@@ -1207,13 +1205,18 @@
             
             playSound: async function(name) {
                 if (!options.soundEnabled || !this.isInitialized || !this.audioContext) return;
+
+                if (this.audioContext.state !== 'running') {
+                    try {
+                        await this.audioContext.resume();
+                    } catch (e) {
+                        console.error('Failed to resume audio context:', e);
+                        return;
+                    }
+                }
                 
                 if (this.loadingPromise) {
                     await this.loadingPromise;
-                }
-
-                if (this.audioContext.state === 'suspended') {
-                    await this.audioContext.resume();
                 }
 
                 const soundBuffer = this.soundBuffers[name];
