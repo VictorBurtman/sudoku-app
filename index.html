@@ -950,7 +950,7 @@
 
     <script>
         // --- App Config ---
-        const appVersion = '1.1.0'; // Version updated
+        const appVersion = '1.1.1'; // Version updated
 
         // --- Global State ---
         let gameState = {
@@ -1166,26 +1166,48 @@
             init: function() {
                 if (this.isInitialized) return;
                 this.isInitialized = true;
-
                 try {
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
                     this.audioContext = new AudioContext();
-                    
-                    const buffer = this.audioContext.createBuffer(1, 1, 22050);
-                    const source = this.audioContext.createBufferSource();
-                    source.buffer = buffer;
-                    source.connect(this.audioContext.destination);
-                    source.start(0);
 
-                    if (this.audioContext.state === 'suspended') {
-                        this.audioContext.resume();
-                    }
+                    const unlockAudio = () => {
+                        if (this.audioContext.state === 'suspended') {
+                            this.audioContext.resume().then(() => {
+                                console.log('Audio unlocked by user interaction.');
+                            });
+                        }
+                        const buffer = this.audioContext.createBuffer(1, 1, 22050);
+                        const source = this.audioContext.createBufferSource();
+                        source.buffer = buffer;
+                        source.connect(this.audioContext.destination);
+                        source.start(0);
+                        document.removeEventListener('click', unlockAudio);
+                        document.removeEventListener('touchstart', unlockAudio);
+                    };
+
+                    document.addEventListener('click', unlockAudio, { once: true });
+                    document.addEventListener('touchstart', unlockAudio, { once: true });
 
                     this.loadingPromise = this.loadAllSounds();
-                    console.log('Sound manager initialized and unlocked with Web Audio API.');
+                    console.log('Sound manager initialized with enhanced mobile support');
                 } catch (e) {
                     console.error('Web Audio API is not supported in this browser.', e);
                 }
+            },
+
+            reinitialize: async function() {
+                console.log('Reinitializing sound manager...');
+                this.isInitialized = false;
+                this.soundBuffers = {};
+                this.loadingPromise = null;
+                if (this.audioContext) {
+                    try {
+                        await this.audioContext.close();
+                    } catch (e) {
+                        console.log('Error closing old AudioContext:', e);
+                    }
+                }
+                this.init();
             },
 
             loadAllSounds: async function() {
@@ -1207,10 +1229,7 @@
                 if (!options.soundEnabled || !this.isInitialized || !this.audioContext) return;
 
                 if (this.audioContext.state === 'closed') {
-                    console.log('AudioContext was closed, recreating...');
-                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                    this.loadingPromise = this.loadAllSounds(); // Re-load sounds for the new context
-                    await this.loadingPromise;
+                    await this.reinitialize();
                 }
             
                 if (this.audioContext.state === 'suspended') {
