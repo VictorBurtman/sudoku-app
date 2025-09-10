@@ -1153,6 +1153,7 @@
             soundBuffers: {},
             isInitialized: false,
             loadingPromise: null,
+            isMobileDevice: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
             soundConfig: {
                 intro: `sounds/intro.mp3?v=${appVersion}`,
                 error: `sounds/error.mp3?v=${appVersion}`,
@@ -1162,54 +1163,94 @@
                 pop4: `sounds/pop4.mp3?v=${appVersion}`,
                 pop5: `sounds/pop5.mp3?v=${appVersion}`
             },
-
+        
             init: function() {
-                if (this.isInitialized) return;
-                this.isInitialized = true;
-                try {
-                    const AudioContext = window.AudioContext || window.webkitAudioContext;
-                    this.audioContext = new AudioContext();
-
-                    const unlockAudio = () => {
-                        if (this.audioContext.state === 'suspended') {
-                            this.audioContext.resume().then(() => {
-                                console.log('Audio unlocked by user interaction.');
-                            });
-                        }
-                        const buffer = this.audioContext.createBuffer(1, 1, 22050);
-                        const source = this.audioContext.createBufferSource();
-                        source.buffer = buffer;
-                        source.connect(this.audioContext.destination);
-                        source.start(0);
-                        document.removeEventListener('click', unlockAudio);
-                        document.removeEventListener('touchstart', unlockAudio);
-                    };
-
-                    document.addEventListener('click', unlockAudio, { once: true });
-                    document.addEventListener('touchstart', unlockAudio, { once: true });
-
-                    this.loadingPromise = this.loadAllSounds();
-                    console.log('Sound manager initialized with enhanced mobile support');
-                } catch (e) {
-                    console.error('Web Audio API is not supported in this browser.', e);
-                }
-            },
-
-            reinitialize: async function() {
-                console.log('Reinitializing sound manager...');
-                this.isInitialized = false;
-                this.soundBuffers = {};
-                this.loadingPromise = null;
-                if (this.audioContext) {
+                if (this.isInitialized) return Promise.resolve();
+                
+                return new Promise((resolve) => {
                     try {
-                        await this.audioContext.close();
-                    } catch (e) {
-                        console.log('Error closing old AudioContext:', e);
-                    }
-                }
-                this.init();
-            },
+                        const AudioContext = window.AudioContext || window.webkitAudioContext;
+                        this.audioContext = new AudioContext();
+                        
+                        if (this.isMobileDevice && this.audioContext.state === 'suspended') {
+                            this.audioContext.resume();
+                        }
 
+                        const unlockAudio = async () => {
+                            console.log('Attempting to unlock audio, current state:', this.audioContext.state);
+                            
+                            if (this.audioContext.state === 'suspended') {
+                                try {
+                                    await this.audioContext.resume();
+                                    console.log('Audio resumed successfully');
+                                } catch (e) {
+                                    console.log('Resume failed:', e);
+                                }
+                            }
+                            
+                            try {
+                                const buffer = this.audioContext.createBuffer(1, 1, 22050);
+                                const source = this.audioContext.createBufferSource();
+                                source.buffer = buffer;
+                                source.connect(this.audioContext.destination);
+                                source.start(0);
+                                
+                                if (this.isMobileDevice) {
+                                    const oscillator = this.audioContext.createOscillator();
+                                    oscillator.frequency.value = 0;
+                                    oscillator.connect(this.audioContext.destination);
+                                    oscillator.start();
+                                    oscillator.stop(this.audioContext.currentTime + 0.001);
+                                }
+                            } catch (e) {
+                                console.log('Silent sound failed:', e);
+                            }
+                            
+                            setTimeout(() => {
+                                console.log('Audio context state after unlock:', this.audioContext.state);
+                                if (this.audioContext.state === 'running') {
+                                    this.isInitialized = true;
+                                    resolve();
+                                }
+                            }, 100);
+                        };
+
+                        const events = ['click', 'touchstart', 'touchend', 'mousedown'];
+                        const addUnlockListeners = () => {
+                            events.forEach(event => {
+                                document.addEventListener(event, unlockAudio, { once: true, passive: true });
+                            });
+                        };
+                        
+                        addUnlockListeners();
+                        
+                        if (this.isMobileDevice) {
+                            const retryInterval = setInterval(() => {
+                                if (this.audioContext.state === 'running') {
+                                    clearInterval(retryInterval);
+                                    this.isInitialized = true;
+                                } else {
+                                    this.audioContext.resume().catch(() => {});
+                                }
+                            }, 500);
+                            
+                            setTimeout(() => clearInterval(retryInterval), 10000);
+                        }
+
+                        this.loadingPromise = this.loadAllSounds();
+                        console.log('Sound manager initialized with enhanced mobile support');
+                        
+                        this.isInitialized = true;
+                        resolve();
+                        
+                    } catch (e) {
+                        console.error('Web Audio API initialization failed:', e);
+                        this.isInitialized = true; 
+                        resolve();
+                    }
+                });
+            },
+        
             loadAllSounds: async function() {
                 const soundPromises = Object.entries(this.soundConfig).map(async ([name, url]) => {
                     try {
@@ -1217,47 +1258,75 @@
                         const arrayBuffer = await response.arrayBuffer();
                         const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
                         this.soundBuffers[name] = audioBuffer;
+                        console.log(`Sound loaded: ${name}`);
                     } catch (e) {
                         console.error(`Failed to load sound: ${name}`, e);
                     }
                 });
                 await Promise.all(soundPromises);
-                console.log('All sounds pre-loaded and decoded.');
+                console.log('All sounds pre-loaded');
             },
             
             playSound: async function(name) {
-                if (!options.soundEnabled || !this.isInitialized || !this.audioContext) return;
-
-                if (this.audioContext.state === 'closed') {
-                    await this.reinitialize();
+                if (!options.soundEnabled) return;
+                
+                if (!this.audioContext) {
+                    await this.init();
                 }
-            
-                if (this.audioContext.state === 'suspended') {
+                
+                if (!this.audioContext) {
+                    console.log('No audio context available');
+                    return;
+                }
+
+                if (this.isMobileDevice && this.audioContext.state !== 'running') {
                     try {
                         await this.audioContext.resume();
-                        console.log('AudioContext resumed');
+                        console.log('Audio context resumed before playing');
                     } catch (e) {
-                        console.error('Failed to resume AudioContext:', e);
-                        return;
+                        console.log('Could not resume audio context:', e);
                     }
                 }
-            
+                
                 if (this.loadingPromise) {
-                    await this.loadingPromise;
+                    try {
+                        await this.loadingPromise;
+                    } catch (e) {
+                        console.log('Error waiting for sounds to load:', e);
+                    }
                 }
 
                 const soundBuffer = this.soundBuffers[name];
-                if (soundBuffer) {
-                    try {
-                        const source = this.audioContext.createBufferSource();
-                        source.buffer = soundBuffer;
-                        source.connect(this.audioContext.destination);
-                        source.start(0);
-                    } catch (e) {
-                        console.error(`Error playing sound ${name}:`, e);
+                if (!soundBuffer) {
+                    console.log(`Sound buffer not found: ${name}`);
+                    return;
+                }
+
+                try {
+                    const source = this.audioContext.createBufferSource();
+                    source.buffer = soundBuffer;
+                    
+                    const gainNode = this.audioContext.createGain();
+                    gainNode.gain.value = 1.0;
+                    
+                    source.connect(gainNode);
+                    gainNode.connect(this.audioContext.destination);
+                    
+                    source.start(0);
+                    console.log(`Playing sound: ${name}`);
+                    
+                } catch (e) {
+                    console.error(`Error playing sound ${name}:`, e);
+                    
+                    if (this.isMobileDevice) {
+                        try {
+                            const audio = new Audio(this.soundConfig[name]);
+                            audio.volume = 1.0;
+                            audio.play().catch(err => console.log('Fallback audio failed:', err));
+                        } catch (fallbackError) {
+                            console.log('Audio fallback also failed:', fallbackError);
+                        }
                     }
-                } else {
-                    console.error(`Sound buffer not found: ${name}`);
                 }
             },
             
@@ -1265,6 +1334,26 @@
                 const popSounds = ['pop4', 'pop5'];
                 const randomSound = popSounds[Math.floor(Math.random() * popSounds.length)];
                 this.playSound(randomSound);
+            },
+            
+            testSound: async function() {
+                console.log('=== Testing Sound System ===');
+                console.log('User Agent:', navigator.userAgent);
+                console.log('Is Mobile:', this.isMobileDevice);
+                console.log('AudioContext state:', this.audioContext?.state);
+                console.log('Is Initialized:', this.isInitialized);
+                console.log('Sound buffers loaded:', Object.keys(this.soundBuffers));
+                
+                if (this.audioContext) {
+                    try {
+                        await this.audioContext.resume();
+                        console.log('Resume successful, state now:', this.audioContext.state);
+                        await this.playSound('button1');
+                        console.log('Test sound played');
+                    } catch (e) {
+                        console.error('Test failed:', e);
+                    }
+                }
             }
         };
 
