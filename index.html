@@ -1215,12 +1215,14 @@
             overlay: null,
             successPlayers: [],
             victoryPlayer: null,
+            defeatPlayer: null,
             isInitialized: false,
             config: {
                 successFiles: [
                     'anims/success1.json'
                 ],
                 victoryFile: 'anims/victory.json',
+                defeatFile: 'anims/Defeat.json',
                 successAnimationChance: 1.0 // 100% chance for now
             },
 
@@ -1246,6 +1248,11 @@
                 this.victoryPlayer.style.display = 'none';
                 this.overlay.appendChild(this.victoryPlayer);
 
+                this.defeatPlayer = document.createElement('lottie-player');
+                this.defeatPlayer.setAttribute('src', this.config.defeatFile);
+                this.defeatPlayer.style.display = 'none';
+                this.overlay.appendChild(this.defeatPlayer);
+
                 this.isInitialized = true;
                 console.log('Animation manager initialized.');
             },
@@ -1265,12 +1272,13 @@
 
                 this.successPlayers.forEach(p => p.style.display = 'none');
                 if(this.victoryPlayer) this.victoryPlayer.style.display = 'none';
+                if(this.defeatPlayer) this.defeatPlayer.style.display = 'none';
 
-                const animSize = 80; // smaller animation size
+                const animSize = 80;
                 player.style.width = `${animSize}px`;
                 player.style.height = `${animSize}px`;
                 player.style.left = `${rect.left + rect.width / 2}px`;
-                player.style.top = `${rect.top - animSize / 4}px`; // position it above the cell
+                player.style.top = `${rect.top + rect.height / 2}px`;
 
                 player.style.display = 'block';
                 player.seek(0);
@@ -1284,13 +1292,12 @@
                 }
                 
                 this.successPlayers.forEach(p => p.style.display = 'none');
+                if (this.defeatPlayer) this.defeatPlayer.style.display = 'none';
                 
-                // Style for full-screen victory
                 this.victoryPlayer.style.width = '300px';
                 this.victoryPlayer.style.height = '300px';
                 this.victoryPlayer.style.top = '50%';
                 this.victoryPlayer.style.left = '50%';
-
                 this.victoryPlayer.style.display = 'block';
                 
                 const onComplete = () => {
@@ -1302,6 +1309,32 @@
 
                 this.victoryPlayer.seek(0);
                 this.victoryPlayer.play();
+            },
+
+            playDefeatAnimation: function(callback) {
+                if (!options.useAnimations || !this.isInitialized || !this.defeatPlayer) {
+                    if(callback) callback();
+                    return;
+                }
+                
+                this.successPlayers.forEach(p => p.style.display = 'none');
+                if (this.victoryPlayer) this.victoryPlayer.style.display = 'none';
+
+                this.defeatPlayer.style.width = '300px';
+                this.defeatPlayer.style.height = '300px';
+                this.defeatPlayer.style.top = '50%';
+                this.defeatPlayer.style.left = '50%';
+                this.defeatPlayer.style.display = 'block';
+
+                const onComplete = () => {
+                    this.defeatPlayer.style.display = 'none';
+                    if(callback) callback();
+                    this.defeatPlayer.removeEventListener('complete', onComplete);
+                };
+                this.defeatPlayer.addEventListener('complete', onComplete);
+
+                this.defeatPlayer.seek(0);
+                this.defeatPlayer.play();
             }
         };
 
@@ -1707,9 +1740,11 @@
                             if (gameState.errorCount >= 3) {
                                 gameState.gameLost = true;
                                 gameState.elapsedTime = Date.now() - gameState.startTime;
-                                showGameOverModal(false);
-                                renderGame();
+                                renderGame(); // render the last wrong number
                                 saveGameState();
+                                animationManager.playDefeatAnimation(() => {
+                                    showGameOverModal(false);
+                                });
                                 return;
                             }
                         }
