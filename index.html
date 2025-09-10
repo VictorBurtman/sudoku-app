@@ -322,7 +322,7 @@
 
         /* Lorsque une case est sélectionnée, le chiffre à l'intérieur est mis en gras */
         .sudoku-cell.selected span {
-            font-weight: 900;
+            font-weight: 700;
         }
 
         .sudoku-cell.flash-conflict {
@@ -916,7 +916,6 @@
                     <div style="margin-right: 10px;">⏳</div>
                     <div id="loadingText">Generating grid...</div>
                 </div>
-                <!-- Ajout du conteneur pour l'animation de chargement -->
                 <div id="loadingAnimationContainer" style="width: 120px; height: 120px; margin: 15px auto 0;"></div>
                 <div class="loading-progress" id="loadingProgress"></div>
             </div>
@@ -946,9 +945,18 @@
         </div>
     </div>
 
+    <!-- Audio elements for simple sound playback -->
+    <audio id="soundIntro" src="sounds/intro.mp3" preload="auto"></audio>
+    <audio id="soundError" src="sounds/error.mp3" preload="auto"></audio>
+    <audio id="soundVictory" src="sounds/victory.mp3" preload="auto"></audio>
+    <audio id="soundButton1" src="sounds/button1.mp3" preload="auto"></audio>
+    <audio id="soundButton2" src="sounds/button2.mp3" preload="auto"></audio>
+    <audio id="soundPop4" src="sounds/pop4.mp3" preload="auto"></audio>
+    <audio id="soundPop5" src="sounds/pop5.mp3" preload="auto"></audio>
+
     <script>
         // --- App Config ---
-        const appVersion = '1.0.5'; // Version updated
+        const appVersion = '1.0.6'; // Version updated
 
         // --- Global State ---
         let gameState = {
@@ -1145,109 +1153,26 @@
         }
         const sudokuGenerator = new SudokuGenerator();
         
-        // --- Sound Manager ---
-        const soundManager = {
-            audioContext: null,
-            soundBuffers: {},
-            popSoundBuffers: [],
-            isInitialized: false,
-            loadingPromise: null,
-            soundConfig: {
-                intro: 'sounds/intro.mp3',
-                error: 'sounds/error.mp3',
-                victory: 'sounds/victory.mp3',
-                button1: 'sounds/button1.mp3',
-                button2: 'sounds/button2.mp3',
-                popFiles: ['sounds/pop4.mp3', 'sounds/pop5.mp3']
-            },
-
-            init: function() {
-                if (this.isInitialized) return;
-                this.isInitialized = true;
-                try {
-                    const AudioContext = window.AudioContext || window.webkitAudioContext;
-                    this.audioContext = new AudioContext();
-
-                    // Débloque l'audio pour iOS en jouant un son silencieux
-                    if (this.audioContext.state === 'suspended') {
-                        this.audioContext.resume();
-                        const emptyBuffer = this.audioContext.createBuffer(1, 1, 22050);
-                        const source = this.audioContext.createBufferSource();
-                        source.buffer = emptyBuffer;
-                        source.connect(this.audioContext.destination);
-                        source.start(0);
-                        console.log('AudioContext unlocked by user gesture.');
-                    }
-                    
-                    this.loadingPromise = this.loadSounds();
-                    console.log('Sound manager initialized, sounds loading.');
-                } catch (e) {
-                    console.error('Web Audio API is not supported in this browser.', e);
-                }
-            },
-
-            async loadSound(url) {
-                try {
-                    if (!this.audioContext) throw new Error("AudioContext not available");
-                    const response = await fetch(url);
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                    const arrayBuffer = await response.arrayBuffer();
-                    return await this.audioContext.decodeAudioData(arrayBuffer);
-                } catch (e) {
-                    console.error(`Failed to load sound: ${url}`, e);
-                    return null;
-                }
-            },
-
-            async loadSounds() {
-                const allSoundPromises = [];
-                for (const key in this.soundConfig) {
-                    if (key !== 'popFiles') {
-                        allSoundPromises.push(this.loadSound(this.soundConfig[key]).then(buffer => {
-                            if (buffer) this.soundBuffers[key] = buffer;
-                        }));
-                    }
-                }
-                this.soundConfig.popFiles.forEach(file => {
-                    allSoundPromises.push(this.loadSound(file).then(buffer => {
-                        if (buffer) this.popSoundBuffers.push(buffer);
-                    }));
-                });
-                await Promise.all(allSoundPromises);
-                console.log('All sounds pre-loaded and decoded.');
-            },
-            
-            playSound: async function(name) {
-                if (!options.soundEnabled || !this.isInitialized || !this.audioContext) {
-                    return;
-                }
-                
-                if(this.loadingPromise) {
-                    await this.loadingPromise;
-                }
-
-                if (this.audioContext.state === 'suspended') {
-                    await this.audioContext.resume();
-                }
-
-                let soundBuffer = null;
-                if (name === 'pop') {
-                    if (this.popSoundBuffers.length > 0) {
-                        const randomIndex = Math.floor(Math.random() * this.popSoundBuffers.length);
-                        soundBuffer = this.popSoundBuffers[randomIndex];
-                    }
-                } else {
-                    soundBuffer = this.soundBuffers[name];
-                }
-
-                if (soundBuffer) {
-                    const source = this.audioContext.createBufferSource();
-                    source.buffer = soundBuffer;
-                    source.connect(this.audioContext.destination);
-                    source.start(0);
+        // --- Sound Manager (Simplified for Mobile) ---
+        function playSound(id) {
+            if (!options.soundEnabled) return;
+            const sound = document.getElementById(id);
+            if (sound) {
+                sound.currentTime = 0;
+                const playPromise = sound.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.error(`Error playing sound ${id}:`, error);
+                    });
                 }
             }
-        };
+        }
+
+        function playPopSound() {
+            const popSounds = ['soundPop4', 'soundPop5'];
+            const randomSound = popSounds[Math.floor(Math.random() * popSounds.length)];
+            playSound(randomSound);
+        }
 
         // --- Animation Manager ---
         const animationManager = {
@@ -1505,12 +1430,12 @@
         }
         
         window.goBackToMenu = function() {
-            soundManager.playSound('button2');
+            playSound('soundButton2');
             showScreen('menuScreen');
         }
 
         window.startGame = function(difficulty, label) {
-            soundManager.playSound('button2');
+            playSound('soundButton2');
             document.getElementById('loadingModal').classList.add('show');
             document.getElementById('loadingText').textContent = 'Generating grid...';
             document.getElementById('loadingProgress').textContent = '';
@@ -1543,7 +1468,7 @@
         }
 
         window.showOptionsModal = function() {
-            soundManager.playSound('button1');
+            playSound('soundButton1');
             const modal = document.getElementById('optionsModal');
             const content = document.getElementById('optionsContent');
             
@@ -1632,13 +1557,13 @@
         }
 
         window.closeOptionsModal = function() {
-            soundManager.playSound('button2');
+            playSound('soundButton2');
             document.getElementById('optionsModal').classList.remove('show');
         }
 
         window.toggleOption = function(optionName, element) {
             options[optionName] = !options[optionName];
-            soundManager.playSound('button2');
+            playSound('soundButton2');
             saveOptions();
             
             if (element) {
@@ -1668,7 +1593,7 @@
         }
 
         window.confirmResetGame = function() {
-            soundManager.playSound('button1');
+            playSound('soundButton1');
             document.getElementById('resetConfirmModal').classList.add('show');
         }
 
@@ -1684,7 +1609,7 @@
         // --- Game Logic ---
         window.undoLastAction = function() {
             if (gameState.actionHistory.length === 0) return;
-            soundManager.playSound('button1');
+            playSound('soundButton1');
             
             const lastAction = gameState.actionHistory.pop();
             
@@ -1729,7 +1654,7 @@
             if (gameState.originalGrid[row][col] !== 0) return;
             
             if (number === 0) { // Erase button
-                soundManager.playSound('button1');
+                playSound('soundButton1');
             }
 
             if (options.indicativeMode && 
@@ -1787,10 +1712,10 @@
 
                 if (options.indicativeMode && number !== 0) {
                     if (isCorrectMove(row, col, number)) {
-                        soundManager.playSound('pop');
+                        playPopSound();
                     } else {
                         if (oldValue === 0) { 
-                            soundManager.playSound('error');
+                            playSound('soundError');
                             gameState.errorCount++;
                             if (gameState.errorCount >= 3) {
                                 gameState.gameLost = true;
@@ -1805,7 +1730,7 @@
                         }
                     }
                 } else if (number !== 0) {
-                    soundManager.playSound('pop');
+                    playPopSound();
                 }
             }
 
@@ -1853,7 +1778,7 @@
         }
 
         window.toggleNotesMode = function() {
-            soundManager.playSound('button1');
+            playSound('soundButton1');
             gameState.notesMode = !gameState.notesMode;
             const button = document.getElementById('notesButton');
             
@@ -1962,7 +1887,7 @@
                 startTimer();
             }
 
-            soundManager.playSound('intro');
+            playSound('soundIntro');
 
             updateCoordinatesDisplay();
             saveGameState();
@@ -2003,7 +1928,7 @@
         }
 
         function flashConflictingCells(row, col, number) {
-            soundManager.playSound('error');
+            playSound('soundError');
             const conflictCells = [];
             
             for (let c = 0; c < 9; c++) {
@@ -2152,7 +2077,7 @@
         }
 
         function triggerWinAnimation() {
-            soundManager.playSound('victory');
+            playSound('soundVictory');
 
             gameState.selectedRow = null;
             gameState.selectedCol = null;
@@ -2582,8 +2507,6 @@
             document.getElementById('versionText').textContent = `By Victor Burtman - v${appVersion}`;
 
             const initInteractions = () => {
-                // Ces fonctions vérifient elles-mêmes si elles sont déjà initialisées.
-                soundManager.init();
                 animationManager.init();
             };
             document.body.addEventListener('click', initInteractions, { once: true });
