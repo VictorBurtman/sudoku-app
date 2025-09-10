@@ -1240,7 +1240,8 @@
             config: {
                 successFiles: [
                     'anims/success1.json',
-                    'anims/success2.json' // Ajoutez d'autres fichiers success ici
+                    'anims/success2.json',
+                    'anims/success3.json'
                 ],
                 victoryFile: 'anims/victory.json',
                 defeatFile: 'anims/Defeat.json',
@@ -2117,6 +2118,19 @@
             gameState.selectedCol = null;
             renderGrid();
 
+            const gridEl = document.getElementById('sudokuGrid');
+            const staggerDelay = 50;
+
+            for (let i = 0; i < 81; i++) {
+                const row = Math.floor(i / 9);
+                const col = i % 9;
+                const cell = gridEl.children[i];
+                if (cell) {
+                    cell.style.animationDelay = `${(row + col) * staggerDelay}ms`;
+                    cell.classList.add('win-animate');
+                }
+            }
+
             animationManager.playVictoryAnimation(() => {
                 showGameOverModal(true);
             });
@@ -2595,5 +2609,4 @@
     </script>
 </body>
 </html>
-"
 
