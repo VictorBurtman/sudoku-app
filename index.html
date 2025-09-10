@@ -1113,16 +1113,36 @@
                 victory: 'sounds/victory.mp3',
                 button1: 'sounds/button1.mp3',
                 button2: 'sounds/button2.mp3',
-                // Simply change this number to add/remove pop sounds
-                // as long as they are named pop1.mp3, pop2.mp3, etc.
-                popCount: 5 
+                // Add or remove file paths here to change the available pop sounds
+                popFiles: [
+                    'sounds/pop4.mp3',
+                    'sounds/pop5.mp3'
+                ]
             },
 
             init: function() {
                 if (this.isInitialized) return;
                 this.loadSounds();
                 this.isInitialized = true;
-                console.log('Sound manager initialized by user interaction.');
+
+                // Unlock/warm-up audio elements to reduce latency on first play
+                const allSounds = [...Object.values(this.sounds), ...this.popSounds];
+                allSounds.forEach(sound => {
+                    sound.volume = 0;
+                    const playPromise = sound.play();
+
+                    if (playPromise !== undefined) {
+                        playPromise.then(_ => {
+                            sound.pause();
+                            sound.currentTime = 0;
+                            sound.volume = 1;
+                        }).catch(error => {
+                            // Can be ignored. It's often a file not found error, 
+                            // or the browser blocking autoplay for an element.
+                        });
+                    }
+                });
+                console.log('Sound manager initialized and audio unlocked.');
             },
 
             loadSounds: function() {
@@ -1139,12 +1159,12 @@
                     this.sounds[key].preload = 'auto';
                 }
 
-                // Load pop sounds dynamically based on popCount
-                for (let i = 1; i <= config.popCount; i++) {
-                    const popSound = new Audio(`sounds/pop${i}.mp3`);
+                // Load pop sounds from the popFiles array
+                config.popFiles.forEach(filePath => {
+                    const popSound = new Audio(filePath);
                     popSound.preload = 'auto';
                     this.popSounds.push(popSound);
-                }
+                });
             },
 
             playSound: function(name) {
