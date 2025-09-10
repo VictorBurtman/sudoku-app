@@ -9,6 +9,8 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="My Sudoku">
     
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+
     <style>
         * {
             margin: 0;
@@ -707,6 +709,24 @@
             text-align: center;
         }
 
+        .animation-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            pointer-events: none;
+        }
+
+        .animation-overlay lottie-player {
+            width: 300px;
+            height: 300px;
+        }
+
         @media (max-width: 400px) {
             .sudoku-grid {
                 width: calc(100vw - 15px);
@@ -1114,7 +1134,6 @@
                 victory: 'sounds/victory.mp3',
                 button1: 'sounds/button1.mp3',
                 button2: 'sounds/button2.mp3',
-                // Add or remove file paths here to change the available pop sounds
                 popFiles: [
                     'sounds/pop4.mp3',
                     'sounds/pop5.mp3'
@@ -1126,7 +1145,6 @@
                 this.loadSounds();
                 this.isInitialized = true;
 
-                // Unlock/warm-up audio elements to reduce latency on first play
                 const allSounds = [...Object.values(this.sounds), ...this.popSounds];
                 allSounds.forEach(sound => {
                     sound.volume = 0;
@@ -1137,10 +1155,7 @@
                             sound.pause();
                             sound.currentTime = 0;
                             sound.volume = 1;
-                        }).catch(error => {
-                            // Can be ignored. It's often a file not found error, 
-                            // or the browser blocking autoplay for an element.
-                        });
+                        }).catch(error => {});
                     }
                 });
                 console.log('Sound manager initialized and audio unlocked.');
@@ -1148,19 +1163,16 @@
 
             loadSounds: function() {
                 const config = this.soundConfig;
-                // Load single sounds
                 this.sounds['intro'] = new Audio(config.intro);
                 this.sounds['error'] = new Audio(config.error);
                 this.sounds['victory'] = new Audio(config.victory);
                 this.sounds['button1'] = new Audio(config.button1);
                 this.sounds['button2'] = new Audio(config.button2);
 
-                // Preload single sounds
                 for(const key in this.sounds) {
                     this.sounds[key].preload = 'auto';
                 }
 
-                // Load pop sounds from the popFiles array
                 config.popFiles.forEach(filePath => {
                     const popSound = new Audio(filePath);
                     popSound.preload = 'auto';
@@ -1186,6 +1198,81 @@
                     soundToPlay.currentTime = 0;
                     soundToPlay.play().catch(e => console.error(`Sound play failed for ${name}:`, e));
                 }
+            }
+        };
+
+        const animationManager = {
+            overlay: null,
+            successPlayers: [],
+            victoryPlayer: null,
+            isInitialized: false,
+            config: {
+                successFiles: [
+                    'anims/success1.json'
+                ],
+                victoryFile: 'anims/victory.json',
+                successAnimationChance: 1.0 // 100% chance for now
+            },
+
+            init: function() {
+                if (this.isInitialized) return;
+                this.overlay = document.createElement('div');
+                this.overlay.className = 'animation-overlay';
+                document.body.appendChild(this.overlay);
+
+                this.config.successFiles.forEach(file => {
+                    const player = document.createElement('lottie-player');
+                    player.setAttribute('src', file);
+                    player.style.display = 'none';
+                    player.addEventListener('complete', () => {
+                        player.style.display = 'none';
+                    });
+                    this.successPlayers.push(player);
+                    this.overlay.appendChild(player);
+                });
+
+                this.victoryPlayer = document.createElement('lottie-player');
+                this.victoryPlayer.setAttribute('src', this.config.victoryFile);
+                this.victoryPlayer.style.display = 'none';
+                this.overlay.appendChild(this.victoryPlayer);
+
+                this.isInitialized = true;
+                console.log('Animation manager initialized.');
+            },
+
+            playSuccessAnimation: function() {
+                if (!this.isInitialized || this.successPlayers.length === 0 || Math.random() > this.config.successAnimationChance) {
+                    return;
+                }
+                const randomIndex = Math.floor(Math.random() * this.successPlayers.length);
+                const player = this.successPlayers[randomIndex];
+
+                this.successPlayers.forEach(p => p.style.display = 'none');
+                if(this.victoryPlayer) this.victoryPlayer.style.display = 'none';
+
+                player.style.display = 'block';
+                player.seek(0);
+                player.play();
+            },
+
+            playVictoryAnimation: function(callback) {
+                if (!this.isInitialized || !this.victoryPlayer) {
+                    if(callback) callback();
+                    return;
+                }
+                
+                this.successPlayers.forEach(p => p.style.display = 'none');
+                this.victoryPlayer.style.display = 'block';
+                
+                const onComplete = () => {
+                    this.victoryPlayer.style.display = 'none';
+                    if(callback) callback();
+                    this.victoryPlayer.removeEventListener('complete', onComplete);
+                };
+                this.victoryPlayer.addEventListener('complete', onComplete);
+
+                this.victoryPlayer.seek(0);
+                this.victoryPlayer.play();
             }
         };
 
@@ -1437,7 +1524,6 @@
             soundManager.playSound('button2');
             saveOptions();
             
-            // Manually update the checkbox UI to avoid re-rendering the whole modal
             if (element) {
                 if (options[optionName]) {
                     element.classList.add('checked');
@@ -1584,6 +1670,7 @@
                 if (options.indicativeMode && number !== 0) {
                     if (isCorrectMove(row, col, number)) {
                         soundManager.playSound('pop');
+                        animationManager.playSuccessAnimation();
                     } else {
                         if (oldValue === 0) { 
                             soundManager.playSound('error');
@@ -1936,28 +2023,14 @@
 
         function triggerWinAnimation() {
             soundManager.playSound('victory');
-            const gridEl = document.getElementById('sudokuGrid');
-            const animationDuration = 800;
-            const staggerDelay = 50;
 
             gameState.selectedRow = null;
             gameState.selectedCol = null;
             renderGrid();
 
-            for (let i = 0; i < 81; i++) {
-                const row = Math.floor(i / 9);
-                const col = i % 9;
-                const cell = gridEl.children[i];
-                if (cell) {
-                    cell.style.animationDelay = `${(row + col) * staggerDelay}ms`;
-                    cell.classList.add('win-animate');
-                }
-            }
-
-            const totalAnimationTime = ((9 - 1) + (9 - 1)) * staggerDelay + animationDuration;
-            setTimeout(() => {
+            animationManager.playVictoryAnimation(() => {
                 showGameOverModal(true);
-            }, totalAnimationTime);
+            });
         }
 
         function renderGrid() {
@@ -2357,7 +2430,11 @@
 
         // Initialize the app
         document.addEventListener('DOMContentLoaded', () => {
-            document.body.addEventListener('click', () => soundManager.init(), { once: true });
+            const initInteractions = () => {
+                soundManager.init();
+                animationManager.init();
+            };
+            document.body.addEventListener('click', initInteractions, { once: true });
             
             try {
                 loadOptions();
