@@ -808,7 +808,7 @@
         <div id="menuScreen" class="screen">
             <div class="menu-screen">
                 <div class="main-title">SUDOKU</div>
-                <div class="warning-text">By Victor Burtman</div>
+                <div class="warning-text" id="versionText">By Victor Burtman</div>
                 
                 <button class="option-button" onclick="showOptionsModal()">
                     <span>⚙️</span>
@@ -940,7 +940,10 @@
     </div>
 
     <script>
-        // Global variables
+        // --- App Config ---
+        const appVersion = '1.0';
+
+        // --- Global State ---
         let gameState = {
             currentGrid: [],
             originalGrid: [],
@@ -960,7 +963,7 @@
             source: '',
             actionHistory: [],
             highlightedNumber: null,
-            isInitialRender: false // Flag for initial fade-in animation
+            isInitialRender: false
         };
 
         let options = {
@@ -972,7 +975,7 @@
             soundEnabled: true
         };
 
-        // Sudoku Generator
+        // --- Sudoku Generator ---
         class SudokuGenerator {
             constructor() {
                 this.SIZE = 9;
@@ -1133,9 +1136,9 @@
                 return array;
             }
         }
-
         const sudokuGenerator = new SudokuGenerator();
         
+        // --- Sound Manager ---
         const soundManager = {
             audioContext: null,
             soundBuffers: {},
@@ -1204,6 +1207,10 @@
             playSound: function(name) {
                 if (!options.soundEnabled || !this.isInitialized || !this.audioContext) return;
                 
+                if (this.audioContext.state === 'suspended') {
+                    this.audioContext.resume();
+                }
+
                 let soundBuffer = null;
                 if (name === 'pop') {
                     if (this.popSoundBuffers.length > 0) {
@@ -1223,6 +1230,7 @@
             }
         };
 
+        // --- Animation Manager ---
         const animationManager = {
             overlay: null,
             successPlayers: [],
@@ -1232,7 +1240,7 @@
             config: {
                 successFiles: [
                     'anims/success1.json',
-                    // 'anims/success2.json' // Example of how to add more
+                    'anims/success2.json' // Ajoutez d'autres fichiers success ici
                 ],
                 victoryFile: 'anims/victory.json',
                 defeatFile: 'anims/Defeat.json',
@@ -1351,7 +1359,7 @@
             }
         };
 
-        // Storage functions
+        // --- Storage Functions ---
         function loadOptions() {
             const saved = localStorage.getItem('sudoku_options');
             if (saved) {
@@ -1469,7 +1477,7 @@
             }
         }
 
-        // Main functions - declared globally
+        // --- Main UI Functions ---
         window.showScreen = function(screenId) {
             document.querySelectorAll('.screen').forEach(s => s.classList.add('hidden'));
             document.getElementById(screenId).classList.remove('hidden');
@@ -1639,6 +1647,7 @@
             resetGame();
         }
 
+        // --- Game Logic ---
         window.undoLastAction = function() {
             if (gameState.actionHistory.length === 0) return;
             soundManager.playSound('button1');
@@ -2512,8 +2521,10 @@
             return null;
         }
 
-        // Initialize the app
+        // --- App Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('versionText').textContent = `By Victor Burtman - v${appVersion}`;
+
             const initInteractions = () => {
                 soundManager.init();
                 animationManager.init();
