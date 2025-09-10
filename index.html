@@ -941,7 +941,7 @@
 
     <script>
         // --- App Config ---
-        const appVersion = '1.0.1'; // Version updated
+        const appVersion = '1.0.2'; // Version updated
 
         // --- Global State ---
         let gameState = {
@@ -1144,6 +1144,8 @@
             soundBuffers: {},
             popSoundBuffers: [],
             isInitialized: false,
+            // CORRECTIF SON : Ajout d'un indicateur pour savoir si les sons sont chargés
+            soundsLoaded: false,
             soundConfig: {
                 intro: 'sounds/intro.mp3',
                 error: 'sounds/error.mp3',
@@ -1155,6 +1157,8 @@
 
             init: function() {
                 if (this.isInitialized) return;
+                // CORRECTIF SON : S'assurer que l'indicateur est bien à `false` au début
+                this.soundsLoaded = false;
                 try {
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
                     this.audioContext = new AudioContext();
@@ -1202,13 +1206,14 @@
 
                 await Promise.all(allSoundPromises);
                 console.log('All sounds pre-loaded and decoded.');
+                // CORRECTIF SON : Mettre l'indicateur à `true` une fois que TOUT est chargé
+                this.soundsLoaded = true;
             },
-
-            // CORRECTIF SON : La fonction est maintenant 'async' pour gérer correctement la reprise du contexte audio
+            
             playSound: async function(name) {
-                if (!options.soundEnabled || !this.isInitialized || !this.audioContext) return;
+                // CORRECTIF SON : Vérifier aussi que les sons sont chargés pour éviter une "race condition"
+                if (!options.soundEnabled || !this.isInitialized || !this.soundsLoaded || !this.audioContext) return;
                 
-                // Sur mobile, le contexte audio doit être réactivé par un geste de l'utilisateur
                 if (this.audioContext.state === 'suspended') {
                     await this.audioContext.resume();
                 }
@@ -1242,7 +1247,7 @@
             config: {
                 successFiles: [
                     { src: 'anims/success1.json', taille: 95, offset: { x: 0, y: 0 } },
-                    { src: 'anims/success2.json', taille: 150, offset: { x: 0, y: 10 } },
+                    { src: 'anims/success2.json', taille: 150, offset: { x: 0, y: 12 } },
                     { src: 'anims/success3.json', taille: 120, offset: { x: 0, y: 0 } }
                 ],
                 victoryFile: 'anims/victory.json',
@@ -1758,8 +1763,6 @@
                 if (options.indicativeMode && number !== 0) {
                     if (isCorrectMove(row, col, number)) {
                         soundManager.playSound('pop');
-                        // CORRECTIF ANIMATION : L'animation de succès est retirée d'ici.
-                        // Elle sera jouée plus bas seulement si une ligne/colonne/bloc est complété.
                     } else {
                         if (oldValue === 0) { 
                             soundManager.playSound('error');
@@ -1767,7 +1770,7 @@
                             if (gameState.errorCount >= 3) {
                                 gameState.gameLost = true;
                                 gameState.elapsedTime = Date.now() - gameState.startTime;
-                                renderGame(); // render the last wrong number
+                                renderGame(); 
                                 saveGameState();
                                 animationManager.playDefeatAnimation(() => {
                                     showGameOverModal(false);
@@ -1788,14 +1791,17 @@
 
             const isNowComplete = isSudokuComplete();
             const unitsToAnimate = options.indicativeMode ? getCompletedUnits(row, col) : [];
-
-            // CORRECTIF ANIMATION : Joue une animation de succès si une unité est complétée,
-            // mais que le jeu n'est pas encore entièrement gagné.
+            
             if (options.useAnimations && unitsToAnimate.length > 0 && !isNowComplete) {
                 animationManager.playSuccessAnimation(row, col);
             }
 
             if (isNowComplete) {
+                // CORRECTIF ANIMATION : Jouer l'animation de succès aussi pour la toute dernière case
+                if (options.useAnimations && unitsToAnimate.length > 0) {
+                    animationManager.playSuccessAnimation(row, col);
+                }
+                
                 gameState.gameWon = true;
                 gameState.elapsedTime = Date.now() - gameState.startTime;
                 clearInterval(gameState.gameTimer);
@@ -1809,7 +1815,8 @@
                     completionAnimTime = Math.max(0, unitsToAnimate.length - 1) * 700 + 1200;
                 }
                 
-                setTimeout(triggerWinAnimation, completionAnimTime + 100);
+                // Délai légèrement augmenté pour laisser l'animation de succès se terminer
+                setTimeout(triggerWinAnimation, completionAnimTime + 300);
                 
                 return;
             } else {
@@ -2551,10 +2558,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('versionText').textContent = `By Victor Burtman - v${appVersion}`;
 
-            // CORRECTIF SON : L'initialisation se fait sur le premier 'click' ou 'touchstart'
-            // pour être compatible avec les navigateurs mobiles.
             const initInteractions = () => {
-                // La vérification 'isInitialized' empêche une double initialisation si 'touch' et 'click' se déclenchent
                 if (soundManager.isInitialized) return;
                 soundManager.init();
                 animationManager.init();
@@ -2626,3 +2630,4 @@
     </script>
 </body>
 </html>
+
