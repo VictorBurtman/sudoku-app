@@ -322,7 +322,12 @@
 
         /* Lorsque une case est sélectionnée, le chiffre à l'intérieur est mis en gras */
         .sudoku-cell.selected span {
-            font-weight: 700;
+            font-weight: 600;
+        }
+
+        /* Couleur plus foncée pour les chiffres utilisateur sélectionnés */
+        .sudoku-cell.selected.user span {
+            color: #4fc3f7;
         }
 
         .sudoku-cell.flash-conflict {
@@ -956,7 +961,7 @@
 
     <script>
         // --- App Config ---
-        const appVersion = '1.0.6'; // Version updated
+        const appVersion = '1.0.7'; // Version updated
 
         // --- Global State ---
         let gameState = {
@@ -1154,25 +1159,57 @@
         const sudokuGenerator = new SudokuGenerator();
         
         // --- Sound Manager (Simplified for Mobile) ---
-        function playSound(id) {
-            if (!options.soundEnabled) return;
-            const sound = document.getElementById(id);
-            if (sound) {
-                sound.currentTime = 0;
-                const playPromise = sound.play();
-                if (playPromise !== undefined) {
-                    playPromise.catch(error => {
-                        console.error(`Error playing sound ${id}:`, error);
-                    });
-                }
-            }
-        }
+        const soundManager = {
+            isInitialized: false,
+            soundIds: ['soundIntro', 'soundError', 'soundVictory', 'soundButton1', 'soundButton2', 'soundPop4', 'soundPop5'],
+            
+            init: function() {
+                if (this.isInitialized) return;
+                this.isInitialized = true;
+                console.log("Initializing sounds on user interaction to reduce latency.");
+                this.soundIds.forEach(id => {
+                    const sound = document.getElementById(id);
+                    if (sound) {
+                        sound.load();
+                        // This attempts to play and pause each sound.
+                        // On mobile, this will likely only work for the first one,
+                        // but it's a standard way to "unlock" audio.
+                        const playPromise = sound.play();
+                        if (playPromise !== undefined) {
+                            playPromise.then(_ => {
+                                sound.pause();
+                                sound.currentTime = 0;
+                            }).catch(error => {
+                                // Autoplay was prevented. This is expected and OK.
+                            });
+                        }
+                    }
+                });
+            },
 
-        function playPopSound() {
-            const popSounds = ['soundPop4', 'soundPop5'];
-            const randomSound = popSounds[Math.floor(Math.random() * popSounds.length)];
-            playSound(randomSound);
-        }
+            playSound: function(id) {
+                if (!options.soundEnabled) return;
+                const sound = document.getElementById(id);
+                if (sound) {
+                    sound.currentTime = 0;
+                    const playPromise = sound.play();
+                    if (playPromise !== undefined) {
+                        playPromise.catch(error => {
+                            // Ignore errors from interrupting playback, which is normal.
+                            if (error.name !== 'AbortError') {
+                                console.error(`Error playing sound ${id}:`, error);
+                            }
+                        });
+                    }
+                }
+            },
+
+            playPopSound: function() {
+                const popSounds = ['soundPop4', 'soundPop5'];
+                const randomSound = popSounds[Math.floor(Math.random() * popSounds.length)];
+                this.playSound(randomSound);
+            }
+        };
 
         // --- Animation Manager ---
         const animationManager = {
@@ -1430,12 +1467,12 @@
         }
         
         window.goBackToMenu = function() {
-            playSound('soundButton2');
+            soundManager.playSound('soundButton2');
             showScreen('menuScreen');
         }
 
         window.startGame = function(difficulty, label) {
-            playSound('soundButton2');
+            soundManager.playSound('soundButton2');
             document.getElementById('loadingModal').classList.add('show');
             document.getElementById('loadingText').textContent = 'Generating grid...';
             document.getElementById('loadingProgress').textContent = '';
@@ -1468,7 +1505,7 @@
         }
 
         window.showOptionsModal = function() {
-            playSound('soundButton1');
+            soundManager.playSound('soundButton1');
             const modal = document.getElementById('optionsModal');
             const content = document.getElementById('optionsContent');
             
@@ -1557,13 +1594,13 @@
         }
 
         window.closeOptionsModal = function() {
-            playSound('soundButton2');
+            soundManager.playSound('soundButton2');
             document.getElementById('optionsModal').classList.remove('show');
         }
 
         window.toggleOption = function(optionName, element) {
             options[optionName] = !options[optionName];
-            playSound('soundButton2');
+            soundManager.playSound('soundButton2');
             saveOptions();
             
             if (element) {
@@ -1593,7 +1630,7 @@
         }
 
         window.confirmResetGame = function() {
-            playSound('soundButton1');
+            soundManager.playSound('soundButton1');
             document.getElementById('resetConfirmModal').classList.add('show');
         }
 
@@ -1609,7 +1646,7 @@
         // --- Game Logic ---
         window.undoLastAction = function() {
             if (gameState.actionHistory.length === 0) return;
-            playSound('soundButton1');
+            soundManager.playSound('soundButton1');
             
             const lastAction = gameState.actionHistory.pop();
             
@@ -1654,7 +1691,7 @@
             if (gameState.originalGrid[row][col] !== 0) return;
             
             if (number === 0) { // Erase button
-                playSound('soundButton1');
+                soundManager.playSound('soundButton1');
             }
 
             if (options.indicativeMode && 
@@ -1712,10 +1749,10 @@
 
                 if (options.indicativeMode && number !== 0) {
                     if (isCorrectMove(row, col, number)) {
-                        playPopSound();
+                        soundManager.playPopSound();
                     } else {
                         if (oldValue === 0) { 
-                            playSound('soundError');
+                            soundManager.playSound('soundError');
                             gameState.errorCount++;
                             if (gameState.errorCount >= 3) {
                                 gameState.gameLost = true;
@@ -1730,7 +1767,7 @@
                         }
                     }
                 } else if (number !== 0) {
-                    playPopSound();
+                    soundManager.playPopSound();
                 }
             }
 
@@ -1778,7 +1815,7 @@
         }
 
         window.toggleNotesMode = function() {
-            playSound('soundButton1');
+            soundManager.playSound('soundButton1');
             gameState.notesMode = !gameState.notesMode;
             const button = document.getElementById('notesButton');
             
@@ -1887,7 +1924,7 @@
                 startTimer();
             }
 
-            playSound('soundIntro');
+            soundManager.playSound('soundIntro');
 
             updateCoordinatesDisplay();
             saveGameState();
@@ -1928,7 +1965,7 @@
         }
 
         function flashConflictingCells(row, col, number) {
-            playSound('soundError');
+            soundManager.playSound('soundError');
             const conflictCells = [];
             
             for (let c = 0; c < 9; c++) {
@@ -2077,7 +2114,7 @@
         }
 
         function triggerWinAnimation() {
-            playSound('soundVictory');
+            soundManager.playSound('soundVictory');
 
             gameState.selectedRow = null;
             gameState.selectedCol = null;
@@ -2508,6 +2545,7 @@
 
             const initInteractions = () => {
                 animationManager.init();
+                soundManager.init();
             };
             document.body.addEventListener('click', initInteractions, { once: true });
             document.body.addEventListener('touchstart', initInteractions, { once: true });
