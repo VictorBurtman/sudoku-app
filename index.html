@@ -936,7 +936,7 @@
             showTimer: true,
             showCoordinates: false,
             useAnimations: true,
-            soundEnabled: true // Added for sound effects
+            soundEnabled: true
         };
 
         // Sudoku Generator
@@ -1102,38 +1102,51 @@
         }
 
         const sudokuGenerator = new SudokuGenerator();
-
+        
         const soundManager = {
             sounds: {},
             popSounds: [],
             isInitialized: false,
+            soundConfig: {
+                intro: 'sounds/intro.mp3',
+                error: 'sounds/error.mp3',
+                victory: 'sounds/victory.mp3',
+                button1: 'sounds/button1.mp3',
+                button2: 'sounds/button2.mp3',
+                // Simply change this number to add/remove pop sounds
+                // as long as they are named pop1.mp3, pop2.mp3, etc.
+                popCount: 5 
+            },
+
             init: function() {
                 if (this.isInitialized) return;
                 this.loadSounds();
                 this.isInitialized = true;
                 console.log('Sound manager initialized by user interaction.');
             },
-            loadSounds: function() {
-                const soundFiles = {
-                    intro: 'sounds/intro.mp3',
-                    error: 'sounds/error.mp3',
-                    victory: 'sounds/victory.mp3',
-                    button: 'sounds/button.mp3',
-                    pop1: 'sounds/pop1.mp3',
-                    pop2: 'sounds/pop2.mp3',
-                    pop3: 'sounds/pop3.mp3',
-                    pop4: 'sounds/pop4.mp3', // Corrected from .mp4
-                    pop5: 'sounds/pop5.mp3'  // Corrected from .mp5
-                };
 
-                for (const key in soundFiles) {
-                    this.sounds[key] = new Audio(soundFiles[key]);
+            loadSounds: function() {
+                const config = this.soundConfig;
+                // Load single sounds
+                this.sounds['intro'] = new Audio(config.intro);
+                this.sounds['error'] = new Audio(config.error);
+                this.sounds['victory'] = new Audio(config.victory);
+                this.sounds['button1'] = new Audio(config.button1);
+                this.sounds['button2'] = new Audio(config.button2);
+
+                // Preload single sounds
+                for(const key in this.sounds) {
                     this.sounds[key].preload = 'auto';
-                    if (key.startsWith('pop')) {
-                        this.popSounds.push(this.sounds[key]);
-                    }
+                }
+
+                // Load pop sounds dynamically based on popCount
+                for (let i = 1; i <= config.popCount; i++) {
+                    const popSound = new Audio(`sounds/pop${i}.mp3`);
+                    popSound.preload = 'auto';
+                    this.popSounds.push(popSound);
                 }
             },
+
             playSound: function(name) {
                 if (!options.soundEnabled || !this.isInitialized) return;
 
@@ -1141,7 +1154,8 @@
 
                 if (name === 'pop') {
                     if (this.popSounds.length > 0) {
-                        soundToPlay = this.popSounds[Math.floor(Math.random() * this.popSounds.length)];
+                        const randomIndex = Math.floor(Math.random() * this.popSounds.length);
+                        soundToPlay = this.popSounds[randomIndex];
                     }
                 } else if (this.sounds[name]) {
                     soundToPlay = this.sounds[name];
@@ -1149,7 +1163,7 @@
                 
                 if(soundToPlay) {
                     soundToPlay.currentTime = 0;
-                    soundToPlay.play().catch(e => console.log(`Sound play failed for ${name}:`, e));
+                    soundToPlay.play().catch(e => console.error(`Sound play failed for ${name}:`, e));
                 }
             }
         };
@@ -1279,12 +1293,12 @@
         }
         
         window.goBackToMenu = function() {
-            soundManager.playSound('button');
+            soundManager.playSound('button2');
             showScreen('menuScreen');
         }
 
         window.startGame = function(difficulty, label) {
-            soundManager.playSound('button');
+            soundManager.playSound('button2');
             document.getElementById('loadingModal').classList.add('show');
             document.getElementById('loadingText').textContent = 'Generating grid...';
             document.getElementById('loadingProgress').textContent = '';
@@ -1304,7 +1318,7 @@
         }
 
         window.showOptionsModal = function() {
-            soundManager.playSound('button');
+            soundManager.playSound('button1');
             const modal = document.getElementById('optionsModal');
             const content = document.getElementById('optionsContent');
             
@@ -1398,6 +1412,7 @@
 
         window.toggleOption = function(optionName) {
             options[optionName] = !options[optionName];
+            soundManager.playSound('button2');
             saveOptions();
             
             if (optionName === 'showTimer') {
@@ -1418,7 +1433,7 @@
         }
 
         window.confirmResetGame = function() {
-            soundManager.playSound('button');
+            soundManager.playSound('button1');
             document.getElementById('resetConfirmModal').classList.add('show');
         }
 
@@ -1433,7 +1448,7 @@
 
         window.undoLastAction = function() {
             if (gameState.actionHistory.length === 0) return;
-            soundManager.playSound('button');
+            soundManager.playSound('button1');
             
             const lastAction = gameState.actionHistory.pop();
             
@@ -1477,8 +1492,8 @@
 
             if (gameState.originalGrid[row][col] !== 0) return;
             
-            if (number === 0) {
-                soundManager.playSound('button');
+            if (number === 0) { // Erase button
+                soundManager.playSound('button1');
             }
 
             if (options.indicativeMode && 
@@ -1529,14 +1544,14 @@
                 saveAction(action);
 
                 gameState.currentGrid[row][col] = number;
+                
                 if (number !== 0) {
-                    soundManager.playSound('pop');
                     gameState.notesGrid[row][col].clear();
                 }
 
                 if (options.indicativeMode && number !== 0) {
                     if (isCorrectMove(row, col, number)) {
-                        // Animations will be handled after the win check
+                        soundManager.playSound('pop');
                     } else {
                         if (oldValue === 0) { 
                             soundManager.playSound('error');
@@ -1551,6 +1566,8 @@
                             }
                         }
                     }
+                } else if (number !== 0) {
+                    soundManager.playSound('pop');
                 }
             }
 
@@ -1590,7 +1607,7 @@
         }
 
         window.toggleNotesMode = function() {
-            soundManager.playSound('button');
+            soundManager.playSound('button1');
             gameState.notesMode = !gameState.notesMode;
             const button = document.getElementById('notesButton');
             
@@ -2308,7 +2325,6 @@
 
         // Initialize the app
         document.addEventListener('DOMContentLoaded', () => {
-            // Initialize sound on first click anywhere
             document.body.addEventListener('click', () => soundManager.init(), { once: true });
             
             try {
@@ -2375,3 +2391,4 @@
     </script>
 </body>
 </html>
+
