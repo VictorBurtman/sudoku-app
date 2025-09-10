@@ -1147,7 +1147,6 @@
         }
         const sudokuGenerator = new SudokuGenerator();
         
-        // --- Sound Manager (Web Audio API for low latency) ---
         const soundManager = {
             audioContext: null,
             soundBuffers: {},
@@ -1161,7 +1160,9 @@
                 button1: `sounds/button1.mp3?v=${appVersion}`,
                 button2: `sounds/button2.mp3?v=${appVersion}`,
                 pop4: `sounds/pop4.mp3?v=${appVersion}`,
-                pop5: `sounds/pop5.mp3?v=${appVersion}`
+                pop5: `sounds/pop5.mp3?v=${appVersion}`,
+                completion1: `sounds/completion1.wav?v=${appVersion}`,
+                completion2: `sounds/completion2.wav?v=${appVersion}`
             },
         
             init: function() {
@@ -1256,6 +1257,12 @@
             playPopSound: function() {
                 const popSounds = ['pop4', 'pop5'];
                 const randomSound = popSounds[Math.floor(Math.random() * popSounds.length)];
+                this.playSound(randomSound);
+            },
+
+            playCompletionSound: function() {
+                const completionSounds = ['completion1', 'completion2'];
+                const randomSound = completionSounds[Math.floor(Math.random() * completionSounds.length)];
                 this.playSound(randomSound);
             }
         };
@@ -1827,6 +1834,10 @@
 
             const isNowComplete = isSudokuComplete();
             const unitsToAnimate = options.indicativeMode ? getCompletedUnits(row, col) : [];
+            
+            if(unitsToAnimate.length > 0) {
+                soundManager.playCompletionSound();
+            }
             
             if (options.useAnimations && unitsToAnimate.length > 0 && !isNowComplete) {
                 animationManager.playSuccessAnimation(row, col);
