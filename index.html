@@ -950,7 +950,7 @@
 
     <script>
         // --- App Config ---
-        const appVersion = '1.0.9'; // Version updated
+        const appVersion = '1.1.0'; // Version updated
 
         // --- Global State ---
         let gameState = {
@@ -1206,25 +1206,39 @@
             playSound: async function(name) {
                 if (!options.soundEnabled || !this.isInitialized || !this.audioContext) return;
 
-                if (this.audioContext.state !== 'running') {
+                if (this.audioContext.state === 'closed') {
+                    console.log('AudioContext was closed, recreating...');
+                    this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    this.loadingPromise = this.loadAllSounds(); // Re-load sounds for the new context
+                    await this.loadingPromise;
+                }
+            
+                if (this.audioContext.state === 'suspended') {
                     try {
                         await this.audioContext.resume();
+                        console.log('AudioContext resumed');
                     } catch (e) {
-                        console.error('Failed to resume audio context:', e);
+                        console.error('Failed to resume AudioContext:', e);
                         return;
                     }
                 }
-                
+            
                 if (this.loadingPromise) {
                     await this.loadingPromise;
                 }
 
                 const soundBuffer = this.soundBuffers[name];
                 if (soundBuffer) {
-                    const source = this.audioContext.createBufferSource();
-                    source.buffer = soundBuffer;
-                    source.connect(this.audioContext.destination);
-                    source.start(0);
+                    try {
+                        const source = this.audioContext.createBufferSource();
+                        source.buffer = soundBuffer;
+                        source.connect(this.audioContext.destination);
+                        source.start(0);
+                    } catch (e) {
+                        console.error(`Error playing sound ${name}:`, e);
+                    }
+                } else {
+                    console.error(`Sound buffer not found: ${name}`);
                 }
             },
             
