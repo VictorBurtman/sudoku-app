@@ -941,7 +941,7 @@
 
     <script>
         // --- App Config ---
-        const appVersion = '1.0.3'; // Version updated
+        const appVersion = '1.0.4'; // Version updated
 
         // --- Global State ---
         let gameState = {
@@ -1144,8 +1144,7 @@
             soundBuffers: {},
             popSoundBuffers: [],
             isInitialized: false,
-            soundsLoaded: false,
-            loadingPromise: null, // CORRECTIF SON: Pour suivre le chargement
+            loadingPromise: null,
             soundConfig: {
                 intro: 'sounds/intro.mp3',
                 error: 'sounds/error.mp3',
@@ -1155,38 +1154,23 @@
                 popFiles: ['sounds/pop4.mp3', 'sounds/pop5.mp3']
             },
 
+            // CORRECTIF SON : L'initialisation se fait DANS la première interaction utilisateur
             init: function() {
                 if (this.isInitialized) return;
-                this.isInitialized = true;
-                this.soundsLoaded = false;
+                this.isInitialized = true; // Empêche les initialisations multiples
                 try {
                     const AudioContext = window.AudioContext || window.webkitAudioContext;
                     this.audioContext = new AudioContext();
-                    // CORRECTIF SON: On lance le chargement et on stocke la promesse
-                    this.loadingPromise = this.loadSounds(); 
-                    console.log('Sound manager initialized.');
+                    this.loadingPromise = this.loadSounds();
+                    console.log('Sound manager initialized by user action.');
                 } catch(e) {
                     console.error('Web Audio API is not supported in this browser.');
                 }
             },
 
-            // CORRECTIF SON: Fonction pour débloquer l'audio sur iOS
-            unlockAudio: function() {
-                if (!this.audioContext || this.audioContext.state !== 'suspended') return;
-                
-                const emptyBuffer = this.audioContext.createBuffer(1, 1, 22050);
-                const source = this.audioContext.createBufferSource();
-                source.buffer = emptyBuffer;
-                source.connect(this.audioContext.destination);
-                source.start(0);
-                
-                this.audioContext.resume().then(() => {
-                    console.log("AudioContext resumed successfully!");
-                });
-            },
-
             async loadSound(url) {
                 try {
+                    if (!this.audioContext) throw new Error("AudioContext not available");
                     const response = await fetch(url);
                     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
                     const arrayBuffer = await response.arrayBuffer();
@@ -1201,30 +1185,32 @@
                 const allSoundPromises = [];
                 for (const key in this.soundConfig) {
                     if (key !== 'popFiles') {
-                        const promise = this.loadSound(this.soundConfig[key]).then(buffer => {
+                        allSoundPromises.push(this.loadSound(this.soundConfig[key]).then(buffer => {
                             if (buffer) this.soundBuffers[key] = buffer;
-                        });
-                        allSoundPromises.push(promise);
+                        }));
                     }
                 }
                 this.soundConfig.popFiles.forEach(file => {
-                    const promise = this.loadSound(file).then(buffer => {
+                    allSoundPromises.push(this.loadSound(file).then(buffer => {
                         if (buffer) this.popSoundBuffers.push(buffer);
-                    });
-                    allSoundPromises.push(promise);
+                    }));
                 });
-
                 await Promise.all(allSoundPromises);
                 console.log('All sounds pre-loaded and decoded.');
-                this.soundsLoaded = true;
             },
             
             playSound: async function(name) {
-                if (!options.soundEnabled || !this.isInitialized || !this.audioContext) return;
+                if (!options.soundEnabled || !this.isInitialized || !this.audioContext) {
+                    return;
+                }
                 
-                // CORRECTIF SON: Attendre que le chargement soit terminé avant de jouer
-                await this.loadingPromise; 
+                // CORRECTIF SON : Attend que les sons soient chargés avant de jouer.
+                // loadingPromise est défini dans init(), donc il existera.
+                if(this.loadingPromise) {
+                    await this.loadingPromise;
+                }
 
+                // CORRECTIF SON : Réveille le contexte s'il a été suspendu
                 if (this.audioContext.state === 'suspended') {
                     await this.audioContext.resume();
                 }
@@ -1267,6 +1253,7 @@
 
             init: function() {
                 if (this.isInitialized) return;
+                this.isInitialized = true;
                 this.overlay = document.createElement('div');
                 this.overlay.className = 'animation-overlay';
                 document.body.appendChild(this.overlay);
@@ -1292,7 +1279,6 @@
                 this.defeatPlayer.style.display = 'none';
                 this.overlay.appendChild(this.defeatPlayer);
 
-                this.isInitialized = true;
                 console.log('Animation manager initialized.');
             },
 
@@ -2567,15 +2553,14 @@
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('versionText').textContent = `By Victor Burtman - v${appVersion}`;
 
+            // CORRECTIF SON : Cette fonction est maintenant le point d'entrée pour
+            // initialiser le son et les animations, uniquement après une action de l'utilisateur.
             const initInteractions = () => {
                 if (soundManager.isInitialized) return;
                 
-                // On initialise les deux managers
+                console.log("First user interaction detected. Initializing managers.");
                 soundManager.init();
                 animationManager.init();
-
-                // CORRECTIF SON : On débloque l'audio sur la première interaction
-                soundManager.unlockAudio();
             };
             document.body.addEventListener('click', initInteractions, { once: true });
             document.body.addEventListener('touchstart', initInteractions, { once: true });
