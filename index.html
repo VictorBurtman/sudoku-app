@@ -1239,9 +1239,9 @@
             isInitialized: false,
             config: {
                 successFiles: [
-                    { src: 'anims/success1.json', taille: 95 },
-                    { src: 'anims/success2.json', taille: 150 },
-                    { src: 'anims/success3.json', taille: 120 }
+                    { src: 'anims/success1.json', taille: 95, offset: { x: 0, y: 0 } },
+                    { src: 'anims/success2.json', taille: 150, offset: { x: 0, y: -5 } },
+                    { src: 'anims/success3.json', taille: 120, offset: { x: 0, y: 0 } }
                 ],
                 victoryFile: 'anims/victory.json',
                 defeatFile: 'anims/Defeat.json',
@@ -1298,10 +1298,11 @@
                 if(this.defeatPlayer) this.defeatPlayer.style.display = 'none';
 
                 const animSize = animConfig.taille || 95;
+                const offset = animConfig.offset || { x: 0, y: 0 };
                 player.style.width = `${animSize}px`;
                 player.style.height = `${animSize}px`;
-                player.style.left = `${rect.left + rect.width / 2}px`;
-                player.style.top = `${rect.top + rect.height / 2}px`;
+                player.style.left = `${rect.left + rect.width / 2 + offset.x}px`;
+                player.style.top = `${rect.top + rect.height / 2 + offset.y}px`;
 
                 player.style.display = 'block';
                 player.seek(0);
@@ -2612,5 +2613,4 @@
     </script>
 </body>
 </html>
-"
 
