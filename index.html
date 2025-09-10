@@ -624,7 +624,7 @@
         .option-item {
             display: flex;
             align-items: center;
-            padding: 12px 0;
+            padding: 10px 0;
             border-bottom: 1px solid #404040;
         }
 
@@ -666,12 +666,13 @@
 
         .option-title {
             font-weight: bold;
-            margin-bottom: 4px;
+            font-size: 15px;
+            margin-bottom: 3px;
             color: #ffffff;
         }
 
         .option-subtitle {
-            font-size: 12px;
+            font-size: 11px;
             color: #b0b0b0;
         }
 
@@ -1363,7 +1364,7 @@
                 ` : ''}
                 <div class="option-item">
                     <div class="checkbox ${options.indicativeMode ? 'checked' : ''}" 
-                         onclick="toggleOption('indicativeMode')">
+                         onclick="toggleOption('indicativeMode', this)">
                         ${options.indicativeMode ? '✓' : ''}
                     </div>
                     <div class="option-details">
@@ -1373,7 +1374,7 @@
                 </div>
                 <div class="option-item">
                     <div class="checkbox ${options.highlightMode ? 'checked' : ''}" 
-                         onclick="toggleOption('highlightMode')">
+                         onclick="toggleOption('highlightMode', this)">
                         ${options.highlightMode ? '✓' : ''}
                     </div>
                     <div class="option-details">
@@ -1383,7 +1384,7 @@
                 </div>
                 <div class="option-item">
                     <div class="checkbox ${options.showTimer ? 'checked' : ''}" 
-                         onclick="toggleOption('showTimer')">
+                         onclick="toggleOption('showTimer', this)">
                         ${options.showTimer ? '✓' : ''}
                     </div>
                     <div class="option-details">
@@ -1393,7 +1394,7 @@
                 </div>
                 <div class="option-item">
                     <div class="checkbox ${options.showCoordinates ? 'checked' : ''}" 
-                         onclick="toggleOption('showCoordinates')">
+                         onclick="toggleOption('showCoordinates', this)">
                         ${options.showCoordinates ? '✓' : ''}
                     </div>
                     <div class="option-details">
@@ -1403,7 +1404,7 @@
                 </div>
                 <div class="option-item">
                     <div class="checkbox ${options.useAnimations ? 'checked' : ''}" 
-                         onclick="toggleOption('useAnimations')">
+                         onclick="toggleOption('useAnimations', this)">
                         ${options.useAnimations ? '✓' : ''}
                     </div>
                     <div class="option-details">
@@ -1413,7 +1414,7 @@
                 </div>
                 <div class="option-item">
                     <div class="checkbox ${options.soundEnabled ? 'checked' : ''}" 
-                         onclick="toggleOption('soundEnabled')">
+                         onclick="toggleOption('soundEnabled', this)">
                         ${options.soundEnabled ? '✓' : ''}
                     </div>
                     <div class="option-details">
@@ -1427,13 +1428,25 @@
         }
 
         window.closeOptionsModal = function() {
+            soundManager.playSound('button2');
             document.getElementById('optionsModal').classList.remove('show');
         }
 
-        window.toggleOption = function(optionName) {
+        window.toggleOption = function(optionName, element) {
             options[optionName] = !options[optionName];
             soundManager.playSound('button2');
             saveOptions();
+            
+            // Manually update the checkbox UI to avoid re-rendering the whole modal
+            if (element) {
+                if (options[optionName]) {
+                    element.classList.add('checked');
+                    element.innerHTML = '✓';
+                } else {
+                    element.classList.remove('checked');
+                    element.innerHTML = '';
+                }
+            }
             
             if (optionName === 'showTimer') {
                 clearInterval(gameState.gameTimer);
@@ -1446,7 +1459,6 @@
                 updateCoordinatesDisplay();
             }
             
-            showOptionsModal();
             if (document.getElementById('gameScreen').classList.contains('hidden') === false) {
                 renderGame();
             }
