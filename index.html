@@ -950,7 +950,7 @@
 
     <script>
         // --- App Config ---
-        const appVersion = '1.1.3'; // Version updated
+        const appVersion = '1.1.2'; // Version updated
 
         // --- Global State ---
         let gameState = {
@@ -1173,37 +1173,39 @@
                         const AudioContext = window.AudioContext || window.webkitAudioContext;
                         this.audioContext = new AudioContext();
                         
-                        if (this.isMobileDevice && this.audioContext.state === 'suspended') {
-                            this.audioContext.resume();
+                        if (/Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)) {
+                           this.audioContext.createGain();
                         }
 
-                        const unlockAudio = async () => {
-                            if (!this.audioContext) return;
+                        const unlockWithSilentSound = () => {
+                            const silentAudio = new Audio("data:audio/mp3;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV");
+                            silentAudio.play().catch(() => {});
                             
                             if (this.audioContext.state === 'suspended') {
-                                try {
-                                    await this.audioContext.resume();
-                                    console.log('Audio resumed successfully');
-                                } catch (e) {
-                                    console.log('Resume failed:', e);
-                                }
+                                this.audioContext.resume();
                             }
+                            
+                            const buffer = this.audioContext.createBuffer(1, 1, 22050);
+                            const source = this.audioContext.createBufferSource();
+                            source.buffer = buffer;
+                            source.connect(this.audioContext.destination);
+                            source.start(0);
                         };
-
-                        const events = ['click', 'touchstart', 'touchend', 'mousedown'];
-                        events.forEach(event => {
-                            document.body.addEventListener(event, unlockAudio, { once: true, passive: true });
+                        
+                        ['click', 'touchstart', 'touchend', 'mousedown', 'keydown'].forEach(event => {
+                            document.addEventListener(event, () => {
+                                unlockWithSilentSound();
+                                if (this.audioContext.state === 'suspended') {
+                                    this.audioContext.resume();
+                                }
+                            }, { once: false });
                         });
-
+                        
                         this.loadingPromise = this.loadAllSounds();
                         this.isInitialized = true;
-                        resolve();
-                        console.log('Sound manager initialized with enhanced mobile support');
                         
                     } catch (e) {
-                        console.error('Web Audio API initialization failed:', e);
-                        this.isInitialized = true; 
-                        resolve();
+                        console.error('Audio init failed:', e);
                     }
                 });
             },
@@ -1225,41 +1227,30 @@
             
             playSound: async function(name) {
                 if (!options.soundEnabled) return;
-                
-                if (!this.isInitialized || !this.audioContext) {
-                    await this.init();
-                }
-                
-                if (!this.audioContext) {
-                    console.log('No audio context available');
-                    return;
-                }
 
-                if (this.audioContext.state !== 'running') {
+                if (this.audioContext && this.audioContext.state === 'suspended') {
                     try {
                         await this.audioContext.resume();
+                    } catch (e) {}
+                }
+
+                if (this.audioContext && this.soundBuffers[name]) {
+                    try {
+                        const source = this.audioContext.createBufferSource();
+                        source.buffer = this.soundBuffers[name];
+                        source.connect(this.audioContext.destination);
+                        source.start(0);
+                        return; 
                     } catch (e) {
-                       console.log('Could not resume audio context on play:', e);
+                        console.log('Web Audio failed, trying fallback');
                     }
                 }
                 
-                if (this.loadingPromise) {
-                    await this.loadingPromise;
-                }
-
-                const soundBuffer = this.soundBuffers[name];
-                if (!soundBuffer) {
-                    console.log(`Sound buffer not found for: ${name}`);
-                    return;
-                }
-
                 try {
-                    const source = this.audioContext.createBufferSource();
-                    source.buffer = soundBuffer;
-                    source.connect(this.audioContext.destination);
-                    source.start(0);
+                    const audio = new Audio(this.soundConfig[name]);
+                    audio.play().catch(() => {});
                 } catch (e) {
-                    console.error(`Error playing sound ${name}:`, e);
+                    console.log('All audio methods failed');
                 }
             },
             
@@ -1537,7 +1528,7 @@
         }
 
         window.startGame = function(difficulty, label) {
-            // No button sound here to prevent conflict with intro sound
+            soundManager.playSound('button2');
             document.getElementById('loadingModal').classList.add('show');
             document.getElementById('loadingText').textContent = 'Generating grid...';
             document.getElementById('loadingProgress').textContent = '';
@@ -1813,7 +1804,9 @@
                 }
 
                 if (options.indicativeMode && number !== 0) {
-                    if (!isCorrectMove(row, col, number)) {
+                    if (isCorrectMove(row, col, number)) {
+                        soundManager.playPopSound();
+                    } else {
                         if (oldValue === 0) { 
                             soundManager.playSound('error');
                             gameState.errorCount++;
@@ -1829,6 +1822,8 @@
                             }
                         }
                     }
+                } else if (number !== 0) {
+                    soundManager.playPopSound();
                 }
             }
 
@@ -1837,25 +1832,18 @@
                 cleanObsoleteNotes();
             }
 
+            const isNowComplete = isSudokuComplete();
             const unitsToAnimate = options.indicativeMode ? getCompletedUnits(row, col) : [];
             
-            const wasNumberPlacement = gameState.actionHistory.length > 0 && gameState.actionHistory[gameState.actionHistory.length-1].type === 'number' && number !== 0;
-            if (wasNumberPlacement) {
-                const wasCorrect = !options.indicativeMode || isCorrectMove(row, col, number);
-                if(wasCorrect) {
-                    if (unitsToAnimate.length > 0) {
-                        soundManager.playCompletionSound();
-                    } else {
-                        soundManager.playPopSound();
-                    }
-                }
+            if(unitsToAnimate.length > 0) {
+                soundManager.playCompletionSound();
             }
-
-            if (options.useAnimations && unitsToAnimate.length > 0 && !isSudokuComplete()) {
+            
+            if (options.useAnimations && unitsToAnimate.length > 0 && !isNowComplete) {
                 animationManager.playSuccessAnimation(row, col);
             }
 
-            if (isSudokuComplete()) {
+            if (isNowComplete) {
                 if (options.useAnimations && unitsToAnimate.length > 0) {
                     animationManager.playSuccessAnimation(row, col);
                 }
@@ -1877,7 +1865,7 @@
                 
                 return;
             } else {
-                 if (options.useAnimations && unitsToAnimate.length > 0) {
+                 if (options.useAnimations) {
                     animateUnitsSequentially(unitsToAnimate);
                  }
             }
@@ -1995,14 +1983,12 @@
             if (options.showTimer) {
                 startTimer();
             }
-            
+
+            soundManager.playSound('intro');
+
             updateCoordinatesDisplay();
             saveGameState();
             renderGame();
-
-            setTimeout(() => {
-                soundManager.playSound('intro');
-            }, 100);
         }
 
         function startTimer() {
@@ -2187,9 +2173,8 @@
             });
         }
 
-        async function triggerWinAnimation() {
+        function triggerWinAnimation() {
             soundManager.playSound('victory');
-            await new Promise(res => setTimeout(res, 200));
 
             gameState.selectedRow = null;
             gameState.selectedCol = null;
