@@ -950,7 +950,7 @@
 
     <script>
         // --- App Config ---
-        const appVersion = '1.1.1'; // Version updated
+        const appVersion = '1.1.2'; // Version updated
 
         // --- Global State ---
         let gameState = {
@@ -1252,6 +1252,7 @@
             },
         
             loadAllSounds: async function() {
+                if (!this.audioContext) return;
                 const soundPromises = Object.entries(this.soundConfig).map(async ([name, url]) => {
                     try {
                         const response = await fetch(url);
@@ -1270,7 +1271,7 @@
             playSound: async function(name) {
                 if (!options.soundEnabled) return;
                 
-                if (!this.audioContext) {
+                if (!this.audioContext || !this.isInitialized) {
                     await this.init();
                 }
                 
@@ -1279,7 +1280,7 @@
                     return;
                 }
 
-                if (this.isMobileDevice && this.audioContext.state !== 'running') {
+                if (this.audioContext.state !== 'running') {
                     try {
                         await this.audioContext.resume();
                         console.log('Audio context resumed before playing');
@@ -1298,7 +1299,7 @@
 
                 const soundBuffer = this.soundBuffers[name];
                 if (!soundBuffer) {
-                    console.log(`Sound buffer not found: ${name}`);
+                    console.log(`Sound buffer not found for: ${name}`);
                     return;
                 }
 
@@ -1313,7 +1314,6 @@
                     gainNode.connect(this.audioContext.destination);
                     
                     source.start(0);
-                    console.log(`Playing sound: ${name}`);
                     
                 } catch (e) {
                     console.error(`Error playing sound ${name}:`, e);
@@ -1334,26 +1334,6 @@
                 const popSounds = ['pop4', 'pop5'];
                 const randomSound = popSounds[Math.floor(Math.random() * popSounds.length)];
                 this.playSound(randomSound);
-            },
-            
-            testSound: async function() {
-                console.log('=== Testing Sound System ===');
-                console.log('User Agent:', navigator.userAgent);
-                console.log('Is Mobile:', this.isMobileDevice);
-                console.log('AudioContext state:', this.audioContext?.state);
-                console.log('Is Initialized:', this.isInitialized);
-                console.log('Sound buffers loaded:', Object.keys(this.soundBuffers));
-                
-                if (this.audioContext) {
-                    try {
-                        await this.audioContext.resume();
-                        console.log('Resume successful, state now:', this.audioContext.state);
-                        await this.playSound('button1');
-                        console.log('Test sound played');
-                    } catch (e) {
-                        console.error('Test failed:', e);
-                    }
-                }
             }
         };
 
