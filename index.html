@@ -325,7 +325,7 @@
         }
 
         .sudoku-cell.selected.user span {
-            color: #1565c0; /* Bleu plus foncÃ© */
+            color: #1565c0; /* Bleu plus foncé */
         }
 
         .sudoku-cell.flash-conflict {
@@ -819,7 +819,7 @@
                 <div class="warning-text" id="versionText">By Victor Burtman</div>
                 
                 <button class="option-button" onclick="showOptionsModal()">
-                    <span>âš™ï¸</span>
+                    <span>⚙️</span>
                     <span>Options</span>
                 </button>
                 
@@ -835,18 +835,18 @@
             <div class="app-bar">
                 <div class="app-bar-top-row">
                     <div class="game-info">
-                        <button class="back-button" onclick="goBackToMenu()">â†</button>
+                        <button class="back-button" onclick="goBackToMenu()">←</button>
                         <div class="app-title" id="gameTitle">Sudoku</div>
                     </div>
                     <div class="game-actions">
                         <div id="errorDisplay" class="error-display hidden"></div>
-                        <button class="btn btn-secondary" onclick="showOptionsModal()">âš™ï¸</button>
-                        <button class="btn btn-secondary" onclick="confirmResetGame()">ðŸ”„</button>
+                        <button class="btn btn-secondary" onclick="showOptionsModal()">⚙️</button>
+                        <button class="btn btn-secondary" onclick="confirmResetGame()">🔄</button>
                     </div>
                 </div>
                 <div class="app-bar-bottom-row">
                     <div id="timerDisplay" class="timer-display hidden">
-                        <span>â±ï¸</span>
+                        <span>⏱️</span>
                         <span id="timerText">0s</span>
                     </div>
                 </div>
@@ -885,9 +885,9 @@
                 
                 <div class="controls" id="gameControls">
                     <div class="action-buttons">
-                        <button class="action-button undo-button" id="undoButton" onclick="undoLastAction()">âŸ²</button>
-                        <button class="action-button erase-button" onclick="placeNumber(0)">Ã—</button>
-                        <button class="action-button notes-button" id="notesButton" onclick="toggleNotesMode()">âœï¸</button>
+                        <button class="action-button undo-button" id="undoButton" onclick="undoLastAction()">⟲</button>
+                        <button class="action-button erase-button" onclick="placeNumber(0)">×</button>
+                        <button class="action-button notes-button" id="notesButton" onclick="toggleNotesMode()">✏️</button>
                     </div>
                     
                     <div class="number-buttons" id="numberButtons"></div>
@@ -916,7 +916,7 @@
         <div id="loadingModal" class="modal">
             <div class="modal-content">
                 <div class="loading">
-                    <div style="margin-right: 10px;">â³</div>
+                    <div style="margin-right: 10px;">⏳</div>
                     <div id="loadingText">Generating grid...</div>
                 </div>
                 <div id="loadingAnimationContainer" style="width: 120px; height: 120px; margin: 15px auto 0;"></div>
@@ -937,7 +937,7 @@
 
         <div id="resetConfirmModal" class="modal">
             <div class="modal-content">
-                <div class="modal-title">âš ï¸ Reset Game</div>
+                <div class="modal-title">⚠️ Reset Game</div>
                 <p>Are you sure you want to reset the current game?</p>
                 <p style="color: #ff9800; font-size: 14px; margin-top: 10px;">All your progress will be lost!</p>
                 <div class="modal-actions">
@@ -1570,14 +1570,14 @@
             content.innerHTML = `
                 ${inGame ? `
                 <div class="option-item clickable" onclick="shareGrid(); closeOptionsModal();">
-                    <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 16px;">ðŸ“¤</div>
+                    <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 16px;">📤</div>
                     <div class="option-details">
                         <div class="option-title">Share This Grid</div>
                         <div class="option-subtitle">Generate a link to share this puzzle with friends</div>
                     </div>
                 </div>
                 <div class="option-item clickable" onclick="exportCurrentState(); closeOptionsModal();">
-                    <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 16px;">ðŸ“‹</div>
+                    <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 16px;">📋</div>
                     <div class="option-details">
                         <div class="option-title">Export Current State</div>
                         <div class="option-subtitle">Copy current grid state as JSON for AI assistance</div>
@@ -1587,7 +1587,7 @@
                 <div class="option-item">
                     <div class="checkbox ${options.indicativeMode ? 'checked' : ''}" 
                          onclick="toggleOption('indicativeMode', this)">
-                        ${options.indicativeMode ? 'âœ“' : ''}
+                        ${options.indicativeMode ? '✓' : ''}
                     </div>
                     <div class="option-details">
                         <div class="option-title">Smart Hint Mode</div>
@@ -1597,7 +1597,7 @@
                 <div class="option-item">
                     <div class="checkbox ${options.highlightMode ? 'checked' : ''}" 
                          onclick="toggleOption('highlightMode', this)">
-                        ${options.highlightMode ? 'âœ“' : ''}
+                        ${options.highlightMode ? '✓' : ''}
                     </div>
                     <div class="option-details">
                         <div class="option-title">Highlight</div>
@@ -1607,7 +1607,7 @@
                 <div class="option-item">
                     <div class="checkbox ${options.showTimer ? 'checked' : ''}" 
                          onclick="toggleOption('showTimer', this)">
-                        ${options.showTimer ? 'âœ“' : ''}
+                        ${options.showTimer ? '✓' : ''}
                     </div>
                     <div class="option-details">
                         <div class="option-title">Show Timer</div>
@@ -1617,7 +1617,7 @@
                 <div class="option-item">
                     <div class="checkbox ${options.showCoordinates ? 'checked' : ''}" 
                          onclick="toggleOption('showCoordinates', this)">
-                        ${options.showCoordinates ? 'âœ“' : ''}
+                        ${options.showCoordinates ? '✓' : ''}
                     </div>
                     <div class="option-details">
                         <div class="option-title">Show Coordinates</div>
@@ -1627,7 +1627,7 @@
                 <div class="option-item">
                     <div class="checkbox ${options.useAnimations ? 'checked' : ''}" 
                          onclick="toggleOption('useAnimations', this)">
-                        ${options.useAnimations ? 'âœ“' : ''}
+                        ${options.useAnimations ? '✓' : ''}
                     </div>
                     <div class="option-details">
                         <div class="option-title">Enable Animations</div>
@@ -1637,7 +1637,7 @@
                 <div class="option-item">
                     <div class="checkbox ${options.soundEnabled ? 'checked' : ''}" 
                          onclick="toggleOption('soundEnabled', this)">
-                        ${options.soundEnabled ? 'âœ“' : ''}
+                        ${options.soundEnabled ? '✓' : ''}
                     </div>
                     <div class="option-details">
                         <div class="option-title">Enable Sounds</div>
@@ -1662,7 +1662,7 @@
             if (element) {
                 if (options[optionName]) {
                     element.classList.add('checked');
-                    element.innerHTML = 'âœ“';
+                    element.innerHTML = '✓';
                 } else {
                     element.classList.remove('checked');
                     element.innerHTML = '';
@@ -2520,7 +2520,7 @@
                 content.innerHTML = `
                     <p>You solved the sudoku!</p>
                     <div style="margin-top: 15px; padding: 12px; background: #1b5e20; border: 1px solid #4caf50; border-radius: 8px; display: flex; align-items: center; gap: 8px;">
-                        <span>â±ï¸</span>
+                        <span>⏱️</span>
                         <strong>Time: ${formatTime(gameState.elapsedTime)}</strong>
                     </div>
                 `;
@@ -2544,7 +2544,7 @@
             modal.classList.add('show');
             
             if (copied) {
-                document.querySelector('#exportModal .modal-title').textContent = 'Export Current State - âœ“ Copied!';
+                document.querySelector('#exportModal .modal-title').textContent = 'Export Current State - ✓ Copied!';
             } else {
                 document.querySelector('#exportModal .modal-title').textContent = 'Export Current State';
             }
@@ -2579,7 +2579,7 @@
                     <div style="background: #1e1e1e; padding: 10px; border-radius: 5px; margin: 15px 0; word-break: break-all; font-size: 12px; border: 1px solid #404040;">
                         ${url}
                     </div>
-                    ${copied ? '<p style="color: #4caf50;">âœ“ Link copied to clipboard!</p>' : '<p style="color: #ff9800;">âš  Please copy the link manually</p>'}
+                    ${copied ? '<p style="color: #4caf50;">✓ Link copied to clipboard!</p>' : '<p style="color: #ff9800;">⚠ Please copy the link manually</p>'}
                     <div class="modal-actions">
                         <button class="btn btn-primary" onclick="this.closest('.modal').remove()">Close</button>
                     </div>
@@ -2625,10 +2625,10 @@
                         modal.className = 'modal show';
                         modal.innerHTML = `
                             <div class="modal-content">
-                                <div class="modal-title">ðŸŽ¯ Shared Grid Loaded!</div>
+                                <div class="modal-title">🎯 Shared Grid Loaded!</div>
                                 <p>You're playing a ${sharedGrid.label} grid shared by someone else.</p>
                                 <p>Note: Smart Hint Mode may not work perfectly with shared grids.</p>
-                                <p>Good luck and have fun! ðŸ€</p>
+                                <p>Good luck and have fun! 🍀</p>
                                 <div class="modal-actions">
                                     <button class="btn btn-primary" onclick="this.closest('.modal').remove()">Let's Play!</button>
                                 </div>
@@ -2650,7 +2650,7 @@
                         modal.className = 'modal show';
                         modal.innerHTML = `
                             <div class="modal-content">
-                                <div class="modal-title">ðŸ’¾ Game Restored!</div>
+                                <div class="modal-title">💾 Game Restored!</div>
                                 <p>Your ${gameState.difficulty} game has been restored.</p>
                                 <p>Continue where you left off!</p>
                                 <div class="modal-actions">
@@ -2674,3 +2674,4 @@
     </script>
 </body>
 </html>
+
