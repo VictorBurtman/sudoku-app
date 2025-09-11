@@ -10,947 +10,131 @@
     <meta name="apple-mobile-web-app-title" content="My Sudoku">
     
     <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
-
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        html, body {
-            font-family: 'Courier New', monospace;
-            background: #121212;
-            color: #ffffff;
-            user-select: none;
-            overflow: hidden;
-            touch-action: manipulation;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            height: 100vh;
-            position: fixed;
-            width: 100%;
-        }
-
-        .app-container {
-            max-width: 480px;
-            margin: 0 auto;
-            background: #1e1e1e;
-            min-height: 100vh;
-        }
-
-        .app-bar {
-            background: #2d2d2d;
-            padding: 8px 16px 12px;
-            border-bottom: 1px solid #404040;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .app-bar-top-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-        }
-        
-        .app-bar-bottom-row {
-            display: flex;
-            justify-content: flex-start; 
-            align-items: center;
-            gap: 16px;
-            width: 100%;
-        }
-
-        .back-button {
-            background: none;
-            border: none;
-            color: #ffffff;
-            font-size: 18px;
-            cursor: pointer;
-            padding: 4px;
-            margin-right: 8px;
-            opacity: 0.8;
-            flex-shrink: 0;
-        }
-
-        .back-button:hover {
-            opacity: 1;
-        }
-
-        .game-info {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex: 1;
-            min-width: 0;
-            overflow: hidden;
-        }
-
-        .game-actions {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            flex-shrink: 0;
-        }
-
-        .app-title {
-            font-size: 16px;
-            font-weight: bold;
-            color: #ffffff;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-
-        .timer-display {
-            background: #1a237e;
-            border: 1px solid #3f51b5;
-            border-radius: 4px;
-            padding: 2px 4px;
-            display: flex;
-            align-items: center;
-            gap: 2px;
-            font-size: 11px;
-            font-weight: bold;
-            color: #90caf9;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
-
-        .error-display {
-            font-weight: bold;
-            font-size: 12px;
-            color: #ffffff;
-            white-space: nowrap;
-            flex-shrink: 0;
-            margin-right: 8px; 
-        }
-
-        .menu-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 80vh;
-            padding: 20px;
-        }
-
-        .main-title {
-            font-size: 48px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            color: #ffffff;
-        }
-
-        .subtitle {
-            font-size: 18px;
-            color: #b0b0b0;
-            margin-bottom: 10px;
-        }
-
-        .warning-text {
-            font-size: 12px;
-            color: #4caf50;
-            font-style: italic;
-            margin-bottom: 30px;
-        }
-
-        .option-button, .difficulty-button {
-            width: 200px;
-            height: 60px;
-            border: none;
-            border-radius: 10px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
-
-        .option-button {
-            background: #404040;
-            color: #ffffff;
-            height: 50px;
-        }
-
-        .option-button:hover {
-            background: #505050;
-        }
-
-        .game-screen {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            min-height: calc(100vh - 80px);
-            gap: 12px;
-        }
-
-        .game-screen.with-coordinates {
-            padding-top: 50px;
-        }
-
-        .sudoku-container {
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-        }
-
-        .sudoku-grid-wrapper {
-            position: relative;
-            display: inline-block;
-        }
-
-        .coordinates-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            pointer-events: none;
-            z-index: 10;
-        }
-
-        .row-coordinates {
-            position: absolute;
-            left: -25px;
-            top: 0;
-            bottom: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-around;
-            align-items: center;
-            width: 20px;
-        }
-
-        .col-coordinates {
-            position: absolute;
-            top: -25px;
-            left: 0;
-            right: 0;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-            height: 20px;
-        }
-
-        .coordinate-label {
-            font-size: 12px;
-            font-weight: bold;
-            color: #90caf9;
-            background: #1a237e;
-            border: 1px solid #3f51b5;
-            border-radius: 3px;
-            width: 18px;
-            height: 18px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-        }
-
-        .sudoku-grid {
-            width: calc(100vw - 30px);
-            max-width: 450px;
-            height: calc(100vw - 30px);
-            max-height: 450px;
-            aspect-ratio: 1;
-            border: 3px solid #ffffff;
-            display: grid;
-            grid-template-columns: repeat(9, 1fr);
-            grid-template-rows: repeat(9, 1fr);
-            user-select: none;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            -webkit-touch-callout: none;
-            margin: 0 auto;
-        }
-
-        .sudoku-grid.with-coordinates {
-            width: calc(100vw - 80px);
-            max-width: 400px;
-            height: calc(100vw - 80px);
-            max-height: 400px;
-        }
-
-        .sudoku-grid.no-events, .controls.no-events {
-            pointer-events: none;
-        }
-
-        .sudoku-cell {
-            border: 0.5px solid #666666;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 32px;
-            font-weight: 300;
-            cursor: pointer;
-            position: relative;
-            background: #2d2d2d;
-            color: #ffffff;
-            overflow: hidden;
-            transition: background-color 0.3s ease;
-        }
-
-        .sudoku-cell.thick-right { border-right: 2px solid #ffffff; }
-        .sudoku-cell.thick-bottom { border-bottom: 2px solid #ffffff; }
-        .sudoku-cell.selected { 
-            background: #ffb74d !important; 
-            color: #ffffff;
-        }
-        .sudoku-cell.error { 
-            background: #d32f2f !important; 
-            color: #ffffff !important;
-        }
-        .sudoku-cell.highlight-number { background: #f57c00; }
-        .sudoku-cell.highlight-area { background: #424242; }
-        .sudoku-cell.original { color: #ffffff; }
-        .sudoku-cell.user { color: #90caf9; }
-        
-        .sudoku-cell span {
-            position: relative; 
-            z-index: 2; 
-        }
-
-        .sudoku-cell.selected span {
-            font-weight: 600;
-        }
-
-        .sudoku-cell.selected.user span {
-            color: #1565c0; /* Bleu plus foncé */
-        }
-
-        .sudoku-cell.flash-conflict {
-            animation: flashRed 0.6s ease-in-out;
-        }
-
-        @keyframes flashRed {
-            0% { background-color: #2d2d2d; }
-            50% { background-color: #f44336; }
-            100% { background-color: #2d2d2d; }
-        }
-        
-        .sudoku-cell.initial-fade-in {
-            animation: fadeIn 0.5s ease-in forwards;
-            opacity: 0; 
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        .sudoku-cell.win-animate {
-            animation: winSpreadText 0.8s ease-in-out forwards;
-        }
-        .sudoku-cell.win-animate::after {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            border-radius: 50%;
-            z-index: 20; 
-            animation: winSpreadEffect 0.8s ease-in-out forwards;
-        }
-
-        @keyframes winSpreadEffect {
-            0% { transform: scale(0); background-color: #f57c00; opacity: 1; }
-            50% { transform: scale(1.2); background-color: #f57c00; opacity: 1; border-radius: 10%; }
-            100% { transform: scale(1); background-color: #424242; opacity: 1; border-radius: 0; }
-        }
-
-        @keyframes winSpreadText {
-            0%, 49% { 
-            }
-            50%, 100% { color: #ffffff; }
-        }
-
-        .sudoku-cell::after {
-            content: '';
-            position: absolute;
-            background-color: #f57c00; 
-            transform: scale(0);
-            border-radius: 50%;
-            pointer-events: none;
-            opacity: 0;
-            z-index: 1; 
-        }
-
-        .sudoku-cell.animate-complete::after {
-            top: 2px; left: 2px; right: 2px; bottom: 2px;
-            animation: growAndShrink 0.8s ease-in-out;
-        }
-
-        .sudoku-cell.animate-complete-selected::after {
-            top: 0; left: 0; right: 0; bottom: 0;
-            animation: growAndShrinkFull 0.8s ease-in-out;
-        }
-
-        @keyframes growAndShrink {
-            0% { transform: scale(0); opacity: 1; }
-            50% { transform: scale(1.1); opacity: 1; border-radius: 15%; }
-            90% { transform: scale(1.1); opacity: 1; border-radius: 15%; } 
-            100% { transform: scale(0); opacity: 0; }
-        }
-
-        @keyframes growAndShrinkFull {
-            0% { transform: scale(0); opacity: 1; border-radius: 50%; }
-            50% { transform: scale(1); opacity: 1; border-radius: 0; }
-            90% { transform: scale(1); opacity: 1; border-radius: 0; }
-            100% { transform: scale(0); opacity: 0; }
-        }
-
-        .notes-container {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            grid-template-rows: repeat(3, 1fr);
-            gap: 0;
-            padding: 0;
-        }
-
-        .note {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            color: #ffffff;
-            font-weight: bold;
-            background: none;
-            border-radius: 0;
-        }
-
-        .note.highlighted {
-            background: #f57c00;
-            color: #ffffff;
-        }
-
-        .controls {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 12px;
-            width: 100%;
-        }
-
-        .action-buttons {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-        }
-
-        .action-button {
-            width: 40px;
-            height: 40px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-
-        .erase-button {
-            background: #d32f2f;
-            color: #ffffff;
-            border: 2px solid #f44336;
-            font-size: 18px;
-        }
-
-        .erase-button:hover:not(:disabled) {
-            background: #f44336;
-            border-color: #f66;
-        }
-
-        .notes-button {
-            background: #404040;
-            color: #ffffff;
-            border: 2px solid #606060;
-            position: relative;
-        }
-
-        .notes-button.active {
-            background: #7b1fa2;
-            color: #ffffff;
-            border: 2px solid #ce93d8;
-            box-shadow: 0 0 12px rgba(123, 31, 162, 0.6), 0 0 24px rgba(123, 31, 162, 0.3);
-            transform: scale(1.15);
-        }
-
-        .notes-button.active::after {
-            content: '';
-            position: absolute;
-            top: -4px;
-            right: -4px;
-            width: 8px;
-            height: 8px;
-            background: #4caf50;
-            border-radius: 50%;
-            border: 1px solid #ffffff;
-        }
-
-        .undo-button {
-            background: #404040;
-            color: #ffffff;
-            border: 2px solid #606060;
-        }
-
-        .undo-button:hover:not(:disabled) {
-            background: #505050;
-            border-color: #707070;
-        }
-
-        .undo-button:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-        }
-
-        .action-button:hover:not(:disabled) {
-            opacity: 0.8;
-        }
-
-        .number-buttons {
-            display: flex;
-            gap: 4px;
-            width: 100%;
-            padding: 0;
-        }
-
-        .number-button {
-            flex: 1;
-            height: 70px;
-            border: 2px solid transparent;
-            border-radius: 5px;
-            font-size: 22px;
-            font-weight: bold;
-            cursor: pointer;
-            background: #404040;
-            color: #ffffff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s ease;
-        }
-
-        .number-button:hover:not(.highlighted) {
-            background: #505050;
-        }
-
-        .number-button:disabled {
-            opacity: 0.3;
-            cursor: not-allowed;
-        }
-
-        .number-button.highlighted {
-            background: #ff9800 !important;
-            border: 2px solid #ffb74d !important;
-            box-shadow: inset 0 0 8px rgba(255, 193, 7, 0.3) !important;
-        }
-
-        .remaining-count {
-            font-size: 10px;
-            color: #b0b0b0;
-            font-weight: bold;
-            margin-top: 2px;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 1000;
-        }
-
-        .modal.show { display: flex; }
-
-        .modal-content {
-            background: #2d2d2d;
-            color: #ffffff;
-            margin: auto;
-            padding: 20px;
-            border-radius: 10px;
-            max-width: 400px;
-            width: 90%;
-            border: 1px solid #404040;
-        }
-
-        .modal-title {
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: #ffffff;
-        }
-
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            margin-top: 20px;
-        }
-
-        .btn {
-            padding: 6px 10px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 14px;
-        }
-
-        .btn-primary { 
-            background: #2196f3; 
-            color: white; 
-        }
-        
-        .btn-primary:hover { 
-            background: #1976d2; 
-        }
-
-        .btn-secondary { 
-            background: #404040; 
-            color: #ffffff; 
-        }
-        
-        .btn-secondary:hover { 
-            background: #505050; 
-        }
-
-        .btn-danger {
-            background: #d32f2f;
-            color: #ffffff;
-        }
-
-        .btn-danger:hover {
-            background: #f44336;
-        }
-
-        .option-item {
-            display: flex;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px solid #404040;
-        }
-
-        .option-item:last-child { border-bottom: none; }
-
-        .option-item.clickable {
-            cursor: pointer;
-            transition: background 0.2s ease;
-        }
-
-        .option-item.clickable:hover {
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .checkbox {
-            width: 20px;
-            height: 20px;
-            border: 2px solid #666666;
-            border-radius: 3px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            background: #2d2d2d;
-            color: #4caf50;
-            font-weight: bold;
-        }
-
-        .checkbox.checked {
-            background: #4caf50;
-            border-color: #4caf50;
-            color: #ffffff;
-        }
-
-        .option-details {
-            flex: 1;
-            margin-left: 12px;
-        }
-
-        .option-title {
-            font-weight: bold;
-            font-size: 15px;
-            margin-bottom: 3px;
-            color: #ffffff;
-        }
-
-        .option-subtitle {
-            font-size: 11px;
-            color: #b0b0b0;
-        }
-
-        .export-textarea {
-            width: 100%;
-            height: 200px;
-            background: #1e1e1e;
-            border: 1px solid #404040;
-            border-radius: 5px;
-            color: #ffffff;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            padding: 10px;
-            margin: 10px 0;
-            resize: vertical;
-        }
-
-        .hidden { display: none !important; }
-        
-        .loading {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            color: #ffffff;
-        }
-
-        .loading-progress {
-            margin-top: 10px;
-            font-size: 12px;
-            color: #b0b0b0;
-            text-align: center;
-        }
-
-        .animation-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 2000;
-            pointer-events: none;
-        }
-        
-        .animation-overlay lottie-player {
-            position: absolute;
-            transform: translate(-50%, -50%);
-        }
-
-        @media (max-width: 400px) {
-            .sudoku-grid {
-                width: calc(100vw - 15px);
-                height: calc(100vw - 15px);
-                max-width: 385px;
-                max-height: 385px;
-            }
-            
-            .sudoku-grid.with-coordinates {
-                width: calc(100vw - 50px);
-                height: calc(100vw - 50px);
-                max-width: 350px;
-                max-height: 350px;
-            }
-            
-            .game-screen {
-                padding: 10px;
-                gap: 15px;
-            }
-
-            .game-screen.with-coordinates {
-                padding-top: 40px;
-            }
-            
-            .number-buttons {
-                gap: 2px;
-            }
-            
-            .number-button {
-                height: 60px;
-                font-size: 18px;
-            }
-
-            .coordinate-label {
-                font-size: 8px;
-                width: 14px;
-                height: 14px;
-            }
-
-            .row-coordinates {
-                left: -18px;
-                width: 14px;
-            }
-
-            .col-coordinates {
-                top: -18px;
-                height: 14px;
-            }
-
-            .sudoku-container {
-                margin: 0;
-                width: 100%;
-            }
-            
-            .sudoku-cell {
-                font-size: 28px;
-            }
-
-            .note {
-                font-size: 8px;
-            }
-        }
-    </style>
 </head>
 <body>
-    <div class="app-container">
-        <div id="menuScreen" class="screen">
-            <div class="menu-screen">
-                <div class="main-title">SUDOKU</div>
-                <div class="warning-text" id="versionText">By Victor Burtman</div>
-                
-                <button class="option-button" onclick="showOptionsModal()">
-                    <span>⚙️</span>
-                    <span>Options</span>
-                </button>
-                
-                <button class="difficulty-button" style="background: #4caf50; color: white;" onclick="startGame(0.2, 'Very Easy')">Very Easy</button>
-                <button class="difficulty-button" style="background: #8bc34a; color: white;" onclick="startGame(0.35, 'Easy')">Easy</button>
-                <button class="difficulty-button" style="background: #ff9800; color: white;" onclick="startGame(0.5, 'Medium')">Medium</button>
-                <button class="difficulty-button" style="background: #ff5722; color: white;" onclick="startGame(0.65, 'Hard')">Hard</button>
-                <button class="difficulty-button" style="background: #f44336; color: white;" onclick="startGame(0.8, 'Expert')">Expert</button>
-            </div>
-        </div>
-
-        <div id="gameScreen" class="screen hidden">
-            <div class="app-bar">
-                <div class="app-bar-top-row">
-                    <div class="game-info">
-                        <button class="back-button" onclick="goBackToMenu()">←</button>
-                        <div class="app-title" id="gameTitle">Sudoku</div>
-                    </div>
-                    <div class="game-actions">
-                        <div id="errorDisplay" class="error-display hidden"></div>
-                        <button class="btn btn-secondary" onclick="showOptionsModal()">⚙️</button>
-                        <button class="btn btn-secondary" onclick="confirmResetGame()">🔄</button>
-                    </div>
-                </div>
-                <div class="app-bar-bottom-row">
-                    <div id="timerDisplay" class="timer-display hidden">
-                        <span>⏱️</span>
-                        <span id="timerText">0s</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="game-screen" onclick="handleGameAreaClick(event)">
-                <div class="sudoku-container">
-                    <div class="sudoku-grid-wrapper">
-                        <div id="coordinatesContainer" class="coordinates-container hidden">
-                            <div class="row-coordinates">
-                                <div class="coordinate-label">R1</div>
-                                <div class="coordinate-label">R2</div>
-                                <div class="coordinate-label">R3</div>
-                                <div class="coordinate-label">R4</div>
-                                <div class="coordinate-label">R5</div>
-                                <div class="coordinate-label">R6</div>
-                                <div class="coordinate-label">R7</div>
-                                <div class="coordinate-label">R8</div>
-                                <div class="coordinate-label">R9</div>
-                            </div>
-                            <div class="col-coordinates">
-                                <div class="coordinate-label">C1</div>
-                                <div class="coordinate-label">C2</div>
-                                <div class="coordinate-label">C3</div>
-                                <div class="coordinate-label">C4</div>
-                                <div class="coordinate-label">C5</div>
-                                <div class="coordinate-label">C6</div>
-                                <div class="coordinate-label">C7</div>
-                                <div class="coordinate-label">C8</div>
-                                <div class="coordinate-label">C9</div>
-                            </div>
-                        </div>
-                        <div class="sudoku-grid" id="sudokuGrid"></div>
-                    </div>
-                </div>
-                
-                <div class="controls" id="gameControls">
-                    <div class="action-buttons">
-                        <button class="action-button undo-button" id="undoButton" onclick="undoLastAction()">⟲</button>
-                        <button class="action-button erase-button" onclick="placeNumber(0)">×</button>
-                        <button class="action-button notes-button" id="notesButton" onclick="toggleNotesMode()">✏️</button>
-                    </div>
-                    
-                    <div class="number-buttons" id="numberButtons"></div>
-                </div>
-            </div>
-        </div>
-
-        <div id="optionsModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-title">Game Options</div>
-                <div id="optionsContent"></div>
-                <div class="modal-actions">
-                    <button class="btn btn-primary" onclick="closeOptionsModal()">Close</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="gameOverModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-title" id="gameOverTitle"></div>
-                <div id="gameOverContent"></div>
-                <div class="modal-actions" id="gameOverActions"></div>
-            </div>
-        </div>
-
-        <div id="loadingModal" class="modal">
-            <div class="modal-content">
-                <div class="loading">
-                    <div style="margin-right: 10px;">⏳</div>
-                    <div id="loadingText">Generating grid...</div>
-                </div>
-                <div id="loadingAnimationContainer" style="width: 120px; height: 120px; margin: 15px auto 0;"></div>
-                <div class="loading-progress" id="loadingProgress"></div>
-            </div>
-        </div>
-
-        <div id="exportModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-title">Export Current State</div>
-                <p>The current state of your Sudoku has been copied to your clipboard:</p>
-                <textarea class="export-textarea" id="exportTextarea" readonly></textarea>
-                <div class="modal-actions">
-                    <button class="btn btn-primary" onclick="closeExportModal()">Close</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="resetConfirmModal" class="modal">
-            <div class="modal-content">
-                <div class="modal-title">⚠️ Reset Game</div>
-                <p>Are you sure you want to reset the current game?</p>
-                <p style="color: #ff9800; font-size: 14px; margin-top: 10px;">All your progress will be lost!</p>
-                <div class="modal-actions">
-                    <button class="btn btn-secondary" onclick="closeResetConfirmModal()">Cancel</button>
-                    <button class="btn btn-danger" onclick="confirmReset()">Reset Game</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Ton HTML inchangé -->
 
     <script>
-        // --- App Config ---
-        const appVersion = '1.1.2'; // Version updated
+        const appVersion = '1.1.3'; // version mise à jour
 
-        // --- Global State ---
-        let gameState = {
+        const soundManager = {
+            audioContext: null,
+            soundBuffers: {},
+            isInitialized: false,
+            loadingPromise: null,
+            isMobileDevice: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
+            soundQueue: [],
+            isPlaying: false,
+            soundConfig: {
+                intro: `sounds/intro.mp3?v=${appVersion}`,
+                error: `sounds/error.mp3?v=${appVersion}`,
+                victory: `sounds/victory.mp3?v=${appVersion}`,
+                button1: `sounds/button1.mp3?v=${appVersion}`,
+                button2: `sounds/button2.mp3?v=${appVersion}`,
+                pop4: `sounds/pop4.mp3?v=${appVersion}`,
+                pop5: `sounds/pop5.mp3?v=${appVersion}`,
+                completion1: `sounds/completion1.mp3?v=${appVersion}`,
+                completion2: `sounds/completion2.mp3?v=${appVersion}`
+            },
+
+            init: function() {
+                if (this.isInitialized) return Promise.resolve();
+                return new Promise((resolve) => {
+                    try {
+                        const AudioContext = window.AudioContext || window.webkitAudioContext;
+                        this.audioContext = new AudioContext();
+
+                        const unlockWithSilentSound = () => {
+                            if (this.audioContext.state === 'suspended') {
+                                this.audioContext.resume();
+                            }
+                            const buffer = this.audioContext.createBuffer(1, 1, 22050);
+                            const source = this.audioContext.createBufferSource();
+                            source.buffer = buffer;
+                            source.connect(this.audioContext.destination);
+                            source.start(0);
+                        };
+
+                        ['click','touchstart','touchend','mousedown','keydown'].forEach(event => {
+                            document.addEventListener(event, () => {
+                                unlockWithSilentSound();
+                            }, { once: false });
+                        });
+
+                        this.loadingPromise = this.loadAllSounds();
+                        this.isInitialized = true;
+                    } catch (e) {
+                        console.error('Audio init failed:', e);
+                    }
+                });
+            },
+
+            loadAllSounds: async function() {
+                if (!this.audioContext) return;
+                const soundPromises = Object.entries(this.soundConfig).map(async ([name, url]) => {
+                    try {
+                        const response = await fetch(url);
+                        const arrayBuffer = await response.arrayBuffer();
+                        const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+                        this.soundBuffers[name] = audioBuffer;
+                    } catch (e) {
+                        console.error(`Failed to load sound: ${name}`, e);
+                    }
+                });
+                await Promise.all(soundPromises);
+            },
+
+            enqueueSound: function(name) {
+                if (!options.soundEnabled) return;
+                this.soundQueue.push(name);
+                this.playNextInQueue();
+            },
+
+            playNextInQueue: async function() {
+                if (this.isPlaying || this.soundQueue.length === 0) return;
+                this.isPlaying = true;
+
+                const name = this.soundQueue.shift();
+                let duration = 500;
+
+                try {
+                    if (this.audioContext && this.soundBuffers[name]) {
+                        const source = this.audioContext.createBufferSource();
+                        source.buffer = this.soundBuffers[name];
+                        source.connect(this.audioContext.destination);
+                        duration = source.buffer.duration * 1000;
+                        source.start(0);
+                    } else {
+                        const audio = new Audio(this.soundConfig[name]);
+                        duration = await new Promise(res => {
+                            audio.onloadedmetadata = () => res(audio.duration * 1000);
+                            audio.play().catch(() => res(500));
+                        });
+                    }
+                } catch (e) {
+                    console.error("Error playing sound:", e);
+                }
+
+                setTimeout(() => {
+                    this.isPlaying = false;
+                    this.playNextInQueue();
+                }, duration + 50);
+            },
+
+            playPopSound: function() {
+                const popSounds = ['pop4','pop5'];
+                const randomSound = popSounds[Math.floor(Math.random() * popSounds.length)];
+                this.enqueueSound(randomSound);
+            },
+
+            playCompletionSound: function() {
+                const completionSounds = ['completion1','completion2'];
+                const randomSound = completionSounds[Math.floor(Math.random() * completionSounds.length)];
+                this.enqueueSound(randomSound);
+            }
+        };
+
+        // Remplacement global des appels soundManager.playSound('xxx') par soundManager.enqueueSound('xxx')
+    </script>
+</body>
+</html>
