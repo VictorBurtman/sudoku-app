@@ -981,7 +981,6 @@
             showTimer: true,
             showCoordinates: false,
             useAnimations: true,
-            soundEnabled: true
         };
 
         // --- Sudoku Generator ---
@@ -1147,126 +1146,6 @@
         }
         const sudokuGenerator = new SudokuGenerator();
         
-        const soundManager = {
-            audioContext: null,
-            soundBuffers: {},
-            isInitialized: false,
-            loadingPromise: null,
-            isMobileDevice: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
-            soundConfig: {
-                intro: `sounds/intro.mp3?v=${appVersion}`,
-                error: `sounds/error.mp3?v=${appVersion}`,
-                victory: `sounds/victory.mp3?v=${appVersion}`,
-                button1: `sounds/button1.mp3?v=${appVersion}`,
-                button2: `sounds/button2.mp3?v=${appVersion}`,
-                pop4: `sounds/pop4.mp3?v=${appVersion}`,
-                pop5: `sounds/pop5.mp3?v=${appVersion}`,
-                completion1: `sounds/completion1.mp3?v=${appVersion}`,
-                completion2: `sounds/completion2.mp3?v=${appVersion}`
-            },
-        
-            init: function() {
-                if (this.isInitialized) return Promise.resolve();
-                
-                return new Promise((resolve) => {
-                    try {
-                        const AudioContext = window.AudioContext || window.webkitAudioContext;
-                        this.audioContext = new AudioContext();
-                        
-                        if (/Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)) {
-                           this.audioContext.createGain();
-                        }
-
-                        const unlockWithSilentSound = () => {
-                            const silentAudio = new Audio("data:audio/mp3;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV");
-                            silentAudio.play().catch(() => {});
-                            
-                            if (this.audioContext.state === 'suspended') {
-                                this.audioContext.resume();
-                            }
-                            
-                            const buffer = this.audioContext.createBuffer(1, 1, 22050);
-                            const source = this.audioContext.createBufferSource();
-                            source.buffer = buffer;
-                            source.connect(this.audioContext.destination);
-                            source.start(0);
-                        };
-                        
-                        ['click', 'touchstart', 'touchend', 'mousedown', 'keydown'].forEach(event => {
-                            document.addEventListener(event, () => {
-                                unlockWithSilentSound();
-                                if (this.audioContext.state === 'suspended') {
-                                    this.audioContext.resume();
-                                }
-                            }, { once: false });
-                        });
-                        
-                        this.loadingPromise = this.loadAllSounds();
-                        this.isInitialized = true;
-                        
-                    } catch (e) {
-                        console.error('Audio init failed:', e);
-                    }
-                });
-            },
-        
-            loadAllSounds: async function() {
-                if (!this.audioContext) return;
-                const soundPromises = Object.entries(this.soundConfig).map(async ([name, url]) => {
-                    try {
-                        const response = await fetch(url);
-                        const arrayBuffer = await response.arrayBuffer();
-                        const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-                        this.soundBuffers[name] = audioBuffer;
-                    } catch (e) {
-                        console.error(`Failed to load sound: ${name}`, e);
-                    }
-                });
-                await Promise.all(soundPromises);
-            },
-            
-            playSound: async function(name) {
-                if (!options.soundEnabled) return;
-
-                if (this.audioContext && this.audioContext.state === 'suspended') {
-                    try {
-                        await this.audioContext.resume();
-                    } catch (e) {}
-                }
-
-                if (this.audioContext && this.soundBuffers[name]) {
-                    try {
-                        const source = this.audioContext.createBufferSource();
-                        source.buffer = this.soundBuffers[name];
-                        source.connect(this.audioContext.destination);
-                        source.start(0);
-                        return; 
-                    } catch (e) {
-                        console.log('Web Audio failed, trying fallback');
-                    }
-                }
-                
-                try {
-                    const audio = new Audio(this.soundConfig[name]);
-                    audio.play().catch(() => {});
-                } catch (e) {
-                    console.log('All audio methods failed');
-                }
-            },
-            
-            playPopSound: function() {
-                const popSounds = ['pop4', 'pop5'];
-                const randomSound = popSounds[Math.floor(Math.random() * popSounds.length)];
-                this.playSound(randomSound);
-            },
-
-            playCompletionSound: function() {
-                const completionSounds = ['completion1', 'completion2'];
-                const randomSound = completionSounds[Math.floor(Math.random() * completionSounds.length)];
-                this.playSound(randomSound);
-            }
-        };
-
         // --- Animation Manager ---
         const animationManager = {
             overlay: null,
@@ -1523,12 +1402,10 @@
         }
         
         window.goBackToMenu = function() {
-            soundManager.playSound('button2');
             showScreen('menuScreen');
         }
 
         window.startGame = function(difficulty, label) {
-            soundManager.playSound('button2');
             document.getElementById('loadingModal').classList.add('show');
             document.getElementById('loadingText').textContent = 'Generating grid...';
             document.getElementById('loadingProgress').textContent = '';
@@ -1561,7 +1438,6 @@
         }
 
         window.showOptionsModal = function() {
-            soundManager.playSound('button1');
             const modal = document.getElementById('optionsModal');
             const content = document.getElementById('optionsContent');
             
@@ -1634,29 +1510,17 @@
                         <div class="option-subtitle">Enables visual effects for completed rows, columns & blocks</div>
                     </div>
                 </div>
-                <div class="option-item">
-                    <div class="checkbox ${options.soundEnabled ? 'checked' : ''}" 
-                         onclick="toggleOption('soundEnabled', this)">
-                        ${options.soundEnabled ? '✓' : ''}
-                    </div>
-                    <div class="option-details">
-                        <div class="option-title">Enable Sounds</div>
-                        <div class="option-subtitle">Enables sound effects during the game</div>
-                    </div>
-                </div>
             `;
 
             modal.classList.add('show');
         }
 
         window.closeOptionsModal = function() {
-            soundManager.playSound('button2');
             document.getElementById('optionsModal').classList.remove('show');
         }
 
         window.toggleOption = function(optionName, element) {
             options[optionName] = !options[optionName];
-            soundManager.playSound('button2');
             saveOptions();
             
             if (element) {
@@ -1686,7 +1550,6 @@
         }
 
         window.confirmResetGame = function() {
-            soundManager.playSound('button1');
             document.getElementById('resetConfirmModal').classList.add('show');
         }
 
@@ -1702,7 +1565,6 @@
         // --- Game Logic ---
         window.undoLastAction = function() {
             if (gameState.actionHistory.length === 0) return;
-            soundManager.playSound('button1');
             
             const lastAction = gameState.actionHistory.pop();
             
@@ -1746,10 +1608,6 @@
 
             if (gameState.originalGrid[row][col] !== 0) return;
             
-            if (number === 0) { // Erase button
-                soundManager.playSound('button1');
-            }
-
             if (options.indicativeMode && 
                 gameState.currentGrid[row][col] !== 0 && 
                 gameState.solvedGrid.length > 0 && 
@@ -1804,11 +1662,8 @@
                 }
 
                 if (options.indicativeMode && number !== 0) {
-                    if (isCorrectMove(row, col, number)) {
-                        soundManager.playPopSound();
-                    } else {
+                    if (!isCorrectMove(row, col, number)) {
                         if (oldValue === 0) { 
-                            soundManager.playSound('error');
                             gameState.errorCount++;
                             if (gameState.errorCount >= 3) {
                                 gameState.gameLost = true;
@@ -1822,8 +1677,6 @@
                             }
                         }
                     }
-                } else if (number !== 0) {
-                    soundManager.playPopSound();
                 }
             }
 
@@ -1835,8 +1688,8 @@
             const isNowComplete = isSudokuComplete();
             const unitsToAnimate = options.indicativeMode ? getCompletedUnits(row, col) : [];
             
-            if(unitsToAnimate.length > 0) {
-                soundManager.playCompletionSound();
+            if (unitsToAnimate.length > 0) {
+                //soundManager.playCompletionSound();
             }
             
             if (options.useAnimations && unitsToAnimate.length > 0 && !isNowComplete) {
@@ -1875,7 +1728,6 @@
         }
 
         window.toggleNotesMode = function() {
-            soundManager.playSound('button1');
             gameState.notesMode = !gameState.notesMode;
             const button = document.getElementById('notesButton');
             
@@ -1984,8 +1836,6 @@
                 startTimer();
             }
 
-            soundManager.playSound('intro');
-
             updateCoordinatesDisplay();
             saveGameState();
             renderGame();
@@ -2025,7 +1875,6 @@
         }
 
         function flashConflictingCells(row, col, number) {
-            soundManager.playSound('error');
             const conflictCells = [];
             
             for (let c = 0; c < 9; c++) {
@@ -2174,8 +2023,6 @@
         }
 
         function triggerWinAnimation() {
-            soundManager.playSound('victory');
-
             gameState.selectedRow = null;
             gameState.selectedCol = null;
             renderGrid();
@@ -2605,7 +2452,6 @@
 
             const initInteractions = () => {
                 animationManager.init();
-                soundManager.init();
             };
             document.body.addEventListener('click', initInteractions, { once: true });
             document.body.addEventListener('touchstart', initInteractions, { once: true });
@@ -2674,4 +2520,3 @@
     </script>
 </body>
 </html>
-
