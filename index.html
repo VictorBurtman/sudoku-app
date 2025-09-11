@@ -1148,6 +1148,7 @@
         const sudokuGenerator = new SudokuGenerator();
         
         // --- MODIFICATION START: Remplacement complet du soundManager ---
+       // --- MODIFICATION START: Remplacement complet du soundManager ---
         const soundManager = {
             audioContext: null,
             soundBuffers: {},
@@ -1163,7 +1164,6 @@
                 button2: `sounds/button2.mp3?v=${appVersion}`,
                 pop4: `sounds/pop4.mp3?v=${appVersion}`,
                 pop5: `sounds/pop5.mp3?v=${appVersion}`,
-                // --- MODIFICATION: Fichiers .wav remplacés par .mp3 ---
                 completion1: `sounds/completion1.mp3?v=${appVersion}`,
                 completion2: `sounds/completion2.mp3?v=${appVersion}`
             },
@@ -1177,8 +1177,8 @@
                         this.audioContext = new AudioContext();
                         
                         const unlockAudio = () => {
-                            if (this.audioContext.state === 'suspended') {
-                                this.audioContext.resume();
+                            if (this.audioContext && this.audioContext.state === 'suspended') {
+                                this.audioContext.resume().catch(e => console.error("AudioContext resume failed:", e));
                             }
                         };
                         
@@ -1217,14 +1217,24 @@
             },
 
             _processQueue: async function() {
-                if (this.isPlaying || this.soundQueue.length === 0 || !this.audioContext) {
+                if (this.isPlaying || this.soundQueue.length === 0) {
+                    return;
+                }
+                
+                // On vérifie le contexte audio ici, car il est peut-être créé après le premier appel
+                if (!this.audioContext) {
+                    console.warn("AudioContext not available yet, retrying soon.");
+                    setTimeout(() => this._processQueue(), 100);
                     return;
                 }
 
                 if (this.audioContext.state === 'suspended') {
                     try {
                         await this.audioContext.resume();
-                    } catch (e) { return; }
+                    } catch (e) { 
+                        console.error("Could not resume audio context", e);
+                        return; 
+                    }
                 }
 
                 this.isPlaying = true;
@@ -1236,14 +1246,17 @@
                     console.error(`Error playing sound ${name}:`, error);
                 } finally {
                     this.isPlaying = false;
-                    setTimeout(() => this._processQueue(), 50);
+                    // --- CORRECTION CLÉ : Appel direct sans setTimeout ---
+                    // Cela maintient la chaîne de confiance de l'événement utilisateur.
+                    this._processQueue();
                 }
             },
             
             _playSoundInternal: function(name) {
                 return new Promise((resolve, reject) => {
-                    if (!this.soundBuffers[name]) {
-                        // Fallback for sounds that might not be loaded or for robustness
+                    if (!this.soundBuffers[name] || !this.audioContext) {
+                        // Fallback si le buffer n'est pas prêt ou si le contexte a un problème
+                        console.warn(`Sound buffer not found for: ${name}, using HTML5 Audio fallback.`);
                         const audio = new Audio(this.soundConfig[name]);
                         audio.onended = () => resolve();
                         audio.onerror = (e) => reject(e);
@@ -1273,7 +1286,7 @@
                 return completionSounds[Math.floor(Math.random() * completionSounds.length)];
             }
         };
-        // --- MODIFICATION END: Remplacement complet du soundManager ---
+        // --- MODIFICATION END ---
 
         // --- Animation Manager ---
         const animationManager = {
