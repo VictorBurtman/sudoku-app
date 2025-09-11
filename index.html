@@ -819,7 +819,7 @@
                 <div class="warning-text" id="versionText">By Victor Burtman</div>
                 
                 <button class="option-button" onclick="showOptionsModal()">
-                    <span>⚙️</span>
+                    <span>âš™ï¸</span>
                     <span>Options</span>
                 </button>
                 
@@ -835,18 +835,18 @@
             <div class="app-bar">
                 <div class="app-bar-top-row">
                     <div class="game-info">
-                        <button class="back-button" onclick="goBackToMenu()">←</button>
+                        <button class="back-button" onclick="goBackToMenu()">â†</button>
                         <div class="app-title" id="gameTitle">Sudoku</div>
                     </div>
                     <div class="game-actions">
                         <div id="errorDisplay" class="error-display hidden"></div>
-                        <button class="btn btn-secondary" onclick="showOptionsModal()">⚙️</button>
-                        <button class="btn btn-secondary" onclick="confirmResetGame()">🔄</button>
+                        <button class="btn btn-secondary" onclick="showOptionsModal()">âš™ï¸</button>
+                        <button class="btn btn-secondary" onclick="confirmResetGame()">ðŸ”„</button>
                     </div>
                 </div>
                 <div class="app-bar-bottom-row">
                     <div id="timerDisplay" class="timer-display hidden">
-                        <span>⏲️</span>
+                        <span>â±ï¸</span>
                         <span id="timerText">0s</span>
                     </div>
                 </div>
@@ -885,9 +885,9 @@
                 
                 <div class="controls" id="gameControls">
                     <div class="action-buttons">
-                        <button class="action-button undo-button" id="undoButton" onclick="undoLastAction()">↩</button>
-                        <button class="action-button erase-button" onclick="placeNumber(0)">×</button>
-                        <button class="action-button notes-button" id="notesButton" onclick="toggleNotesMode()">✏️</button>
+                        <button class="action-button undo-button" id="undoButton" onclick="undoLastAction()">âŸ²</button>
+                        <button class="action-button erase-button" onclick="placeNumber(0)">Ã—</button>
+                        <button class="action-button notes-button" id="notesButton" onclick="toggleNotesMode()">âœï¸</button>
                     </div>
                     
                     <div class="number-buttons" id="numberButtons"></div>
@@ -916,7 +916,7 @@
         <div id="loadingModal" class="modal">
             <div class="modal-content">
                 <div class="loading">
-                    <div style="margin-right: 10px;">⏳</div>
+                    <div style="margin-right: 10px;">â³</div>
                     <div id="loadingText">Generating grid...</div>
                 </div>
                 <div id="loadingAnimationContainer" style="width: 120px; height: 120px; margin: 15px auto 0;"></div>
@@ -937,7 +937,7 @@
 
         <div id="resetConfirmModal" class="modal">
             <div class="modal-content">
-                <div class="modal-title">⚠️ Reset Game</div>
+                <div class="modal-title">âš ï¸ Reset Game</div>
                 <p>Are you sure you want to reset the current game?</p>
                 <p style="color: #ff9800; font-size: 14px; margin-top: 10px;">All your progress will be lost!</p>
                 <div class="modal-actions">
@@ -1165,36 +1165,49 @@
                 completion2: `sounds/completion2.wav?v=${appVersion}`
             },
         
-            init: async function() {
-                if (this.isInitialized) return this.loadingPromise;
-                this.isInitialized = true;
-            
-                this.loadingPromise = new Promise(async (resolve) => {
+            init: function() {
+                if (this.isInitialized) return Promise.resolve();
+                
+                return new Promise((resolve) => {
                     try {
                         const AudioContext = window.AudioContext || window.webkitAudioContext;
                         this.audioContext = new AudioContext();
                         
-                        const unlockAudio = () => {
+                        if (/Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)) {
+                           this.audioContext.createGain();
+                        }
+
+                        const unlockWithSilentSound = () => {
+                            const silentAudio = new Audio("data:audio/mp3;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV");
+                            silentAudio.play().catch(() => {});
+                            
                             if (this.audioContext.state === 'suspended') {
                                 this.audioContext.resume();
                             }
-                            document.removeEventListener('click', unlockAudio, true);
-                            document.removeEventListener('touchstart', unlockAudio, true);
+                            
+                            const buffer = this.audioContext.createBuffer(1, 1, 22050);
+                            const source = this.audioContext.createBufferSource();
+                            source.buffer = buffer;
+                            source.connect(this.audioContext.destination);
+                            source.start(0);
                         };
-            
-                        document.addEventListener('click', unlockAudio, { once: true, capture: true });
-                        document.addEventListener('touchstart', unlockAudio, { once: true, capture: true });
-            
-                        await this.loadAllSounds();
-                        console.log("Sound manager ready and all sounds loaded.");
-                        resolve();
-            
+                        
+                        ['click', 'touchstart', 'touchend', 'mousedown', 'keydown'].forEach(event => {
+                            document.addEventListener(event, () => {
+                                unlockWithSilentSound();
+                                if (this.audioContext.state === 'suspended') {
+                                    this.audioContext.resume();
+                                }
+                            }, { once: false });
+                        });
+                        
+                        this.loadingPromise = this.loadAllSounds();
+                        this.isInitialized = true;
+                        
                     } catch (e) {
                         console.error('Audio init failed:', e);
-                        resolve();
                     }
                 });
-                return this.loadingPromise;
             },
         
             loadAllSounds: async function() {
@@ -1213,42 +1226,31 @@
             },
             
             playSound: async function(name) {
-                if (!this.isInitialized) {
-                    await this.init();
-                }
-                
-                if (this.loadingPromise) {
-                    await this.loadingPromise;
-                }
-            
-                if (!options.soundEnabled || !this.audioContext) return;
-            
-                if (this.audioContext.state === 'suspended') {
+                if (!options.soundEnabled) return;
+
+                if (this.audioContext && this.audioContext.state === 'suspended') {
                     try {
                         await this.audioContext.resume();
-                    } catch (e) {
-                        console.error('Could not resume audio context', e);
-                        return;
-                    }
+                    } catch (e) {}
                 }
-            
-                if (this.soundBuffers[name]) {
+
+                if (this.audioContext && this.soundBuffers[name]) {
                     try {
                         const source = this.audioContext.createBufferSource();
                         source.buffer = this.soundBuffers[name];
                         source.connect(this.audioContext.destination);
                         source.start(0);
+                        return; 
                     } catch (e) {
-                        console.error('Web Audio API playback failed:', e);
+                        console.log('Web Audio failed, trying fallback');
                     }
-                } else {
-                    console.warn(`Sound not found in buffer: ${name}. Trying fallback.`);
-                    try {
-                        const audio = new Audio(this.soundConfig[name]);
-                        audio.play().catch(err => console.error('Fallback audio playback failed:', err));
-                    } catch (e) {
-                        console.error('Fallback audio instantiation failed:', e);
-                    }
+                }
+                
+                try {
+                    const audio = new Audio(this.soundConfig[name]);
+                    audio.play().catch(() => {});
+                } catch (e) {
+                    console.log('All audio methods failed');
                 }
             },
             
@@ -1568,14 +1570,14 @@
             content.innerHTML = `
                 ${inGame ? `
                 <div class="option-item clickable" onclick="shareGrid(); closeOptionsModal();">
-                    <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 16px;">📧</div>
+                    <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 16px;">ðŸ“¤</div>
                     <div class="option-details">
                         <div class="option-title">Share This Grid</div>
                         <div class="option-subtitle">Generate a link to share this puzzle with friends</div>
                     </div>
                 </div>
                 <div class="option-item clickable" onclick="exportCurrentState(); closeOptionsModal();">
-                    <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 16px;">📋</div>
+                    <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 16px;">ðŸ“‹</div>
                     <div class="option-details">
                         <div class="option-title">Export Current State</div>
                         <div class="option-subtitle">Copy current grid state as JSON for AI assistance</div>
@@ -1585,7 +1587,7 @@
                 <div class="option-item">
                     <div class="checkbox ${options.indicativeMode ? 'checked' : ''}" 
                          onclick="toggleOption('indicativeMode', this)">
-                        ${options.indicativeMode ? '✓' : ''}
+                        ${options.indicativeMode ? 'âœ“' : ''}
                     </div>
                     <div class="option-details">
                         <div class="option-title">Smart Hint Mode</div>
@@ -1595,7 +1597,7 @@
                 <div class="option-item">
                     <div class="checkbox ${options.highlightMode ? 'checked' : ''}" 
                          onclick="toggleOption('highlightMode', this)">
-                        ${options.highlightMode ? '✓' : ''}
+                        ${options.highlightMode ? 'âœ“' : ''}
                     </div>
                     <div class="option-details">
                         <div class="option-title">Highlight</div>
@@ -1605,7 +1607,7 @@
                 <div class="option-item">
                     <div class="checkbox ${options.showTimer ? 'checked' : ''}" 
                          onclick="toggleOption('showTimer', this)">
-                        ${options.showTimer ? '✓' : ''}
+                        ${options.showTimer ? 'âœ“' : ''}
                     </div>
                     <div class="option-details">
                         <div class="option-title">Show Timer</div>
@@ -1615,7 +1617,7 @@
                 <div class="option-item">
                     <div class="checkbox ${options.showCoordinates ? 'checked' : ''}" 
                          onclick="toggleOption('showCoordinates', this)">
-                        ${options.showCoordinates ? '✓' : ''}
+                        ${options.showCoordinates ? 'âœ“' : ''}
                     </div>
                     <div class="option-details">
                         <div class="option-title">Show Coordinates</div>
@@ -1625,7 +1627,7 @@
                 <div class="option-item">
                     <div class="checkbox ${options.useAnimations ? 'checked' : ''}" 
                          onclick="toggleOption('useAnimations', this)">
-                        ${options.useAnimations ? '✓' : ''}
+                        ${options.useAnimations ? 'âœ“' : ''}
                     </div>
                     <div class="option-details">
                         <div class="option-title">Enable Animations</div>
@@ -1635,7 +1637,7 @@
                 <div class="option-item">
                     <div class="checkbox ${options.soundEnabled ? 'checked' : ''}" 
                          onclick="toggleOption('soundEnabled', this)">
-                        ${options.soundEnabled ? '✓' : ''}
+                        ${options.soundEnabled ? 'âœ“' : ''}
                     </div>
                     <div class="option-details">
                         <div class="option-title">Enable Sounds</div>
@@ -1660,7 +1662,7 @@
             if (element) {
                 if (options[optionName]) {
                     element.classList.add('checked');
-                    element.innerHTML = '✓';
+                    element.innerHTML = 'âœ“';
                 } else {
                     element.classList.remove('checked');
                     element.innerHTML = '';
@@ -2151,7 +2153,7 @@
             const gridEl = document.getElementById('sudokuGrid');
             cells.forEach(([row, col], index) => {
                 setTimeout(() => {
-                    const cellIndex = row * 9 + c;
+                    const cellIndex = row * 9 + col;
                     const cell = gridEl.children[cellIndex];
                     if (cell) {
                         const isSelectedTriggerCell = (row === gameState.selectedRow && col === gameState.selectedCol);
@@ -2518,7 +2520,7 @@
                 content.innerHTML = `
                     <p>You solved the sudoku!</p>
                     <div style="margin-top: 15px; padding: 12px; background: #1b5e20; border: 1px solid #4caf50; border-radius: 8px; display: flex; align-items: center; gap: 8px;">
-                        <span>⏲️</span>
+                        <span>â±ï¸</span>
                         <strong>Time: ${formatTime(gameState.elapsedTime)}</strong>
                     </div>
                 `;
@@ -2542,7 +2544,7 @@
             modal.classList.add('show');
             
             if (copied) {
-                document.querySelector('#exportModal .modal-title').textContent = 'Export Current State - ✓ Copied!';
+                document.querySelector('#exportModal .modal-title').textContent = 'Export Current State - âœ“ Copied!';
             } else {
                 document.querySelector('#exportModal .modal-title').textContent = 'Export Current State';
             }
@@ -2577,7 +2579,7 @@
                     <div style="background: #1e1e1e; padding: 10px; border-radius: 5px; margin: 15px 0; word-break: break-all; font-size: 12px; border: 1px solid #404040;">
                         ${url}
                     </div>
-                    ${copied ? '<p style="color: #4caf50;">✓ Link copied to clipboard!</p>' : '<p style="color: #ff9800;">⚠ Please copy the link manually</p>'}
+                    ${copied ? '<p style="color: #4caf50;">âœ“ Link copied to clipboard!</p>' : '<p style="color: #ff9800;">âš  Please copy the link manually</p>'}
                     <div class="modal-actions">
                         <button class="btn btn-primary" onclick="this.closest('.modal').remove()">Close</button>
                     </div>
@@ -2623,10 +2625,10 @@
                         modal.className = 'modal show';
                         modal.innerHTML = `
                             <div class="modal-content">
-                                <div class="modal-title">🎯 Shared Grid Loaded!</div>
+                                <div class="modal-title">ðŸŽ¯ Shared Grid Loaded!</div>
                                 <p>You're playing a ${sharedGrid.label} grid shared by someone else.</p>
                                 <p>Note: Smart Hint Mode may not work perfectly with shared grids.</p>
-                                <p>Good luck and have fun! 🍀</p>
+                                <p>Good luck and have fun! ðŸ€</p>
                                 <div class="modal-actions">
                                     <button class="btn btn-primary" onclick="this.closest('.modal').remove()">Let's Play!</button>
                                 </div>
@@ -2648,7 +2650,7 @@
                         modal.className = 'modal show';
                         modal.innerHTML = `
                             <div class="modal-content">
-                                <div class="modal-title">💾 Game Restored!</div>
+                                <div class="modal-title">ðŸ’¾ Game Restored!</div>
                                 <p>Your ${gameState.difficulty} game has been restored.</p>
                                 <p>Continue where you left off!</p>
                                 <div class="modal-actions">
