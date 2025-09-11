@@ -1153,6 +1153,8 @@
             isInitialized: false,
             loadingPromise: null,
             isMobileDevice: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
+            isReady: false,
+            loadingPromise: null,
             soundConfig: {
                 intro: `sounds/intro.mp3?v=${appVersion}`,
                 error: `sounds/error.mp3?v=${appVersion}`,
@@ -1165,49 +1167,39 @@
                 completion2: `sounds/completion2.wav?v=${appVersion}`
             },
         
-            init: function() {
+            // Remplace la fonction init() existante dans ton objet soundManager par celle-ci.
+            init: async function() {
                 if (this.isInitialized) return Promise.resolve();
+                this.isInitialized = true; // Empêche les initialisations multiples
                 
-                return new Promise((resolve) => {
+                // On met le loadingPromise ici pour que d'autres fonctions puissent l'attendre
+                this.loadingPromise = new Promise(async (resolve) => {
                     try {
                         const AudioContext = window.AudioContext || window.webkitAudioContext;
                         this.audioContext = new AudioContext();
                         
-                        if (/Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)) {
-                           this.audioContext.createGain();
-                        }
-
-                        const unlockWithSilentSound = () => {
-                            const silentAudio = new Audio("data:audio/mp3;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV");
-                            silentAudio.play().catch(() => {});
-                            
+                        // Logique de déverrouillage que tu as déjà, on la garde.
+                        const unlockAudio = () => {
                             if (this.audioContext.state === 'suspended') {
                                 this.audioContext.resume();
                             }
-                            
-                            const buffer = this.audioContext.createBuffer(1, 1, 22050);
-                            const source = this.audioContext.createBufferSource();
-                            source.buffer = buffer;
-                            source.connect(this.audioContext.destination);
-                            source.start(0);
+                            document.removeEventListener('click', unlockAudio);
+                            document.removeEventListener('touchstart', unlockAudio);
                         };
-                        
-                        ['click', 'touchstart', 'touchend', 'mousedown', 'keydown'].forEach(event => {
-                            document.addEventListener(event, () => {
-                                unlockWithSilentSound();
-                                if (this.audioContext.state === 'suspended') {
-                                    this.audioContext.resume();
-                                }
-                            }, { once: false });
-                        });
-                        
-                        this.loadingPromise = this.loadAllSounds();
-                        this.isInitialized = true;
-                        
+                        document.addEventListener('click', unlockAudio);
+                        document.addEventListener('touchstart', unlockAudio);
+            
+                        // On attend que tous les sons soient réellement chargés
+                        await this.loadAllSounds();
+                        console.log("Sound manager ready and all sounds loaded.");
+                        resolve();
+            
                     } catch (e) {
                         console.error('Audio init failed:', e);
+                        resolve(); // On résout même en cas d'erreur pour ne pas bloquer le jeu
                     }
                 });
+                return this.loadingPromise;
             },
         
             loadAllSounds: async function() {
@@ -1225,47 +1217,51 @@
                 await Promise.all(soundPromises);
             },
             
+            // Remplace la fonction playSound() existante par cette version asynchrone et fiabilisée.
             playSound: async function(name) {
-                if (!options.soundEnabled) return;
-
-                if (this.audioContext && this.audioContext.state === 'suspended') {
+                // Si le manager n'a pas encore été initialisé, on le fait et on attend que ce soit terminé.
+                // C'est la modification clé qui résout la race condition.
+                if (!this.isInitialized) {
+                    await this.init();
+                }
+                
+                // On attend la fin du chargement, au cas où playSound serait appelé juste après init.
+                if (this.loadingPromise) {
+                    await this.loadingPromise;
+                }
+            
+                if (!options.soundEnabled || !this.audioContext) return;
+            
+                // On s'assure que le contexte est actif juste avant de jouer le son.
+                if (this.audioContext.state === 'suspended') {
                     try {
                         await this.audioContext.resume();
-                    } catch (e) {}
+                    } catch (e) {
+                        console.error('Could not resume audio context', e);
+                        return; // On ne peut pas jouer de son si le contexte est bloqué
+                    }
                 }
-
-                if (this.audioContext && this.soundBuffers[name]) {
+            
+                if (this.soundBuffers[name]) {
                     try {
                         const source = this.audioContext.createBufferSource();
                         source.buffer = this.soundBuffers[name];
                         source.connect(this.audioContext.destination);
                         source.start(0);
-                        return; 
                     } catch (e) {
-                        console.log('Web Audio failed, trying fallback');
+                        console.error('Web Audio API playback failed:', e);
+                    }
+                } else {
+                    console.warn(`Sound not found in buffer: ${name}. Trying fallback.`);
+                    // Le fallback avec new Audio() reste une bonne sécurité
+                    try {
+                        const audio = new Audio(this.soundConfig[name]);
+                        audio.play().catch(err => console.error('Fallback audio playback failed:', err));
+                    } catch (e) {
+                        console.error('Fallback audio instantiation failed:', e);
                     }
                 }
-                
-                try {
-                    const audio = new Audio(this.soundConfig[name]);
-                    audio.play().catch(() => {});
-                } catch (e) {
-                    console.log('All audio methods failed');
-                }
             },
-            
-            playPopSound: function() {
-                const popSounds = ['pop4', 'pop5'];
-                const randomSound = popSounds[Math.floor(Math.random() * popSounds.length)];
-                this.playSound(randomSound);
-            },
-
-            playCompletionSound: function() {
-                const completionSounds = ['completion1', 'completion2'];
-                const randomSound = completionSounds[Math.floor(Math.random() * completionSounds.length)];
-                this.playSound(randomSound);
-            }
-        };
 
         // --- Animation Manager ---
         const animationManager = {
