@@ -1147,12 +1147,14 @@
         }
         const sudokuGenerator = new SudokuGenerator();
         
+        // --- MODIFICATION START: Remplacement complet du soundManager ---
         const soundManager = {
             audioContext: null,
             soundBuffers: {},
             isInitialized: false,
             loadingPromise: null,
-            isMobileDevice: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
+            soundQueue: [],
+            isPlaying: false,
             soundConfig: {
                 intro: `sounds/intro.mp3?v=${appVersion}`,
                 error: `sounds/error.mp3?v=${appVersion}`,
@@ -1161,8 +1163,9 @@
                 button2: `sounds/button2.mp3?v=${appVersion}`,
                 pop4: `sounds/pop4.mp3?v=${appVersion}`,
                 pop5: `sounds/pop5.mp3?v=${appVersion}`,
-                completion1: `sounds/completion1.wav?v=${appVersion}`,
-                completion2: `sounds/completion2.wav?v=${appVersion}`
+                // --- MODIFICATION: Fichiers .wav remplacés par .mp3 ---
+                completion1: `sounds/completion1.mp3?v=${appVersion}`,
+                completion2: `sounds/completion2.mp3?v=${appVersion}`
             },
         
             init: function() {
@@ -1173,32 +1176,14 @@
                         const AudioContext = window.AudioContext || window.webkitAudioContext;
                         this.audioContext = new AudioContext();
                         
-                        if (/Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent)) {
-                           this.audioContext.createGain();
-                        }
-
-                        const unlockWithSilentSound = () => {
-                            const silentAudio = new Audio("data:audio/mp3;base64,SUQzBAAAAAABEVRYWFgAAAAtAAADY29tbWVudABCaWdTb3VuZEJhbmsuY29tIC8gTGFTb25vdGhlcXVlLm9yZwBURU5DAAAAHQAAA1N3aXRjaCBQbHVzIMKpIE5DSCBTb2Z0d2FyZQBUSVQyAAAABgAAAzIyMzUAVFNTRQAAAA8AAANMYXZmNTcuODMuMTAwAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV");
-                            silentAudio.play().catch(() => {});
-                            
+                        const unlockAudio = () => {
                             if (this.audioContext.state === 'suspended') {
                                 this.audioContext.resume();
                             }
-                            
-                            const buffer = this.audioContext.createBuffer(1, 1, 22050);
-                            const source = this.audioContext.createBufferSource();
-                            source.buffer = buffer;
-                            source.connect(this.audioContext.destination);
-                            source.start(0);
                         };
                         
-                        ['click', 'touchstart', 'touchend', 'mousedown', 'keydown'].forEach(event => {
-                            document.addEventListener(event, () => {
-                                unlockWithSilentSound();
-                                if (this.audioContext.state === 'suspended') {
-                                    this.audioContext.resume();
-                                }
-                            }, { once: false });
+                        ['click', 'touchstart', 'touchend'].forEach(event => {
+                            document.addEventListener(event, unlockAudio, { once: true });
                         });
                         
                         this.loadingPromise = this.loadAllSounds();
@@ -1225,47 +1210,70 @@
                 await Promise.all(soundPromises);
             },
             
-            playSound: async function(name) {
-                if (!options.soundEnabled) return;
+            queueSound: function(name) {
+                if (!options.soundEnabled || !name) return;
+                this.soundQueue.push(name);
+                this._processQueue();
+            },
 
-                if (this.audioContext && this.audioContext.state === 'suspended') {
-                    try {
-                        await this.audioContext.resume();
-                    } catch (e) {}
+            _processQueue: async function() {
+                if (this.isPlaying || this.soundQueue.length === 0 || !this.audioContext) {
+                    return;
                 }
 
-                if (this.audioContext && this.soundBuffers[name]) {
+                if (this.audioContext.state === 'suspended') {
+                    try {
+                        await this.audioContext.resume();
+                    } catch (e) { return; }
+                }
+
+                this.isPlaying = true;
+                const name = this.soundQueue.shift();
+
+                try {
+                    await this._playSoundInternal(name);
+                } catch (error) {
+                    console.error(`Error playing sound ${name}:`, error);
+                } finally {
+                    this.isPlaying = false;
+                    setTimeout(() => this._processQueue(), 50);
+                }
+            },
+            
+            _playSoundInternal: function(name) {
+                return new Promise((resolve, reject) => {
+                    if (!this.soundBuffers[name]) {
+                        // Fallback for sounds that might not be loaded or for robustness
+                        const audio = new Audio(this.soundConfig[name]);
+                        audio.onended = () => resolve();
+                        audio.onerror = (e) => reject(e);
+                        audio.play().catch(e => reject(e));
+                        return;
+                    }
+
                     try {
                         const source = this.audioContext.createBufferSource();
                         source.buffer = this.soundBuffers[name];
                         source.connect(this.audioContext.destination);
+                        source.onended = () => resolve();
                         source.start(0);
-                        return; 
                     } catch (e) {
-                        console.log('Web Audio failed, trying fallback');
+                        reject(e);
                     }
-                }
-                
-                try {
-                    const audio = new Audio(this.soundConfig[name]);
-                    audio.play().catch(() => {});
-                } catch (e) {
-                    console.log('All audio methods failed');
-                }
+                });
             },
             
-            playPopSound: function() {
+            getRandomPopSoundName: function() {
                 const popSounds = ['pop4', 'pop5'];
-                const randomSound = popSounds[Math.floor(Math.random() * popSounds.length)];
-                this.playSound(randomSound);
+                return popSounds[Math.floor(Math.random() * popSounds.length)];
             },
 
-            playCompletionSound: function() {
+            getRandomCompletionSoundName: function() {
                 const completionSounds = ['completion1', 'completion2'];
-                const randomSound = completionSounds[Math.floor(Math.random() * completionSounds.length)];
-                this.playSound(randomSound);
+                return completionSounds[Math.floor(Math.random() * completionSounds.length)];
             }
         };
+        // --- MODIFICATION END: Remplacement complet du soundManager ---
 
         // --- Animation Manager ---
         const animationManager = {
@@ -1523,12 +1531,14 @@
         }
         
         window.goBackToMenu = function() {
-            soundManager.playSound('button2');
+            // --- MODIFICATION: Utilisation de la file d'attente de sons ---
+            soundManager.queueSound('button2');
             showScreen('menuScreen');
         }
 
         window.startGame = function(difficulty, label) {
-            soundManager.playSound('button2');
+            // --- MODIFICATION: Utilisation de la file d'attente de sons ---
+            soundManager.queueSound('button2');
             document.getElementById('loadingModal').classList.add('show');
             document.getElementById('loadingText').textContent = 'Generating grid...';
             document.getElementById('loadingProgress').textContent = '';
@@ -1561,7 +1571,8 @@
         }
 
         window.showOptionsModal = function() {
-            soundManager.playSound('button1');
+            // --- MODIFICATION: Utilisation de la file d'attente de sons ---
+            soundManager.queueSound('button1');
             const modal = document.getElementById('optionsModal');
             const content = document.getElementById('optionsContent');
             
@@ -1650,13 +1661,15 @@
         }
 
         window.closeOptionsModal = function() {
-            soundManager.playSound('button2');
+            // --- MODIFICATION: Utilisation de la file d'attente de sons ---
+            soundManager.queueSound('button2');
             document.getElementById('optionsModal').classList.remove('show');
         }
 
         window.toggleOption = function(optionName, element) {
             options[optionName] = !options[optionName];
-            soundManager.playSound('button2');
+            // --- MODIFICATION: Utilisation de la file d'attente de sons ---
+            soundManager.queueSound('button2');
             saveOptions();
             
             if (element) {
@@ -1686,7 +1699,8 @@
         }
 
         window.confirmResetGame = function() {
-            soundManager.playSound('button1');
+            // --- MODIFICATION: Utilisation de la file d'attente de sons ---
+            soundManager.queueSound('button1');
             document.getElementById('resetConfirmModal').classList.add('show');
         }
 
@@ -1702,7 +1716,8 @@
         // --- Game Logic ---
         window.undoLastAction = function() {
             if (gameState.actionHistory.length === 0) return;
-            soundManager.playSound('button1');
+            // --- MODIFICATION: Utilisation de la file d'attente de sons ---
+            soundManager.queueSound('button1');
             
             const lastAction = gameState.actionHistory.pop();
             
@@ -1747,7 +1762,8 @@
             if (gameState.originalGrid[row][col] !== 0) return;
             
             if (number === 0) { // Erase button
-                soundManager.playSound('button1');
+                // --- MODIFICATION: Utilisation de la file d'attente de sons ---
+                soundManager.queueSound('button1');
             }
 
             if (options.indicativeMode && 
@@ -1803,17 +1819,26 @@
                     gameState.notesGrid[row][col].clear();
                 }
 
+                // --- MODIFICATION START: Logique de son améliorée ---
+                let unitsToAnimate = [];
                 if (options.indicativeMode && number !== 0) {
-                    if (isCorrectMove(row, col, number)) {
-                        soundManager.playPopSound();
-                    } else {
-                        if (oldValue === 0) { 
-                            soundManager.playSound('error');
+                    const isCorrect = isCorrectMove(row, col, number);
+                    
+                    if (isCorrect) {
+                        unitsToAnimate = getCompletedUnits(row, col);
+                        if (unitsToAnimate.length > 0) {
+                            soundManager.queueSound(soundManager.getRandomCompletionSoundName());
+                        } else {
+                            soundManager.queueSound(soundManager.getRandomPopSoundName());
+                        }
+                    } else { // Incorrect move
+                        if (oldValue === 0) {
+                            soundManager.queueSound('error');
                             gameState.errorCount++;
                             if (gameState.errorCount >= 3) {
                                 gameState.gameLost = true;
                                 gameState.elapsedTime = Date.now() - gameState.startTime;
-                                renderGame(); 
+                                renderGame();
                                 saveGameState();
                                 animationManager.playDefeatAnimation(() => {
                                     showGameOverModal(false);
@@ -1823,8 +1848,10 @@
                         }
                     }
                 } else if (number !== 0) {
-                    soundManager.playPopSound();
+                    // Pour les modes non-indicatifs, on ne peut pas savoir si une ligne est complétée
+                    soundManager.queueSound(soundManager.getRandomPopSoundName());
                 }
+                // --- MODIFICATION END: Logique de son améliorée ---
             }
 
             if (options.indicativeMode) {
@@ -1834,10 +1861,6 @@
 
             const isNowComplete = isSudokuComplete();
             const unitsToAnimate = options.indicativeMode ? getCompletedUnits(row, col) : [];
-            
-            if(unitsToAnimate.length > 0) {
-                soundManager.playCompletionSound();
-            }
             
             if (options.useAnimations && unitsToAnimate.length > 0 && !isNowComplete) {
                 animationManager.playSuccessAnimation(row, col);
@@ -1875,7 +1898,8 @@
         }
 
         window.toggleNotesMode = function() {
-            soundManager.playSound('button1');
+            // --- MODIFICATION: Utilisation de la file d'attente de sons ---
+            soundManager.queueSound('button1');
             gameState.notesMode = !gameState.notesMode;
             const button = document.getElementById('notesButton');
             
@@ -1984,7 +2008,8 @@
                 startTimer();
             }
 
-            soundManager.playSound('intro');
+            // --- MODIFICATION: Utilisation de la file d'attente de sons ---
+            soundManager.queueSound('intro');
 
             updateCoordinatesDisplay();
             saveGameState();
@@ -2025,7 +2050,8 @@
         }
 
         function flashConflictingCells(row, col, number) {
-            soundManager.playSound('error');
+            // --- MODIFICATION: Utilisation de la file d'attente de sons ---
+            soundManager.queueSound('error');
             const conflictCells = [];
             
             for (let c = 0; c < 9; c++) {
@@ -2153,7 +2179,7 @@
             const gridEl = document.getElementById('sudokuGrid');
             cells.forEach(([row, col], index) => {
                 setTimeout(() => {
-                    const cellIndex = row * 9 + col;
+                    const cellIndex = row * 9 + c;
                     const cell = gridEl.children[cellIndex];
                     if (cell) {
                         const isSelectedTriggerCell = (row === gameState.selectedRow && col === gameState.selectedCol);
@@ -2174,7 +2200,8 @@
         }
 
         function triggerWinAnimation() {
-            soundManager.playSound('victory');
+            // --- MODIFICATION: Utilisation de la file d'attente de sons ---
+            soundManager.queueSound('victory');
 
             gameState.selectedRow = null;
             gameState.selectedCol = null;
@@ -2674,4 +2701,3 @@
     </script>
 </body>
 </html>
-
