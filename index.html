@@ -325,7 +325,7 @@
         }
 
         .sudoku-cell.selected.user span {
-            color: #1565c0; /* Bleu plus foncé */
+            color: #1565c0; /* Bleu plus foncÃ© */
         }
 
         .sudoku-cell.flash-conflict {
@@ -846,7 +846,7 @@
                 </div>
                 <div class="app-bar-bottom-row">
                     <div id="timerDisplay" class="timer-display hidden">
-                        <span>⏱️</span>
+                        <span>⏲️</span>
                         <span id="timerText">0s</span>
                     </div>
                 </div>
@@ -885,7 +885,7 @@
                 
                 <div class="controls" id="gameControls">
                     <div class="action-buttons">
-                        <button class="action-button undo-button" id="undoButton" onclick="undoLastAction()">⟲</button>
+                        <button class="action-button undo-button" id="undoButton" onclick="undoLastAction()">↩</button>
                         <button class="action-button erase-button" onclick="placeNumber(0)">×</button>
                         <button class="action-button notes-button" id="notesButton" onclick="toggleNotesMode()">✏️</button>
                     </div>
@@ -1153,8 +1153,6 @@
             isInitialized: false,
             loadingPromise: null,
             isMobileDevice: /iPhone|iPad|iPod|Android/i.test(navigator.userAgent),
-            isReady: false,
-            loadingPromise: null,
             soundConfig: {
                 intro: `sounds/intro.mp3?v=${appVersion}`,
                 error: `sounds/error.mp3?v=${appVersion}`,
@@ -1167,36 +1165,33 @@
                 completion2: `sounds/completion2.wav?v=${appVersion}`
             },
         
-            // Remplace la fonction init() existante dans ton objet soundManager par celle-ci.
             init: async function() {
-                if (this.isInitialized) return Promise.resolve();
-                this.isInitialized = true; // Empêche les initialisations multiples
-                
-                // On met le loadingPromise ici pour que d'autres fonctions puissent l'attendre
+                if (this.isInitialized) return this.loadingPromise;
+                this.isInitialized = true;
+            
                 this.loadingPromise = new Promise(async (resolve) => {
                     try {
                         const AudioContext = window.AudioContext || window.webkitAudioContext;
                         this.audioContext = new AudioContext();
                         
-                        // Logique de déverrouillage que tu as déjà, on la garde.
                         const unlockAudio = () => {
                             if (this.audioContext.state === 'suspended') {
                                 this.audioContext.resume();
                             }
-                            document.removeEventListener('click', unlockAudio);
-                            document.removeEventListener('touchstart', unlockAudio);
+                            document.removeEventListener('click', unlockAudio, true);
+                            document.removeEventListener('touchstart', unlockAudio, true);
                         };
-                        document.addEventListener('click', unlockAudio);
-                        document.addEventListener('touchstart', unlockAudio);
             
-                        // On attend que tous les sons soient réellement chargés
+                        document.addEventListener('click', unlockAudio, { once: true, capture: true });
+                        document.addEventListener('touchstart', unlockAudio, { once: true, capture: true });
+            
                         await this.loadAllSounds();
                         console.log("Sound manager ready and all sounds loaded.");
                         resolve();
             
                     } catch (e) {
                         console.error('Audio init failed:', e);
-                        resolve(); // On résout même en cas d'erreur pour ne pas bloquer le jeu
+                        resolve();
                     }
                 });
                 return this.loadingPromise;
@@ -1217,28 +1212,23 @@
                 await Promise.all(soundPromises);
             },
             
-            // Remplace la fonction playSound() existante par cette version asynchrone et fiabilisée.
             playSound: async function(name) {
-                // Si le manager n'a pas encore été initialisé, on le fait et on attend que ce soit terminé.
-                // C'est la modification clé qui résout la race condition.
                 if (!this.isInitialized) {
                     await this.init();
                 }
                 
-                // On attend la fin du chargement, au cas où playSound serait appelé juste après init.
                 if (this.loadingPromise) {
                     await this.loadingPromise;
                 }
             
                 if (!options.soundEnabled || !this.audioContext) return;
             
-                // On s'assure que le contexte est actif juste avant de jouer le son.
                 if (this.audioContext.state === 'suspended') {
                     try {
                         await this.audioContext.resume();
                     } catch (e) {
                         console.error('Could not resume audio context', e);
-                        return; // On ne peut pas jouer de son si le contexte est bloqué
+                        return;
                     }
                 }
             
@@ -1253,7 +1243,6 @@
                     }
                 } else {
                     console.warn(`Sound not found in buffer: ${name}. Trying fallback.`);
-                    // Le fallback avec new Audio() reste une bonne sécurité
                     try {
                         const audio = new Audio(this.soundConfig[name]);
                         audio.play().catch(err => console.error('Fallback audio playback failed:', err));
@@ -1262,6 +1251,19 @@
                     }
                 }
             },
+            
+            playPopSound: function() {
+                const popSounds = ['pop4', 'pop5'];
+                const randomSound = popSounds[Math.floor(Math.random() * popSounds.length)];
+                this.playSound(randomSound);
+            },
+
+            playCompletionSound: function() {
+                const completionSounds = ['completion1', 'completion2'];
+                const randomSound = completionSounds[Math.floor(Math.random() * completionSounds.length)];
+                this.playSound(randomSound);
+            }
+        };
 
         // --- Animation Manager ---
         const animationManager = {
@@ -1566,7 +1568,7 @@
             content.innerHTML = `
                 ${inGame ? `
                 <div class="option-item clickable" onclick="shareGrid(); closeOptionsModal();">
-                    <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 16px;">📤</div>
+                    <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 16px;">📧</div>
                     <div class="option-details">
                         <div class="option-title">Share This Grid</div>
                         <div class="option-subtitle">Generate a link to share this puzzle with friends</div>
@@ -2149,7 +2151,7 @@
             const gridEl = document.getElementById('sudokuGrid');
             cells.forEach(([row, col], index) => {
                 setTimeout(() => {
-                    const cellIndex = row * 9 + col;
+                    const cellIndex = row * 9 + c;
                     const cell = gridEl.children[cellIndex];
                     if (cell) {
                         const isSelectedTriggerCell = (row === gameState.selectedRow && col === gameState.selectedCol);
@@ -2516,7 +2518,7 @@
                 content.innerHTML = `
                     <p>You solved the sudoku!</p>
                     <div style="margin-top: 15px; padding: 12px; background: #1b5e20; border: 1px solid #4caf50; border-radius: 8px; display: flex; align-items: center; gap: 8px;">
-                        <span>⏱️</span>
+                        <span>⏲️</span>
                         <strong>Time: ${formatTime(gameState.elapsedTime)}</strong>
                     </div>
                 `;
@@ -2670,4 +2672,3 @@
     </script>
 </body>
 </html>
-
