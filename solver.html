@@ -73,18 +73,6 @@
             overflow-y: auto;
         }
 
-        .input-section {
-            display: none;
-        }
-
-        .json-input {
-            display: none;
-        }
-
-        .analyze-btn {
-            display: none;
-        }
-
         .grid-section {
             padding: 16px;
             border-bottom: 1px solid #404040;
@@ -217,15 +205,6 @@
             margin-bottom: 4px;
         }
 
-        .error-message {
-            background: #d32f2f;
-            color: #ffffff;
-            padding: 12px;
-            border-radius: 8px;
-            margin-top: 12px;
-            font-size: 12px;
-        }
-
         .checklist {
             list-style: none;
         }
@@ -291,6 +270,12 @@
             color: #b0b0b0;
         }
 
+        .error-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #f44336;
+        }
+
         /* Media queries pour très petits écrans */
         @media (max-width: 360px) {
             .sudoku-grid {
@@ -305,16 +290,16 @@
                 font-size: 5px;
             }
             
-            .input-section, .grid-section, .analysis-section {
+            .grid-section, .analysis-section {
                 padding: 12px;
             }
         }
 
         /* Style pour les éléments interactifs sur mobile */
         @media (hover: none) and (pointer: coarse) {
-            .analyze-btn:active {
-                background: #1976d2;
-                transform: scale(0.98);
+            .back-button:active {
+                background: rgba(255,255,255,0.1);
+                border-radius: 4px;
             }
         }
     </style>
@@ -323,19 +308,12 @@
     <div class="app-container">
         <div class="app-bar">
             <button class="back-button" onclick="window.close()">←</button>
-            <h1>Assistant Sudoku v1.1</h1>
+            <h1>Assistant Sudoku v1.3</h1>
             <div></div>
         </div>
         
         <div class="main-content">
-            <div class="input-section">
-                <h3>Importer la grille JSON</h3>
-                <textarea class="json-input" id="jsonInput" placeholder="Collez ici le JSON exporté de votre grille de sudoku..."></textarea>
-                <button class="analyze-btn" onclick="analyzeGrid()">Analyser la grille</button>
-                <div id="errorMessage"></div>
-            </div>
-            
-            <div class="grid-section" id="gridSection" style="display: none;">
+            <div class="grid-section" id="gridSection">
                 <div id="gridDisplay"></div>
             </div>
             
@@ -343,7 +321,7 @@
                 <h3>Analyse des techniques</h3>
                 <div id="analysisResult">
                     <div class="loading-state">
-                        Importez une grille pour commencer l'analyse...
+                        Chargement de la grille...
                     </div>
                 </div>
             </div>
@@ -365,29 +343,109 @@
             { name: "X-Wing", description: "Technique du X-Wing", checked: false }
         ];
 
+        function showError(message) {
+            const analysisResult = document.getElementById('analysisResult');
+            if (analysisResult) {
+                analysisResult.innerHTML = `<div class="error-state">${message}</div>`;
+            }
+            console.error('Error:', message);
+        }
+
+        function showLoading(message) {
+            const analysisResult = document.getElementById('analysisResult');
+            if (analysisResult) {
+                analysisResult.innerHTML = `<div class="loading-state">${message}</div>`;
+            }
+        }
+
+        function loadDataFromURL() {
+            const urlParams = new URLSearchParams(window.location.search);
+            console.log('🔍 Checking URL params:', window.location.search);
+            
+            // Cas 1: Données directement dans l'URL
+            const encodedData = urlParams.get('data');
+            if (encodedData) {
+                console.log('📥 Found data in URL, length:', encodedData.length);
+                try {
+                    const decodedData = decodeURIComponent(encodedData);
+                    console.log('🔓 Decoded data length:', decodedData.length);
+                    const data = JSON.parse(decodedData);
+                    console.log('✅ Parsed data successfully:', data);
+                    
+                    if (!data.currentGrid || !data.notesGrid) {
+                        throw new Error("currentGrid ou notesGrid manquants");
+                    }
+                    
+                    currentGrid = data.currentGrid;
+                    originalGrid = data.originalGrid;
+                    notesGrid = data.notesGrid;
+                    
+                    console.log('🎯 Data loaded successfully from URL');
+                    analyzeGrid();
+                    return true;
+                } catch (error) {
+                    console.error('❌ Error loading data from URL:', error);
+                    showError('Erreur URL: ' + error.message);
+                    return false;
+                }
+            }
+            
+            // Cas 2: ID vers localStorage
+            const dataId = urlParams.get('id');
+            if (dataId) {
+                console.log('🆔 Found ID in URL:', dataId);
+                try {
+                    const storedData = localStorage.getItem(dataId);
+                    if (storedData) {
+                        console.log('💾 Found stored data, length:', storedData.length);
+                        localStorage.removeItem(dataId);
+                        
+                        const data = JSON.parse(storedData);
+                        console.log('✅ Parsed stored data successfully:', data);
+                        
+                        if (!data.currentGrid || !data.notesGrid) {
+                            throw new Error("currentGrid ou notesGrid manquants");
+                        }
+                        
+                        currentGrid = data.currentGrid;
+                        originalGrid = data.originalGrid;
+                        notesGrid = data.notesGrid;
+                        
+                        console.log('🎯 Data loaded successfully from localStorage');
+                        analyzeGrid();
+                        return true;
+                    } else {
+                        console.log('❌ No data found in localStorage for ID:', dataId);
+                        showError('Données expirées (ID: ' + dataId + ')');
+                        return false;
+                    }
+                } catch (error) {
+                    console.error('❌ Error with localStorage:', error);
+                    showError('Erreur localStorage: ' + error.message);
+                    return false;
+                }
+            }
+            
+            console.log('❌ No data or id parameter found');
+            return false;
+        }
+
         function analyzeGrid() {
-            const jsonText = document.getElementById('jsonInput').value.trim();
-            const errorDiv = document.getElementById('errorMessage');
+            console.log('🧮 Starting grid analysis...');
+            
+            if (!currentGrid || !notesGrid) {
+                console.error('❌ Missing grid data for analysis');
+                showError('Données de grille manquantes');
+                return;
+            }
             
             try {
-                const data = JSON.parse(jsonText);
-                
-                if (!data.currentGrid || !data.notesGrid) {
-                    throw new Error("Format JSON invalide - currentGrid et notesGrid requis");
-                }
-                
-                currentGrid = data.currentGrid;
-                originalGrid = data.originalGrid;
-                notesGrid = data.notesGrid;
-                
                 displayGrid();
                 performAnalysis();
-                errorDiv.innerHTML = '';
-                
+                console.log('✅ Analysis completed successfully');
             } catch (error) {
-                errorDiv.innerHTML = `<div class="error-message">❌ Erreur: ${error.message}</div>`;
-                document.getElementById('gridSection').style.display = 'none';
-                document.getElementById('analysisResult').innerHTML = '<div class="loading-state">Erreur dans l\'importation...</div>';
+                console.error('❌ Error during analysis:', error);
+                showError('Erreur pendant l\'analyse: ' + error.message);
             }
         }
 
@@ -411,21 +469,17 @@
             `;
             
             document.getElementById('gridDisplay').innerHTML = gridHtml;
-            document.getElementById('gridSection').style.display = 'block';
         }
 
         function performAnalysis() {
-            // Reset techniques
             techniques.forEach(t => t.checked = false);
             
-            // Generate correct candidates for all empty cells
             const correctCandidates = generateCandidates();
             
             let foundTechnique = null;
             let suggestion = null;
             let candidateIssues = checkCandidateDiscrepancies(correctCandidates);
 
-            // 1. Check for Naked Singles
             const nakedSingle = findNakedSingles(correctCandidates);
             if (nakedSingle) {
                 foundTechnique = "Naked Singles";
@@ -433,7 +487,6 @@
                 techniques[0].checked = true;
             }
 
-            // 2. Check for Hidden Singles
             if (!foundTechnique) {
                 const hiddenSingle = findHiddenSingles(correctCandidates);
                 if (hiddenSingle) {
@@ -443,7 +496,6 @@
                 }
             }
 
-            // 3. Check for Naked Pairs
             if (!foundTechnique) {
                 const nakedPair = findNakedPairs(correctCandidates);
                 if (nakedPair) {
@@ -479,17 +531,14 @@
         }
 
         function isValidPlacement(row, col, num) {
-            // Check row
             for (let c = 0; c < 9; c++) {
                 if (currentGrid[row][c] === num) return false;
             }
             
-            // Check column
             for (let r = 0; r < 9; r++) {
                 if (currentGrid[r][col] === num) return false;
             }
             
-            // Check 3x3 box
             const boxRow = Math.floor(row / 3) * 3;
             const boxCol = Math.floor(col / 3) * 3;
             for (let r = boxRow; r < boxRow + 3; r++) {
@@ -510,10 +559,7 @@
                         const userNotes = notesGrid[r][c] || [];
                         const correctNotes = correctCandidates[r][c];
                         
-                        // Find missing candidates
                         const missing = correctNotes.filter(n => !userNotes.includes(n));
-                        
-                        // Find incorrect candidates
                         const incorrect = userNotes.filter(n => !correctNotes.includes(n));
                         
                         if (missing.length > 0 || incorrect.length > 0) {
@@ -549,7 +595,6 @@
         }
 
         function findHiddenSingles(candidates) {
-            // Check rows
             for (let r = 0; r < 9; r++) {
                 for (let digit = 1; digit <= 9; digit++) {
                     if (currentGrid[r].includes(digit)) continue;
@@ -572,7 +617,6 @@
                 }
             }
 
-            // Check columns
             for (let c = 0; c < 9; c++) {
                 for (let digit = 1; digit <= 9; digit++) {
                     if (currentGrid.some(row => row[c] === digit)) continue;
@@ -595,7 +639,6 @@
                 }
             }
 
-            // Check boxes
             for (let boxR = 0; boxR < 3; boxR++) {
                 for (let boxC = 0; boxC < 3; boxC++) {
                     for (let digit = 1; digit <= 9; digit++) {
@@ -631,7 +674,6 @@
         }
 
         function findNakedPairs(candidates) {
-            // Check rows for naked pairs
             for (let r = 0; r < 9; r++) {
                 for (let c1 = 0; c1 < 8; c1++) {
                     if (currentGrid[r][c1] !== 0 || candidates[r][c1].length !== 2) continue;
@@ -640,7 +682,6 @@
                         if (currentGrid[r][c2] !== 0 || candidates[r][c2].length !== 2) continue;
                         
                         if (JSON.stringify(candidates[r][c1]) === JSON.stringify(candidates[r][c2])) {
-                            // Found a naked pair
                             const pair = candidates[r][c1];
                             return {
                                 type: 'elimination',
@@ -671,7 +712,6 @@
             
             html += '</ul>';
 
-            // Display candidate issues if any
             if (candidateIssues.length > 0) {
                 html += `
                     <div class="warning-section">
@@ -699,7 +739,6 @@
             }
 
             if (suggestion) {
-                // Highlight the relevant cell
                 document.querySelectorAll('.cell').forEach(cell => {
                     cell.classList.remove('highlighted');
                 });
@@ -709,7 +748,6 @@
                     if (targetCell) {
                         targetCell.classList.add('highlighted');
                         
-                        // Update the cell to show correct candidates
                         if (correctCandidates[suggestion.row][suggestion.col].length > 0) {
                             const notesDiv = targetCell.querySelector('.notes');
                             if (notesDiv) {
@@ -741,93 +779,16 @@
             document.getElementById('analysisResult').innerHTML = html;
         }
 
-        // Function to load data from URL parameter or localStorage
-        function loadDataFromURL() {
-            const urlParams = new URLSearchParams(window.location.search);
-            console.log('URL params:', urlParams.toString());
-            
-            // Cas 1: Données directement dans l'URL
-            const encodedData = urlParams.get('data');
-            if (encodedData) {
-                console.log('Found data in URL, length:', encodedData.length);
-                try {
-                    const decodedData = decodeURIComponent(encodedData);
-                    console.log('Decoded data length:', decodedData.length);
-                    const data = JSON.parse(decodedData);
-                    console.log('Parsed data:', data);
-                    
-                    if (!data.currentGrid || !data.notesGrid) {
-                        throw new Error("Format JSON invalide - currentGrid ou notesGrid manquants");
-                    }
-                    
-                    currentGrid = data.currentGrid;
-                    originalGrid = data.originalGrid;
-                    notesGrid = data.notesGrid;
-                    
-                    console.log('Data loaded successfully from URL');
-                    analyzeGrid();
-                    return true;
-                } catch (error) {
-                    console.error('Error loading data from URL:', error);
-                    showError('Erreur lors du chargement des données depuis l\'URL: ' + error.message);
-                    return false;
-                }
-            }
-            
-            // Cas 2: ID vers localStorage
-            const dataId = urlParams.get('id');
-            if (dataId) {
-                console.log('Found ID in URL:', dataId);
-                try {
-                    const storedData = localStorage.getItem(dataId);
-                    if (storedData) {
-                        console.log('Found stored data, length:', storedData.length);
-                        // Nettoyer après utilisation
-                        localStorage.removeItem(dataId);
-                        
-                        const data = JSON.parse(storedData);
-                        console.log('Parsed stored data:', data);
-                        
-                        if (!data.currentGrid || !data.notesGrid) {
-                            throw new Error("Format JSON invalide - currentGrid ou notesGrid manquants");
-                        }
-                        
-                        currentGrid = data.currentGrid;
-                        originalGrid = data.originalGrid;
-                        notesGrid = data.notesGrid;
-                        
-                        console.log('Data loaded successfully from localStorage');
-                        analyzeGrid();
-                        return true;
-                    } else {
-                        console.log('No data found in localStorage for ID:', dataId);
-                        showError('Données non trouvées dans le stockage local pour l\'ID: ' + dataId);
-                        return false;
-                    }
-                } catch (error) {
-                    console.error('Error loading data from localStorage:', error);
-                    showError('Erreur lors du chargement des données depuis le stockage local: ' + error.message);
-                    return false;
-                }
-            }
-            
-            console.log('No data or id parameter found in URL');
-            return false;
-        }
-
-        function showError(message) {
-            const analysisResult = document.getElementById('analysisResult');
-            if (analysisResult) {
-                analysisResult.innerHTML = `<div class="loading-state" style="color: #f44336;">${message}</div>`;
-            }
-        }
-
-        // Auto-load data from URL
+        // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
-            if (!loadDataFromURL()) {
-                // Si aucune donnée trouvée, afficher un message d'erreur
-                showError('Aucune grille trouvée. Ouvrez cette page depuis l\'app Sudoku.');
-            }
+            console.log('🚀 Assistant Sudoku v1.3 started');
+            showLoading('Chargement des données...');
+            
+            setTimeout(() => {
+                if (!loadDataFromURL()) {
+                    showError('Aucune grille trouvée. Ouvrez cette page depuis l\'app Sudoku.');
+                }
+            }, 100);
         });
     </script>
 </body>
