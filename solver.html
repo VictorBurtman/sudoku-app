@@ -323,7 +323,7 @@
     <div class="app-container">
         <div class="app-bar">
             <button class="back-button" onclick="window.close()">←</button>
-            <h1>Assistant Sudoku v1.0</h1>
+            <h1>Assistant Sudoku v1.1</h1>
             <div></div>
         </div>
         
@@ -744,27 +744,32 @@
         // Function to load data from URL parameter or localStorage
         function loadDataFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
+            console.log('URL params:', urlParams.toString());
             
             // Cas 1: Données directement dans l'URL
             const encodedData = urlParams.get('data');
             if (encodedData) {
+                console.log('Found data in URL, length:', encodedData.length);
                 try {
                     const decodedData = decodeURIComponent(encodedData);
+                    console.log('Decoded data length:', decodedData.length);
                     const data = JSON.parse(decodedData);
+                    console.log('Parsed data:', data);
                     
                     if (!data.currentGrid || !data.notesGrid) {
-                        throw new Error("Format JSON invalide");
+                        throw new Error("Format JSON invalide - currentGrid ou notesGrid manquants");
                     }
                     
                     currentGrid = data.currentGrid;
                     originalGrid = data.originalGrid;
                     notesGrid = data.notesGrid;
                     
+                    console.log('Data loaded successfully from URL');
                     analyzeGrid();
                     return true;
                 } catch (error) {
                     console.error('Error loading data from URL:', error);
-                    showError('Erreur lors du chargement des données depuis l\'URL');
+                    showError('Erreur lors du chargement des données depuis l\'URL: ' + error.message);
                     return false;
                 }
             }
@@ -772,35 +777,41 @@
             // Cas 2: ID vers localStorage
             const dataId = urlParams.get('id');
             if (dataId) {
+                console.log('Found ID in URL:', dataId);
                 try {
                     const storedData = localStorage.getItem(dataId);
                     if (storedData) {
+                        console.log('Found stored data, length:', storedData.length);
                         // Nettoyer après utilisation
                         localStorage.removeItem(dataId);
                         
                         const data = JSON.parse(storedData);
+                        console.log('Parsed stored data:', data);
                         
                         if (!data.currentGrid || !data.notesGrid) {
-                            throw new Error("Format JSON invalide");
+                            throw new Error("Format JSON invalide - currentGrid ou notesGrid manquants");
                         }
                         
                         currentGrid = data.currentGrid;
                         originalGrid = data.originalGrid;
                         notesGrid = data.notesGrid;
                         
+                        console.log('Data loaded successfully from localStorage');
                         analyzeGrid();
                         return true;
                     } else {
-                        showError('Données non trouvées dans le stockage local');
+                        console.log('No data found in localStorage for ID:', dataId);
+                        showError('Données non trouvées dans le stockage local pour l\'ID: ' + dataId);
                         return false;
                     }
                 } catch (error) {
                     console.error('Error loading data from localStorage:', error);
-                    showError('Erreur lors du chargement des données depuis le stockage local');
+                    showError('Erreur lors du chargement des données depuis le stockage local: ' + error.message);
                     return false;
                 }
             }
             
+            console.log('No data or id parameter found in URL');
             return false;
         }
 
