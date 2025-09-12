@@ -323,7 +323,7 @@
     <div class="app-container">
         <div class="app-bar">
             <button class="back-button" onclick="window.close()">←</button>
-            <h1>Assistant Sudoku</h1>
+            <h1>Assistant Sudoku v1.0</h1>
             <div></div>
         </div>
         
@@ -764,6 +764,8 @@
                     return true;
                 } catch (error) {
                     console.error('Error loading data from URL:', error);
+                    showError('Erreur lors du chargement des données depuis l\'URL');
+                    return false;
                 }
             }
             
@@ -788,23 +790,32 @@
                         
                         analyzeGrid();
                         return true;
+                    } else {
+                        showError('Données non trouvées dans le stockage local');
+                        return false;
                     }
                 } catch (error) {
                     console.error('Error loading data from localStorage:', error);
+                    showError('Erreur lors du chargement des données depuis le stockage local');
+                    return false;
                 }
             }
             
             return false;
         }
 
+        function showError(message) {
+            const analysisResult = document.getElementById('analysisResult');
+            if (analysisResult) {
+                analysisResult.innerHTML = `<div class="loading-state" style="color: #f44336;">${message}</div>`;
+            }
+        }
+
         // Auto-load data from URL
         document.addEventListener('DOMContentLoaded', function() {
             if (!loadDataFromURL()) {
                 // Si aucune donnée trouvée, afficher un message d'erreur
-                const analysisResult = document.getElementById('analysisResult');
-                if (analysisResult) {
-                    analysisResult.innerHTML = '<div class="loading-state">Aucune grille trouvée. Ouvrez cette page depuis l\'app Sudoku.</div>';
-                }
+                showError('Aucune grille trouvée. Ouvrez cette page depuis l\'app Sudoku.');
             }
         });
     </script>
