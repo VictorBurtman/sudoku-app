@@ -1829,7 +1829,6 @@
         // Ajouter cette fonction dans le script de ton app sudoku
         
         window.openSudokuAssistant = function() {
-            // Préparer les données comme pour l'export
             const notesGridForExport = gameState.notesGrid.map(row =>
                 row.map(noteSet => Array.from(noteSet).sort())
             );
@@ -1841,14 +1840,24 @@
                 notesGrid: notesGridForExport
             };
         
-            const jsonString = JSON.stringify(exportData, null, 2);
+            // Compression simple : enlever les espaces et caractères inutiles
+            const compactJson = JSON.stringify(exportData);
             
-            // Encoder les données pour l'URL
-            const encodedData = encodeURIComponent(jsonString);
-            
-            // Ouvrir solver.html avec les données
-            const assistantUrl = `solver.html?data=${encodedData}`;
-            window.open(assistantUrl, '_blank');
+            // Si l'URL est encore trop longue, utiliser localStorage comme fallback
+            if (compactJson.length > 1500) {
+                // Stocker les données localement avec un ID unique
+                const dataId = 'sudoku_assistant_' + Date.now();
+                localStorage.setItem(dataId, compactJson);
+                
+                // Ouvrir avec juste l'ID
+                const assistantUrl = `solver.html?id=${dataId}`;
+                window.open(assistantUrl, '_blank');
+            } else {
+                // URL normale si les données sont assez petites
+                const encodedData = encodeURIComponent(compactJson);
+                const assistantUrl = `solver.html?data=${encodedData}`;
+                window.open(assistantUrl, '_blank');
+            }
         }
         
         function initializeGame(grid, solution, difficultyLabel, difficulty) {
