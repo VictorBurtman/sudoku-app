@@ -242,28 +242,6 @@
             margin-top: 2px;
         }
 
-        .warning-section {
-            background: #ff9800;
-            color: #ffffff;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 16px;
-        }
-
-        .warning-section h4 {
-            font-size: 14px;
-            margin-bottom: 8px;
-        }
-
-        .warning-section ul {
-            margin-left: 16px;
-            font-size: 12px;
-        }
-
-        .warning-section li {
-            margin-bottom: 4px;
-        }
-
         .loading-state {
             text-align: center;
             padding: 40px 20px;
@@ -308,7 +286,7 @@
     <div class="app-container">
         <div class="app-bar">
             <button class="back-button" onclick="window.close()">←</button>
-            <h1>Assistant Sudoku v1.3</h1>
+            <h1>Assistant Sudoku v1.5</h1>
             <div></div>
         </div>
         
@@ -334,13 +312,13 @@
         let notesGrid = null;
 
         const techniques = [
-            { name: "Naked Singles", description: "Cases avec une seule possibilité", checked: false },
-            { name: "Hidden Singles", description: "Chiffres avec une seule position possible", checked: false },
-            { name: "Naked Pairs", description: "Paires de candidats identiques", checked: false },
-            { name: "Hidden Pairs", description: "Paires cachées dans les candidats", checked: false },
-            { name: "Intersection Removal", description: "Élimination par intersection", checked: false },
-            { name: "Naked Triples", description: "Triplets de candidats", checked: false },
-            { name: "X-Wing", description: "Technique du X-Wing", checked: false }
+            { name: "Dernier chiffre possible", description: "Un seul chiffre peut aller dans cette case" },
+            { name: "Case unique", description: "Ce chiffre ne peut aller que dans une seule case" },
+            { name: "Élimination simple", description: "Supprimer des candidats évidents" },
+            { name: "Paires nues", description: "Deux cases avec les mêmes candidats" },
+            { name: "Pointage", description: "Élimination par intersection" },
+            { name: "Triplets nus", description: "Trois cases avec les mêmes candidats" },
+            { name: "Techniques avancées", description: "X-Wing, Swordfish..." }
         ];
 
         function showError(message) {
@@ -362,7 +340,6 @@
             const urlParams = new URLSearchParams(window.location.search);
             console.log('🔍 Checking URL params:', window.location.search);
             
-            // Cas 1: Données directement dans l'URL
             const encodedData = urlParams.get('data');
             if (encodedData) {
                 console.log('📥 Found data in URL, length:', encodedData.length);
@@ -390,7 +367,6 @@
                 }
             }
             
-            // Cas 2: ID vers localStorage
             const dataId = urlParams.get('id');
             if (dataId) {
                 console.log('🆔 Found ID in URL:', dataId);
@@ -472,40 +448,57 @@
         }
 
         function performAnalysis() {
-            techniques.forEach(t => t.checked = false);
-            
-            const correctCandidates = generateCandidates();
-            
             let foundTechnique = null;
             let suggestion = null;
-            let candidateIssues = checkCandidateDiscrepancies(correctCandidates);
+            let currentTechniqueIndex = -1;
 
-            const nakedSingle = findNakedSingles(correctCandidates);
-            if (nakedSingle) {
-                foundTechnique = "Naked Singles";
-                suggestion = nakedSingle;
-                techniques[0].checked = true;
+            const lastNumber = findLastPossibleNumber();
+            if (lastNumber) {
+                foundTechnique = "Dernier chiffre possible";
+                suggestion = lastNumber;
+                currentTechniqueIndex = 0;
             }
 
             if (!foundTechnique) {
-                const hiddenSingle = findHiddenSingles(correctCandidates);
-                if (hiddenSingle) {
-                    foundTechnique = "Hidden Singles";
-                    suggestion = hiddenSingle;
-                    techniques[1].checked = true;
+                const uniquePlace = findUniquePlace();
+                if (uniquePlace) {
+                    foundTechnique = "Case unique";
+                    suggestion = uniquePlace;
+                    currentTechniqueIndex = 1;
                 }
             }
 
             if (!foundTechnique) {
+                const correctCandidates = generateCandidates();
+                const simpleElimination = findSimpleElimination(correctCandidates);
+                if (simpleElimination) {
+                    foundTechnique = "Élimination simple";
+                    suggestion = simpleElimination;
+                    currentTechniqueIndex = 2;
+                }
+            }
+
+            if (!foundTechnique) {
+                const correctCandidates = generateCandidates();
                 const nakedPair = findNakedPairs(correctCandidates);
                 if (nakedPair) {
-                    foundTechnique = "Naked Pairs";
+                    foundTechnique = "Paires nues";
                     suggestion = nakedPair;
-                    techniques[2].checked = true;
+                    currentTechniqueIndex = 3;
                 }
             }
 
-            displayAnalysis(foundTechnique, suggestion, candidateIssues, correctCandidates);
+            if (!foundTechnique) {
+                const correctCandidates = generateCandidates();
+                const pointing = findPointing(correctCandidates);
+                if (pointing) {
+                    foundTechnique = "Pointage";
+                    suggestion = pointing;
+                    currentTechniqueIndex = 4;
+                }
+            }
+
+            displayAnalysis(foundTechnique, suggestion, currentTechniqueIndex);
         }
 
         function generateCandidates() {
@@ -550,58 +543,40 @@
             return true;
         }
 
-        function checkCandidateDiscrepancies(correctCandidates) {
-            const issues = [];
-            
+        function findLastPossibleNumber() {
             for (let r = 0; r < 9; r++) {
                 for (let c = 0; c < 9; c++) {
                     if (currentGrid[r][c] === 0) {
-                        const userNotes = notesGrid[r][c] || [];
-                        const correctNotes = correctCandidates[r][c];
+                        const possibleNumbers = [];
+                        for (let num = 1; num <= 9; num++) {
+                            if (isValidPlacement(r, c, num)) {
+                                possibleNumbers.push(num);
+                            }
+                        }
                         
-                        const missing = correctNotes.filter(n => !userNotes.includes(n));
-                        const incorrect = userNotes.filter(n => !correctNotes.includes(n));
-                        
-                        if (missing.length > 0 || incorrect.length > 0) {
-                            issues.push({
+                        if (possibleNumbers.length === 1) {
+                            return {
                                 row: r,
                                 col: c,
-                                missing: missing,
-                                incorrect: incorrect,
-                                correct: correctNotes
-                            });
+                                value: possibleNumbers[0],
+                                explanation: `La case (${r+1}, ${c+1}) ne peut contenir que le chiffre ${possibleNumbers[0]}. Tous les autres chiffres (1-9) apparaissent déjà dans sa ligne, colonne ou boîte 3x3.`,
+                                reasoning: `Élimination par contraintes : ligne ${r+1}, colonne ${c+1}, boîte 3x3`
+                            };
                         }
-                    }
-                }
-            }
-            
-            return issues;
-        }
-
-        function findNakedSingles(candidates) {
-            for (let r = 0; r < 9; r++) {
-                for (let c = 0; c < 9; c++) {
-                    if (currentGrid[r][c] === 0 && candidates[r][c].length === 1) {
-                        return {
-                            row: r,
-                            col: c,
-                            value: candidates[r][c][0],
-                            explanation: `La case (${r+1}, ${c+1}) n'a qu'une seule possibilité: ${candidates[r][c][0]}`
-                        };
                     }
                 }
             }
             return null;
         }
 
-        function findHiddenSingles(candidates) {
+        function findUniquePlace() {
             for (let r = 0; r < 9; r++) {
                 for (let digit = 1; digit <= 9; digit++) {
                     if (currentGrid[r].includes(digit)) continue;
                     
                     const possibleCols = [];
                     for (let c = 0; c < 9; c++) {
-                        if (currentGrid[r][c] === 0 && candidates[r][c].includes(digit)) {
+                        if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
                             possibleCols.push(c);
                         }
                     }
@@ -611,7 +586,8 @@
                             row: r,
                             col: possibleCols[0],
                             value: digit,
-                            explanation: `Le chiffre ${digit} ne peut aller qu'en (${r+1}, ${possibleCols[0]+1}) dans cette ligne`
+                            explanation: `Le chiffre ${digit} ne peut aller qu'en (${r+1}, ${possibleCols[0]+1}) dans la ligne ${r+1}. Toutes les autres cases de cette ligne contiennent déjà ce chiffre ou ne peuvent pas l'accueillir.`,
+                            reasoning: `Case unique dans la ligne ${r+1}`
                         };
                     }
                 }
@@ -623,7 +599,7 @@
                     
                     const possibleRows = [];
                     for (let r = 0; r < 9; r++) {
-                        if (currentGrid[r][c] === 0 && candidates[r][c].includes(digit)) {
+                        if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
                             possibleRows.push(r);
                         }
                     }
@@ -633,7 +609,8 @@
                             row: possibleRows[0],
                             col: c,
                             value: digit,
-                            explanation: `Le chiffre ${digit} ne peut aller qu'en (${possibleRows[0]+1}, ${c+1}) dans cette colonne`
+                            explanation: `Le chiffre ${digit} ne peut aller qu'en (${possibleRows[0]+1}, ${c+1}) dans la colonne ${c+1}. Toutes les autres cases de cette colonne contiennent déjà ce chiffre ou ne peuvent pas l'accueillir.`,
+                            reasoning: `Case unique dans la colonne ${c+1}`
                         };
                     }
                 }
@@ -651,7 +628,7 @@
                                     digitFound = true;
                                     break;
                                 }
-                                if (currentGrid[r][c] === 0 && candidates[r][c].includes(digit)) {
+                                if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
                                     possibleCells.push({r, c});
                                 }
                             }
@@ -663,13 +640,36 @@
                                 row: possibleCells[0].r,
                                 col: possibleCells[0].c,
                                 value: digit,
-                                explanation: `Le chiffre ${digit} ne peut aller qu'en (${possibleCells[0].r+1}, ${possibleCells[0].c+1}) dans cette boîte`
+                                explanation: `Le chiffre ${digit} ne peut aller qu'en (${possibleCells[0].r+1}, ${possibleCells[0].c+1}) dans la boîte 3x3 (lignes ${boxR*3+1}-${boxR*3+3}, colonnes ${boxC*3+1}-${boxC*3+3}).`,
+                                reasoning: `Case unique dans la boîte 3x3`
                             };
                         }
                     }
                 }
             }
 
+            return null;
+        }
+
+        function findSimpleElimination(correctCandidates) {
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (currentGrid[r][c] === 0 && correctCandidates[r][c].length === 1) {
+                        const userNotes = notesGrid[r][c] || [];
+                        const correctValue = correctCandidates[r][c][0];
+                        
+                        if (userNotes.length > 1) {
+                            return {
+                                row: r,
+                                col: c,
+                                value: correctValue,
+                                explanation: `En (${r+1}, ${c+1}), seul le ${correctValue} est possible. Vous pouvez éliminer les autres candidats de vos notes et placer ce chiffre.`,
+                                reasoning: `Éliminez de vos notes : ${userNotes.filter(n => n !== correctValue).join(', ')}`
+                            };
+                        }
+                    }
+                }
+            }
             return null;
         }
 
@@ -687,22 +687,68 @@
                                 type: 'elimination',
                                 cells: [{row: r, col: c1}, {row: r, col: c2}],
                                 values: pair,
-                                explanation: `Paire nue ${pair.join(',')} trouvée en (${r+1}, ${c1+1}) et (${r+1}, ${c2+1}). Ces valeurs peuvent être éliminées des autres cases de la ligne.`
+                                explanation: `Paire nue ${pair.join('-')} trouvée en (${r+1}, ${c1+1}) et (${r+1}, ${c2+1}). Ces deux chiffres ne peuvent aller que dans ces deux cases de la ligne ${r+1}.`,
+                                reasoning: `Éliminez ${pair.join(' et ')} des notes des autres cases de la ligne ${r+1}.`
                             };
                         }
                     }
                 }
             }
-
             return null;
         }
 
-        function displayAnalysis(foundTechnique, suggestion, candidateIssues, correctCandidates) {
+        function findPointing(candidates) {
+            for (let boxR = 0; boxR < 3; boxR++) {
+                for (let boxC = 0; boxC < 3; boxC++) {
+                    for (let digit = 1; digit <= 9; digit++) {
+                        const candidatesInBox = [];
+                        
+                        for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
+                            for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
+                                if (currentGrid[r][c] === 0 && candidates[r][c].includes(digit)) {
+                                    candidatesInBox.push({r, c});
+                                }
+                            }
+                        }
+                        
+                        if (candidatesInBox.length >= 2) {
+                            const rows = [...new Set(candidatesInBox.map(cell => cell.r))];
+                            if (rows.length === 1) {
+                                const targetRow = rows[0];
+                                let canEliminate = false;
+                                for (let c = 0; c < 9; c++) {
+                                    if (Math.floor(c / 3) !== boxC && currentGrid[targetRow][c] === 0 && candidates[targetRow][c].includes(digit)) {
+                                        canEliminate = true;
+                                        break;
+                                    }
+                                }
+                                
+                                if (canEliminate) {
+                                    return {
+                                        type: 'pointing',
+                                        digit: digit,
+                                        explanation: `Pointage détecté : le chiffre ${digit} dans la boîte (lignes ${boxR*3+1}-${boxR*3+3}, colonnes ${boxC*3+1}-${boxC*3+3}) ne peut aller que sur la ligne ${targetRow+1}.`,
+                                        reasoning: `Éliminez le ${digit} des notes des autres cases de la ligne ${targetRow+1} qui sont en dehors de cette boîte.`
+                                    };
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
+        function displayAnalysis(foundTechnique, suggestion, currentTechniqueIndex) {
             let html = '<ul class="checklist">';
             
             techniques.forEach((technique, index) => {
-                const isCurrentTechnique = technique.name === foundTechnique;
-                const cssClass = technique.checked ? 'checked' : isCurrentTechnique ? 'current' : '';
+                let cssClass = '';
+                if (index < currentTechniqueIndex) {
+                    cssClass = 'checked';
+                } else if (index === currentTechniqueIndex) {
+                    cssClass = 'current';
+                }
                 
                 html += `<li class="${cssClass}">
                     <strong>${technique.name}</strong>
@@ -711,32 +757,6 @@
             });
             
             html += '</ul>';
-
-            if (candidateIssues.length > 0) {
-                html += `
-                    <div class="warning-section">
-                        <h4>⚠️ Problèmes détectés dans les notes</h4>
-                        <p style="font-size: 12px; margin-bottom: 8px;">Différences entre vos notes et les candidats corrects :</p>
-                        <ul style="font-size: 11px;">
-                `;
-                
-                candidateIssues.slice(0, 3).forEach(issue => {
-                    html += `<li><strong>Case (${issue.row + 1}, ${issue.col + 1})</strong>: `;
-                    if (issue.missing.length > 0) {
-                        html += `Manquants: ${issue.missing.join(', ')}. `;
-                    }
-                    if (issue.incorrect.length > 0) {
-                        html += `Incorrects: ${issue.incorrect.join(', ')}. `;
-                    }
-                    html += `<br>Corrects: ${issue.correct.join(', ')}</li>`;
-                });
-                
-                if (candidateIssues.length > 3) {
-                    html += `<li><em>... et ${candidateIssues.length - 3} autres problèmes</em></li>`;
-                }
-                
-                html += `</ul></div>`;
-            }
 
             if (suggestion) {
                 document.querySelectorAll('.cell').forEach(cell => {
@@ -747,31 +767,23 @@
                     const targetCell = document.querySelector(`[data-row="${suggestion.row}"][data-col="${suggestion.col}"]`);
                     if (targetCell) {
                         targetCell.classList.add('highlighted');
-                        
-                        if (correctCandidates[suggestion.row][suggestion.col].length > 0) {
-                            const notesDiv = targetCell.querySelector('.notes');
-                            if (notesDiv) {
-                                notesDiv.textContent = correctCandidates[suggestion.row][suggestion.col].join('');
-                            } else if (targetCell.textContent.trim() === '') {
-                                targetCell.innerHTML += `<div class="notes">${correctCandidates[suggestion.row][suggestion.col].join('')}</div>`;
-                            }
-                        }
                     }
                 }
 
                 html += `
                     <div class="move-suggestion">
-                        <h4>💡 Suggestion de coup</h4>
+                        <h4>💡 Prochaine étape</h4>
                         <p><strong>Technique:</strong> ${foundTechnique}</p>
                         <p>${suggestion.explanation}</p>
-                        ${suggestion.value ? `<p><strong>Placez le chiffre ${suggestion.value} en position (${suggestion.row + 1}, ${suggestion.col + 1})</strong></p>` : ''}
+                        ${suggestion.reasoning ? `<p><em>${suggestion.reasoning}</em></p>` : ''}
+                        ${suggestion.value ? `<p><strong>➤ Placez le chiffre ${suggestion.value} en position (${suggestion.row + 1}, ${suggestion.col + 1})</strong></p>` : ''}
                     </div>
                 `;
             } else {
                 html += `
                     <div class="technique">
-                        <h4>🎉 Analyse terminée</h4>
-                        <p>Aucune technique évidente trouvée. La grille pourrait nécessiter des techniques plus avancées ou être déjà résolue.</p>
+                        <h4>🎉 Grille analysée</h4>
+                        <p>Aucune technique simple trouvée. La grille nécessite des techniques plus avancées (X-Wing, Swordfish, chaînes logiques...) ou est déjà résolue.</p>
                     </div>
                 `;
             }
@@ -779,9 +791,8 @@
             document.getElementById('analysisResult').innerHTML = html;
         }
 
-        // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Assistant Sudoku v1.3 started');
+            console.log('🚀 Assistant Sudoku v1.5 started');
             showLoading('Chargement des données...');
             
             setTimeout(() => {
