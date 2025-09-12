@@ -740,25 +740,10 @@
         }
 
         function displayAnalysis(foundTechnique, suggestion, currentTechniqueIndex) {
-            let html = '<ul class="checklist">';
-            
-            techniques.forEach((technique, index) => {
-                let cssClass = '';
-                if (index < currentTechniqueIndex) {
-                    cssClass = 'checked';
-                } else if (index === currentTechniqueIndex) {
-                    cssClass = 'current';
-                }
-                
-                html += `<li class="${cssClass}">
-                    <strong>${technique.name}</strong>
-                    <small>${technique.description}</small>
-                </li>`;
-            });
-            
-            html += '</ul>';
+            let html = '';
 
             if (suggestion) {
+                // Surligner la case concernée
                 document.querySelectorAll('.cell').forEach(cell => {
                     cell.classList.remove('highlighted');
                 });
@@ -772,11 +757,10 @@
 
                 html += `
                     <div class="move-suggestion">
-                        <h4>💡 Prochaine étape</h4>
-                        <p><strong>Technique:</strong> ${foundTechnique}</p>
+                        <h4>🎯 ${foundTechnique}</h4>
                         <p>${suggestion.explanation}</p>
                         ${suggestion.reasoning ? `<p><em>${suggestion.reasoning}</em></p>` : ''}
-                        ${suggestion.value ? `<p><strong>➤ Placez le chiffre ${suggestion.value} en position (${suggestion.row + 1}, ${suggestion.col + 1})</strong></p>` : ''}
+                        ${suggestion.value ? `<p><strong>➤ Placez le chiffre ${suggestion.value} en R${suggestion.row + 1}C${suggestion.col + 1}</strong></p>` : ''}
                     </div>
                 `;
             } else {
