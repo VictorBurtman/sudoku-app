@@ -426,42 +426,32 @@
         }
 
         function displayGrid() {
-            let gridHtml = `<div class="sudoku-grid-with-coords">`;
+            const gridHtml = `
+                <div class="sudoku-grid">
+                    ${currentGrid.map((row, r) => 
+                        row.map((cell, c) => {
+                            const isGiven = originalGrid && originalGrid[r][c] !== 0;
+                            const isFilled = cell !== 0;
+                            const notes = notesGrid[r][c] || [];
+                            const notesText = notes.length > 0 ? notes.join('') : '';
+                            
+                            let cellClass = 'cell';
+                            if (isGiven) cellClass += ' given';
+                            else if (isFilled) cellClass += ' filled';
+                            
+                            // Bordures épaisses pour les boîtes 3x3
+                            if ((c + 1) % 3 === 0 && c !== 8) cellClass += ' thick-right';
+                            if ((r + 1) % 3 === 0 && r !== 8) cellClass += ' thick-bottom';
+                            
+                            return `<div class="${cellClass}" data-row="${r}" data-col="${c}">
+                                ${cell !== 0 ? cell : ''}
+                                ${cell === 0 && notes.length > 0 ? `<div class="notes">${notesText}</div>` : ''}
+                            </div>`;
+                        }).join('')
+                    ).join('')}
+                </div>
+            `;
             
-            // Première ligne : coin vide + coordonnées colonnes
-            gridHtml += `<div class="coord-cell empty"></div>`;
-            for (let c = 1; c <= 9; c++) {
-                gridHtml += `<div class="coord-cell"><div class="coordinate-label">C${c}</div></div>`;
-            }
-            
-            // 9 lignes de données
-            for (let r = 0; r < 9; r++) {
-                // Coordonnée de ligne
-                gridHtml += `<div class="coord-cell"><div class="coordinate-label">R${r+1}</div></div>`;
-                
-                // 9 cellules de la grille
-                for (let c = 0; c < 9; c++) {
-                    const isGiven = originalGrid && originalGrid[r][c] !== 0;
-                    const isFilled = currentGrid[r][c] !== 0;
-                    const notes = notesGrid[r][c] || [];
-                    const notesText = notes.length > 0 ? notes.join('') : '';
-                    
-                    let cellClass = 'cell';
-                    if (isGiven) cellClass += ' given';
-                    else if (isFilled) cellClass += ' filled';
-                    
-                    // Bordures épaisses pour les boîtes 3x3
-                    if ((c + 1) % 3 === 0 && c !== 8) cellClass += ' thick-right';
-                    if ((r + 1) % 3 === 0 && r !== 8) cellClass += ' thick-bottom';
-                    
-                    gridHtml += `<div class="${cellClass}" data-row="${r}" data-col="${c}">
-                        ${currentGrid[r][c] !== 0 ? currentGrid[r][c] : ''}
-                        ${currentGrid[r][c] === 0 && notes.length > 0 ? `<div class="notes">${notesText}</div>` : ''}
-                    </div>`;
-                }
-            }
-            
-            gridHtml += `</div>`;
             document.getElementById('gridDisplay').innerHTML = gridHtml;
         }
 
