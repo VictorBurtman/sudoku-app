@@ -798,15 +798,28 @@
             return false;
         }
 
-        // Auto-load example data or URL data
+        // Auto-load data from URL or show manual input
         document.addEventListener('DOMContentLoaded', function() {
             // Try to load from URL first
             if (loadDataFromURL()) {
                 return;
             }
             
-            // Otherwise load example data
-            const exampleData = `{
+            // If no URL data, show manual input section and hide grid
+            const manualInput = document.getElementById('manualInput');
+            const gridSection = document.getElementById('gridSection');
+            const analysisResult = document.getElementById('analysisResult');
+            const jsonInput = document.getElementById('jsonInput');
+            
+            if (manualInput) manualInput.style.display = 'block';
+            if (gridSection) gridSection.style.display = 'none';
+            if (analysisResult) {
+                analysisResult.innerHTML = '<div class="loading-state">Importez une grille pour commencer l\'analyse...</div>';
+            }
+            
+            // Load example data in the textarea
+            if (jsonInput) {
+                const exampleData = `{
   "difficulty": "Expert",
   "originalGrid": [
     [0,9,0,6,0,0,0,0,7],
@@ -842,7 +855,8 @@
     [[4],[3,4,8],[],[],[],[],[3],[8],[8]]
   ]
 }`;
-            document.getElementById('jsonInput').value = exampleData;
+                jsonInput.value = exampleData;
+            }
         });
     </script>
 </body>
