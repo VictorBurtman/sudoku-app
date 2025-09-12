@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assistant Sudoku - Analyseur de Techniques</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: flex;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .left-panel {
+            flex: 1;
+        }
+
+        .right-panel {
+            flex: 1;
+        }
+
+        .input-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 2px solid #e9ecef;
+        }
+
+        .input-section h3 {
+            color: #343a40;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+
+        .json-input {
+            width: 100%;
+            height: 200px;
+            padding: 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        .json-input:focus {
+            outline: none;
+            border-color: #4facfe;
+        }
+
+        .analyze-btn {
+            background: linear-gradient(45deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 15px;
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(79, 172, 254, 0.3);
+        }
+
+        .sudoku-grid {
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            gap: 2px;
+            background: #333;
+            border: 3px solid #333;
+            border-radius: 10px;
+            padding: 5px;
+            margin-bottom: 25px;
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            position: relative;
+        }
+
+        .cell:nth-child(3n):not(:nth-child(9n)) {
+            border-right: 2px solid #333;
+        }
+
+        .cell:nth-child(n+19):nth-child(-n+27),
+        .cell:nth-child(n+46):nth-child(-n+54) {
+            border-bottom: 2px solid #333;
+        }
+
+        .cell.given {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .cell.filled {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+
+        .cell.highlighted {
+            background: #ffecb3 !important;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .notes {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            font-size: 8px;
+            color: #666;
+            line-height: 1;
+        }
+
+        .analysis-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+            border: 2px solid #e9ecef;
+        }
+
+        .analysis-section h3 {
+            color: #343a40;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+        }
+
+        .technique {
+            background: white;
+            border-left: 4px solid #4facfe;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .technique h4 {
+            color: #4facfe;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .technique.found {
+            border-left-color: #28a745;
+            background: #f8fff9;
+        }
+
+        .technique.found h4 {
+            color: #28a745;
+        }
+
+        .move-suggestion {
+            background: linear-gradient(45deg, #28a745 0%, #20c997 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .move-suggestion h4 {
+            font-size: 1.3em;
+            margin-bottom: 10px;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            border: 1px solid #f5c6cb;
+        }
+
+        .checklist {
+            list-style: none;
+        }
+
+        .checklist li {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+            position: relative;
+            padding-left: 30px;
+        }
+
+        .checklist li:before {
+            content: '⚪';
+            position: absolute;
+            left: 0;
+            font-size: 1.2em;
+        }
+
+        .checklist li.checked:before {
+            content: '✅';
+        }
+
+        .checklist li.current:before {
+            content: '🔍';
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧩 Assistant Sudoku</h1>
+            <p>Analyseur intelligent de techniques de résolution</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="left-panel">
+                <div class="input-section">
+                    <h3>📥 Importer la grille JSON</h3>
+                    <textarea class="json-input" id="jsonInput" placeholder="Collez ici le JSON exporté de votre grille de sudoku..."></textarea>
+                    <button class="analyze-btn" onclick="analyzeGrid()">🔍 Analyser la grille</button>
+                    <div id="errorMessage"></div>
+                </div>
+                
+                <div id="gridDisplay"></div>
+            </div>
+            
+            <div class="right-panel">
+                <div class="analysis-section">
+                    <h3>🎯 Analyse des techniques</h3>
+                    <div id="analysisResult">
+                        <p style="text-align: center; color: #666; padding: 40px;">
+                            Importez une grille pour commencer l'analyse...
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentGrid = null;
+        let originalGrid = null;
+        let notesGrid = null;
+
+        const techniques = [
+            { name: "Naked Singles", description: "Cases avec une seule possibilité", checked: false },
+            { name: "Hidden Singles", description: "Chiffres avec une seule position possible", checked: false },
+            { name: "Naked Pairs", description: "Paires de candidats identiques", checked: false },
+            { name: "Hidden Pairs", description: "Paires cachées dans les candidats", checked: false },
+            { name: "Intersection Removal", description: "Élimination par intersection", checked: false },
+            { name: "Naked Triples", description: "Triplets de candidats", checked: false },
+            { name: "X-Wing", description: "Technique du X-Wing", checked: false }
+        ];
+
+        function analyzeGrid() {
+            const jsonText = document.getElementById('jsonInput').value.trim();
+            const errorDiv = document.getElementById('errorMessage');
+            
+            try {
+                const data = JSON.parse(jsonText);
+                
+                if (!data.currentGrid || !data.notesGrid) {
+                    throw new Error("Format JSON invalide - currentGrid et notesGrid requis");
+                }
+                
+                currentGrid = data.currentGrid;
+                originalGrid = data.originalGrid;
+                notesGrid = data.notesGrid;
+                
+                displayGrid();
+                performAnalysis();
+                errorDiv.innerHTML = '';
+                
+            } catch (error) {
+                errorDiv.innerHTML = `<div class="error-message">❌ Erreur: ${error.message}</div>`;
+                document.getElementById('gridDisplay').innerHTML = '';
+                document.getElementById('analysisResult').innerHTML = '<p style="text-align: center; color: #666; padding: 40px;">Erreur dans l\'importation...</p>';
+            }
+        }
+
+        function displayGrid() {
+            const gridHtml = `
+                <div class="sudoku-grid">
+                    ${currentGrid.map((row, r) => 
+                        row.map((cell, c) => {
+                            const isGiven = originalGrid && originalGrid[r][c] !== 0;
+                            const isFilled = cell !== 0;
+                            const notes = notesGrid[r][c] || [];
+                            const notesText = notes.length > 0 ? notes.join('') : '';
+                            
+                            return `<div class="cell ${isGiven ? 'given' : isFilled ? 'filled' : ''}" data-row="${r}" data-col="${c}">
+                                ${cell !== 0 ? cell : ''}
+                                ${cell === 0 && notes.length > 0 ? `<div class="notes">${notesText}</div>` : ''}
+                            </div>`;
+                        }).join('')
+                    ).join('')}
+                </div>
+            `;
+            
+            document.getElementById('gridDisplay').innerHTML = gridHtml;
+        }
+
+        function performAnalysis() {
+            // Reset techniques
+            techniques.forEach(t => t.checked = false);
+            
+            // Generate correct candidates for all empty cells
+            const correctCandidates = generateCandidates();
+            
+            let foundTechnique = null;
+            let suggestion = null;
+            let candidateIssues = checkCandidateDiscrepancies(correctCandidates);
+
+            // 1. Check for Naked Singles
+            const nakedSingle = findNakedSingles(correctCandidates);
+            if (nakedSingle) {
+                foundTechnique = "Naked Singles";
+                suggestion = nakedSingle;
+                techniques[0].checked = true;
+            }
+
+            // 2. Check for Hidden Singles
+            if (!foundTechnique) {
+                const hiddenSingle = findHiddenSingles(correctCandidates);
+                if (hiddenSingle) {
+                    foundTechnique = "Hidden Singles";
+                    suggestion = hiddenSingle;
+                    techniques[1].checked = true;
+                }
+            }
+
+            // 3. Check for Naked Pairs
+            if (!foundTechnique) {
+                const nakedPair = findNakedPairs(correctCandidates);
+                if (nakedPair) {
+                    foundTechnique = "Naked Pairs";
+                    suggestion = nakedPair;
+                    techniques[2].checked = true;
+                }
+            }
+
+            displayAnalysis(foundTechnique, suggestion, candidateIssues, correctCandidates);
+        }
+
+        function generateCandidates() {
+            const candidates = [];
+            
+            for (let r = 0; r < 9; r++) {
+                candidates[r] = [];
+                for (let c = 0; c < 9; c++) {
+                    if (currentGrid[r][c] !== 0) {
+                        candidates[r][c] = [];
+                    } else {
+                        candidates[r][c] = [];
+                        for (let num = 1; num <= 9; num++) {
+                            if (isValidPlacement(r, c, num)) {
+                                candidates[r][c].push(num);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return candidates;
+        }
+
+        function isValidPlacement(row, col, num) {
+            // Check row
+            for (let c = 0; c < 9; c++) {
+                if (currentGrid[row][c] === num) return false;
+            }
+            
+            // Check column
+            for (let r = 0; r < 9; r++) {
+                if (currentGrid[r][col] === num) return false;
+            }
+            
+            // Check 3x3 box
+            const boxRow = Math.floor(row / 3) * 3;
+            const boxCol = Math.floor(col / 3) * 3;
+            for (let r = boxRow; r < boxRow + 3; r++) {
+                for (let c = boxCol; c < boxCol + 3; c++) {
+                    if (currentGrid[r][c] === num) return false;
+                }
+            }
+            
+            return true;
+        }
+
+        function checkCandidateDiscrepancies(correctCandidates) {
+            const issues = [];
+            
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (currentGrid[r][c] === 0) {
+                        const userNotes = notesGrid[r][c] || [];
+                        const correctNotes = correctCandidates[r][c];
+                        
+                        // Find missing candidates
+                        const missing = correctNotes.filter(n => !userNotes.includes(n));
+                        
+                        // Find incorrect candidates
+                        const incorrect = userNotes.filter(n => !correctNotes.includes(n));
+                        
+                        if (missing.length > 0 || incorrect.length > 0) {
+                            issues.push({
+                                row: r,
+                                col: c,
+                                missing: missing,
+                                incorrect: incorrect,
+                                correct: correctNotes
+                            });
+                        }
+                    }
+                }
+            }
+            
+            return issues;
+        }
+
+        function findNakedSingles(candidates) {
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (currentGrid[r][c] === 0 && candidates[r][c].length === 1) {
+                        return {
+                            row: r,
+                            col: c,
+                            value: candidates[r][c][0],
+                            explanation: `La case (${r+1}, ${c+1}) n'a qu'une seule possibilité: ${candidates[r][c][0]}`
+                        };
+                    }
+                }
+            }
+            return null;
+        }
+
+        function findHiddenSingles(candidates) {
+            // Check rows
+            for (let r = 0; r < 9; r++) {
+                for (let digit = 1; digit <= 9; digit++) {
+                    if (currentGrid[r].includes(digit)) continue;
+                    
+                    const possibleCols = [];
+                    for (let c = 0; c < 9; c++) {
+                        if (currentGrid[r][c] === 0 && candidates[r][c].includes(digit)) {
+                            possibleCols.push(c);
+                        }
+                    }
+                    
+                    if (possibleCols.length === 1) {
+                        return {
+                            row: r,
+                            col: possibleCols[0],
+                            value: digit,
+                            explanation: `Le chiffre ${digit} ne peut aller qu'en (${r+1}, ${possibleCols[0]+1}) dans cette ligne`
+                        };
+                    }
+                }
+            }
+
+            // Check columns
+            for (let c = 0; c < 9; c++) {
+                for (let digit = 1; digit <= 9; digit++) {
+                    if (currentGrid.some(row => row[c] === digit)) continue;
+                    
+                    const possibleRows = [];
+                    for (let r = 0; r < 9; r++) {
+                        if (currentGrid[r][c] === 0 && candidates[r][c].includes(digit)) {
+                            possibleRows.push(r);
+                        }
+                    }
+                    
+                    if (possibleRows.length === 1) {
+                        return {
+                            row: possibleRows[0],
+                            col: c,
+                            value: digit,
+                            explanation: `Le chiffre ${digit} ne peut aller qu'en (${possibleRows[0]+1}, ${c+1}) dans cette colonne`
+                        };
+                    }
+                }
+            }
+
+            // Check boxes
+            for (let boxR = 0; boxR < 3; boxR++) {
+                for (let boxC = 0; boxC < 3; boxC++) {
+                    for (let digit = 1; digit <= 9; digit++) {
+                        let digitFound = false;
+                        const possibleCells = [];
+                        
+                        for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
+                            for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
+                                if (currentGrid[r][c] === digit) {
+                                    digitFound = true;
+                                    break;
+                                }
+                                if (currentGrid[r][c] === 0 && candidates[r][c].includes(digit)) {
+                                    possibleCells.push({r, c});
+                                }
+                            }
+                            if (digitFound) break;
+                        }
+                        
+                        if (!digitFound && possibleCells.length === 1) {
+                            return {
+                                row: possibleCells[0].r,
+                                col: possibleCells[0].c,
+                                value: digit,
+                                explanation: `Le chiffre ${digit} ne peut aller qu'en (${possibleCells[0].r+1}, ${possibleCells[0].c+1}) dans cette boîte`
+                            };
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        function findNakedPairs(candidates) {
+            // Check rows for naked pairs
+            for (let r = 0; r < 9; r++) {
+                for (let c1 = 0; c1 < 8; c1++) {
+                    if (currentGrid[r][c1] !== 0 || candidates[r][c1].length !== 2) continue;
+                    
+                    for (let c2 = c1 + 1; c2 < 9; c2++) {
+                        if (currentGrid[r][c2] !== 0 || candidates[r][c2].length !== 2) continue;
+                        
+                        if (JSON.stringify(candidates[r][c1]) === JSON.stringify(candidates[r][c2])) {
+                            // Found a naked pair
+                            const pair = candidates[r][c1];
+                            return {
+                                type: 'elimination',
+                                cells: [{row: r, col: c1}, {row: r, col: c2}],
+                                values: pair,
+                                explanation: `Paire nue ${pair.join(',')} trouvée en (${r+1}, ${c1+1}) et (${r+1}, ${c2+1}). Ces valeurs peuvent être éliminées des autres cases de la ligne.`
+                            };
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        function displayAnalysis(foundTechnique, suggestion, candidateIssues, correctCandidates) {
+            let html = '<ul class="checklist">';
+            
+            techniques.forEach((technique, index) => {
+                const isCurrentTechnique = technique.name === foundTechnique;
+                const cssClass = technique.checked ? 'checked' : isCurrentTechnique ? 'current' : '';
+                
+                html += `<li class="${cssClass}">
+                    <strong>${technique.name}</strong><br>
+                    <small>${technique.description}</small>
+                </li>`;
+            });
+            
+            html += '</ul>';
+
+            // Display candidate issues if any
+            if (candidateIssues.length > 0) {
+                html += `
+                    <div class="technique" style="border-left-color: #ffc107; background: #fffbf0;">
+                        <h4 style="color: #856404;">⚠️ Problèmes détectés dans les notes</h4>
+                        <p>J'ai détecté des différences entre vos notes et les candidats corrects :</p>
+                        <ul style="margin-top: 10px;">
+                `;
+                
+                candidateIssues.slice(0, 3).forEach(issue => {
+                    html += `<li><strong>Case (${issue.row + 1}, ${issue.col + 1})</strong>: `;
+                    if (issue.missing.length > 0) {
+                        html += `Candidats manquants: ${issue.missing.join(', ')}. `;
+                    }
+                    if (issue.incorrect.length > 0) {
+                        html += `Candidats incorrects: ${issue.incorrect.join(', ')}. `;
+                    }
+                    html += `<br><small>Candidats corrects: ${issue.correct.join(', ')}</small></li>`;
+                });
+                
+                if (candidateIssues.length > 3) {
+                    html += `<li><em>... et ${candidateIssues.length - 3} autres problèmes</em></li>`;
+                }
+                
+                html += `
+                        </ul>
+                        <p><small><em>L'analyse utilise les candidats corrects calculés automatiquement.</em></small></p>
+                    </div>
+                `;
+            }
+
+            if (suggestion) {
+                // Highlight the relevant cell
+                document.querySelectorAll('.cell').forEach(cell => {
+                    cell.classList.remove('highlighted');
+                });
+
+                if (suggestion.row !== undefined && suggestion.col !== undefined) {
+                    const targetCell = document.querySelector(`[data-row="${suggestion.row}"][data-col="${suggestion.col}"]`);
+                    if (targetCell) {
+                        targetCell.classList.add('highlighted');
+                        
+                        // Update the cell to show correct candidates
+                        if (correctCandidates[suggestion.row][suggestion.col].length > 0) {
+                            const notesDiv = targetCell.querySelector('.notes');
+                            if (notesDiv) {
+                                notesDiv.textContent = correctCandidates[suggestion.row][suggestion.col].join('');
+                            } else if (targetCell.textContent.trim() === '') {
+                                targetCell.innerHTML += `<div class="notes">${correctCandidates[suggestion.row][suggestion.col].join('')}</div>`;
+                            }
+                        }
+                    }
+                }
+
+                html += `
+                    <div class="move-suggestion">
+                        <h4>💡 Suggestion de coup</h4>
+                        <p><strong>Technique:</strong> ${foundTechnique}</p>
+                        <p>${suggestion.explanation}</p>
+                        ${suggestion.value ? `<p><strong>Placez le chiffre ${suggestion.value} en position (${suggestion.row + 1}, ${suggestion.col + 1})</strong></p>` : ''}
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="technique">
+                        <h4>🎉 Analyse terminée</h4>
+                        <p>Aucune technique évidente trouvée. La grille pourrait nécessiter des techniques plus avancées ou être déjà résolue.</p>
+                    </div>
+                `;
+            }
+
+            document.getElementById('analysisResult').innerHTML = html;
+        }
+
+        // Auto-load example data
+        document.addEventListener('DOMContentLoaded', function() {
+            const exampleData = `{
+  "difficulty": "Expert",
+  "originalGrid": [
+    [0,9,0,6,0,0,0,0,7],
+    [0,1,3,7,0,0,0,0,0],
+    [7,0,8,0,4,0,0,3,0],
+    [0,0,0,0,0,0,5,0,6],
+    [0,5,0,0,0,0,8,0,0],
+    [8,0,0,0,2,0,0,0,3],
+    [9,0,0,0,0,8,0,0,2],
+    [0,0,0,3,0,0,0,4,0],
+    [0,0,2,5,9,7,0,0,0]
+  ],
+  "currentGrid": [
+    [0,9,0,6,0,0,0,0,7],
+    [0,1,3,7,0,0,0,0,0],
+    [7,0,8,2,4,0,0,3,0],
+    [0,2,0,8,0,0,5,0,6],
+    [0,5,0,0,0,6,8,2,0],
+    [8,0,0,0,2,5,0,0,3],
+    [9,0,0,4,0,8,0,0,2],
+    [0,0,0,3,0,2,0,4,0],
+    [0,0,2,5,9,7,0,0,0]
+  ],
+  "notesGrid": [
+    [[2,5],[],[5],[],[1,3,5,8],[1,3],[2,4],[8],[]],
+    [[2,5,6],[],[],[],[5,8],[9],[2,4,6],[6,8],[4,8]],
+    [[],[6],[],[],[],[1,9],[6],[],[]],
+    [[3],[],[9],[],[3,7],[3,4],[],[7],[]],
+    [[3],[],[9],[9],[3,7],[],[],[],[4]],
+    [[],[6],[6,9],[9],[],[],[4,7],[7],[]],
+    [[],[3,7],[5],[],[1,6],[],[3,7],[5,7],[]],
+    [[5],[7,8],[5,7],[],[1,6],[],[7,9],[],[5,8,9]],
+    [[4],[3,4,8],[],[],[],[],[3],[8],[8]]
+  ]
+}`;
+            document.getElementById('jsonInput').value = exampleData;
+        });
+    </script>
+</body>
+</html>
