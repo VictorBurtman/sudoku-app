@@ -370,7 +370,7 @@
     <div class="app-container">
         <div class="app-bar">
             <button class="back-button" onclick="window.close()">←</button>
-            <h1>Assistant Sudoku v2.5</h1>
+            <h1>Assistant Sudoku v2.6</h1>
             <div></div>
         </div>
 
@@ -378,30 +378,6 @@
     <div class="main-content">
         <div class="grid-section" id="gridSection">
             <div class="grid-container">
-                <div class="coordinates-overlay">
-                    <div class="row-coordinates">
-                        <div class="coordinate-label">R1</div>
-                        <div class="coordinate-label">R2</div>
-                        <div class="coordinate-label">R3</div>
-                        <div class="coordinate-label">R4</div>
-                        <div class="coordinate-label">R5</div>
-                        <div class="coordinate-label">R6</div>
-                        <div class="coordinate-label">R7</div>
-                        <div class="coordinate-label">R8</div>
-                        <div class="coordinate-label">R9</div>
-                    </div>
-                    <div class="col-coordinates">
-                        <div class="coordinate-label">C1</div>
-                        <div class="coordinate-label">C2</div>
-                        <div class="coordinate-label">C3</div>
-                        <div class="coordinate-label">C4</div>
-                        <div class="coordinate-label">C5</div>
-                        <div class="coordinate-label">C6</div>
-                        <div class="coordinate-label">C7</div>
-                        <div class="coordinate-label">C8</div>
-                        <div class="coordinate-label">C9</div>
-                    </div>
-                </div>
                 <div id="gridDisplay"></div>
             </div>
         </div>
@@ -884,6 +860,49 @@
                             explanation: `Paire nue ${pair.join('-')} trouvée en (${r+1}, ${c1+1}) et (${r+1}, ${c2+1}). Ces deux chiffres ne peuvent aller que dans ces deux cases de la ligne ${r+1}.`,
                             reasoning: `Éliminez ${pair.join(' et ')} des notes des autres cases de la ligne ${r+1}.`
                         };
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    // Technique 5: Pointage (Intersection removal)
+    function findPointing(candidates) {
+        for (let boxR = 0; boxR < 3; boxR++) {
+            for (let boxC = 0; boxC < 3; boxC++) {
+                for (let digit = 1; digit <= 9; digit++) {
+                    const candidatesInBox = [];
+                    
+                    for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
+                        for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
+                            if (currentGrid[r][c] === 0 && candidates[r][c].includes(digit)) {
+                                candidatesInBox.push({r, c});
+                            }
+                        }
+                    }
+                    
+                    if (candidatesInBox.length >= 2) {
+                        const rows = [...new Set(candidatesInBox.map(cell => cell.r))];
+                        if (rows.length === 1) {
+                            const targetRow = rows[0];
+                            let canEliminate = false;
+                            for (let c = 0; c < 9; c++) {
+                                if (Math.floor(c / 3) !== boxC && currentGrid[targetRow][c] === 0 && candidates[targetRow][c].includes(digit)) {
+                                    canEliminate = true;
+                                    break;
+                                }
+                            }
+                            
+                            if (canEliminate) {
+                                return {
+                                    type: 'pointing',
+                                    digit: digit,
+                                    explanation: `Pointage détecté : le chiffre ${digit} dans la boîte (lignes ${boxR*3+1}-${boxR*3+3}, colonnes ${boxC*3+1}-${boxC*3+3}) ne peut aller que sur la ligne ${targetRow+1}.`,
+                                    reasoning: `Éliminez le ${digit} des notes des autres cases de la ligne ${targetRow+1} qui sont en dehors de cette boîte.`
+                                };
+                            }
+                        }
                     }
                 }
             }
