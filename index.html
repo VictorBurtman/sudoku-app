@@ -1440,7 +1440,7 @@
 
 
         // Modifier la fonction showOptionsModal pour inclure le nouvel option
-        window.showOptionsModal = function() {
+       window.showOptionsModal = function() {
             const modal = document.getElementById('optionsModal');
             const content = document.getElementById('optionsContent');
             
@@ -1459,14 +1459,7 @@
                     <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 16px;">🧩</div>
                     <div class="option-details">
                         <div class="option-title">Open Sudoku Assistant</div>
-                        <div class="option-subtitle">Get AI help and technique suggestions for current grid</div>
-                    </div>
-                </div>
-                <div class="option-item clickable" onclick="exportCurrentState(); closeOptionsModal();">
-                    <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 16px;">📋</div>
-                    <div class="option-details">
-                        <div class="option-title">Export Current State</div>
-                        <div class="option-subtitle">Copy current grid state as JSON for AI assistance</div>
+                        <div class="option-subtitle">Get AI help + copy grid to clipboard</div>
                     </div>
                 </div>
                 ` : ''}
@@ -1524,6 +1517,7 @@
         
             modal.classList.add('show');
         }
+        
 
 
 
@@ -1776,34 +1770,7 @@
             document.getElementById('gameOverModal').classList.remove('show');
         }
 
-        window.exportCurrentState = function() {
-            const notesGridForExport = gameState.notesGrid.map(row =>
-                row.map(noteSet => Array.from(noteSet).sort())
-            );
 
-            const exportData = {
-                difficulty: gameState.difficulty,
-                originalGrid: gameState.originalGrid,
-                currentGrid: gameState.currentGrid,
-                notesGrid: notesGridForExport
-            };
-
-            const jsonString = JSON.stringify(exportData, null, 2);
-            
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(jsonString).then(() => {
-                    showExportModal(jsonString, true);
-                }).catch(() => {
-                    showExportModal(jsonString, false);
-                });
-            } else {
-                showExportModal(jsonString, false);
-            }
-        }
-
-        window.closeExportModal = function() {
-            document.getElementById('exportModal').classList.remove('show');
-        }
 
         window.shareGrid = function() {
             if (!gameState.originalGrid || gameState.originalGrid.length === 0) {
@@ -1840,10 +1807,20 @@
                 notesGrid: notesGridForExport
             };
         
-            // Compression simple : enlever les espaces et caractères inutiles
+            const jsonString = JSON.stringify(exportData, null, 2);
+            
+            // 1. Copier dans le presse-papier
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(jsonString).then(() => {
+                    console.log('Grid data copied to clipboard');
+                }).catch(err => {
+                    console.log('Failed to copy to clipboard:', err);
+                });
+            }
+            
+            // 2. Ouvrir l'assistant
             const compactJson = JSON.stringify(exportData);
             
-            // Si l'URL est encore trop longue, utiliser localStorage comme fallback
             if (compactJson.length > 1500) {
                 // Stocker les données localement avec un ID unique
                 const dataId = 'sudoku_assistant_' + Date.now();
@@ -2434,19 +2411,6 @@
             modal.classList.add('show');
         }
 
-        function showExportModal(jsonString, copied) {
-            const modal = document.getElementById('exportModal');
-            const textarea = document.getElementById('exportTextarea');
-            
-            textarea.value = jsonString;
-            modal.classList.add('show');
-            
-            if (copied) {
-                document.querySelector('#exportModal .modal-title').textContent = 'Export Current State - ✓ Copied!';
-            } else {
-                document.querySelector('#exportModal .modal-title').textContent = 'Export Current State';
-            }
-        }
 
         function encodeGrid(originalGrid, difficulty, difficultyLabel) {
             const gridData = {
