@@ -1437,12 +1437,15 @@
             }, 200);
         }
 
+
+
+        // Modifier la fonction showOptionsModal pour inclure le nouvel option
         window.showOptionsModal = function() {
             const modal = document.getElementById('optionsModal');
             const content = document.getElementById('optionsContent');
             
             const inGame = !document.getElementById('gameScreen').classList.contains('hidden');
-
+        
             content.innerHTML = `
                 ${inGame ? `
                 <div class="option-item clickable" onclick="shareGrid(); closeOptionsModal();">
@@ -1450,6 +1453,13 @@
                     <div class="option-details">
                         <div class="option-title">Share This Grid</div>
                         <div class="option-subtitle">Generate a link to share this puzzle with friends</div>
+                    </div>
+                </div>
+                <div class="option-item clickable" onclick="openSudokuAssistant(); closeOptionsModal();">
+                    <div style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 16px;">🧩</div>
+                    <div class="option-details">
+                        <div class="option-title">Open Sudoku Assistant</div>
+                        <div class="option-subtitle">Get AI help and technique suggestions for current grid</div>
                     </div>
                 </div>
                 <div class="option-item clickable" onclick="exportCurrentState(); closeOptionsModal();">
@@ -1511,9 +1521,15 @@
                     </div>
                 </div>
             `;
-
+        
             modal.classList.add('show');
         }
+
+
+
+
+
+        
 
         window.closeOptionsModal = function() {
             document.getElementById('optionsModal').classList.remove('show');
