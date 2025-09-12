@@ -779,22 +779,47 @@
             document.getElementById('analysisResult').innerHTML = html;
         }
 
-        // Function to load data from URL parameter
+        // Function to load data from URL parameter or localStorage
         function loadDataFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
-            const encodedData = urlParams.get('data');
             
+            // Cas 1: Données directement dans l'URL
+            const encodedData = urlParams.get('data');
             if (encodedData) {
                 try {
                     const decodedData = decodeURIComponent(encodedData);
-                    document.getElementById('jsonInput').value = decodedData;
-                    analyzeGrid();
-                    return true;
+                    const jsonInput = document.getElementById('jsonInput');
+                    if (jsonInput) {
+                        jsonInput.value = decodedData;
+                        analyzeGrid();
+                        return true;
+                    }
                 } catch (error) {
                     console.error('Error loading data from URL:', error);
-                    return false;
                 }
             }
+            
+            // Cas 2: ID vers localStorage
+            const dataId = urlParams.get('id');
+            if (dataId) {
+                try {
+                    const storedData = localStorage.getItem(dataId);
+                    if (storedData) {
+                        // Nettoyer après utilisation
+                        localStorage.removeItem(dataId);
+                        
+                        const jsonInput = document.getElementById('jsonInput');
+                        if (jsonInput) {
+                            jsonInput.value = storedData;
+                            analyzeGrid();
+                            return true;
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error loading data from localStorage:', error);
+                }
+            }
+            
             return false;
         }
 
