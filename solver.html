@@ -286,7 +286,7 @@
     <div class="app-container">
         <div class="app-bar">
             <button class="back-button" onclick="window.close()">←</button>
-            <h1>Assistant Sudoku v1.7</h1>
+            <h1>Assistant Sudoku v1.6</h1>
             <div></div>
         </div>
         
@@ -426,88 +426,52 @@
         }
 
         function displayGrid() {
-            // Créer la grille avec coordonnées intégrées
             let gridHtml = `
-                <div style="display: flex; justify-content: center; position: relative;">
-                    <!-- Coordonnées des lignes -->
-                    <div style="display: flex; flex-direction: column; width: 16px; height: 280px; margin-right: 6px; padding-top: 14px;">
-                        <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
-                            <div class="coordinate-label">R1</div>
-                        </div>
-                        <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
-                            <div class="coordinate-label">R2</div>
-                        </div>
-                        <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
-                            <div class="coordinate-label">R3</div>
-                        </div>
-                        <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
-                            <div class="coordinate-label">R4</div>
-                        </div>
-                        <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
-                            <div class="coordinate-label">R5</div>
-                        </div>
-                        <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
-                            <div class="coordinate-label">R6</div>
-                        </div>
-                        <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
-                            <div class="coordinate-label">R7</div>
-                        </div>
-                        <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
-                            <div class="coordinate-label">R8</div>
-                        </div>
-                        <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
-                            <div class="coordinate-label">R9</div>
-                        </div>
+                <div style="display: grid; grid-template-columns: 16px 280px; grid-template-rows: 16px 280px; gap: 4px; justify-content: center;">
+                    <!-- Coin vide -->
+                    <div></div>
+                    
+                    <!-- Coordonnées colonnes -->
+                    <div style="display: grid; grid-template-columns: repeat(9, 1fr); align-items: center;">
+                        <div style="display: flex; justify-content: center;"><div class="coordinate-label">C1</div></div>
+                        <div style="display: flex; justify-content: center;"><div class="coordinate-label">C2</div></div>
+                        <div style="display: flex; justify-content: center;"><div class="coordinate-label">C3</div></div>
+                        <div style="display: flex; justify-content: center;"><div class="coordinate-label">C4</div></div>
+                        <div style="display: flex; justify-content: center;"><div class="coordinate-label">C5</div></div>
+                        <div style="display: flex; justify-content: center;"><div class="coordinate-label">C6</div></div>
+                        <div style="display: flex; justify-content: center;"><div class="coordinate-label">C7</div></div>
+                        <div style="display: flex; justify-content: center;"><div class="coordinate-label">C8</div></div>
+                        <div style="display: flex; justify-content: center;"><div class="coordinate-label">C9</div></div>
                     </div>
                     
-                    <div style="display: flex; flex-direction: column; align-items: center;">
-                        <!-- Coordonnées des colonnes -->
-                        <div style="display: flex; width: 280px; height: 16px; margin-bottom: 6px; padding-left: 14px;">
-                            <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
-                                <div class="coordinate-label">C1</div>
-                            </div>
-                            <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
-                                <div class="coordinate-label">C2</div>
-                            </div>
-                            <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
-                                <div class="coordinate-label">C3</div>
-                            </div>
-                            <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
-                                <div class="coordinate-label">C4</div>
-                            </div>
-                            <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
-                                <div class="coordinate-label">C5</div>
-                            </div>
-                            <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
-                                <div class="coordinate-label">C6</div>
-                            </div>
-                            <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
-                                <div class="coordinate-label">C7</div>
-                            </div>
-                            <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
-                                <div class="coordinate-label">C8</div>
-                            </div>
-                            <div style="flex: 1; display: flex; align-items: center; justify-content: center;">
-                                <div class="coordinate-label">C9</div>
-                            </div>
-                        </div>
-                        
-                        <!-- Grille sudoku -->
-                        <div class="sudoku-grid">
-                            ${currentGrid.map((row, r) => 
-                                row.map((cell, c) => {
-                                    const isGiven = originalGrid && originalGrid[r][c] !== 0;
-                                    const isFilled = cell !== 0;
-                                    const notes = notesGrid[r][c] || [];
-                                    const notesText = notes.length > 0 ? notes.join('') : '';
-                                    
-                                    return `<div class="cell ${isGiven ? 'given' : isFilled ? 'filled' : ''}" data-row="${r}" data-col="${c}">
-                                        ${cell !== 0 ? cell : ''}
-                                        ${cell === 0 && notes.length > 0 ? `<div class="notes">${notesText}</div>` : ''}
-                                    </div>`;
-                                }).join('')
-                            ).join('')}
-                        </div>
+                    <!-- Coordonnées lignes -->
+                    <div style="display: grid; grid-template-rows: repeat(9, 1fr); justify-items: center;">
+                        <div style="display: flex; align-items: center;"><div class="coordinate-label">R1</div></div>
+                        <div style="display: flex; align-items: center;"><div class="coordinate-label">R2</div></div>
+                        <div style="display: flex; align-items: center;"><div class="coordinate-label">R3</div></div>
+                        <div style="display: flex; align-items: center;"><div class="coordinate-label">R4</div></div>
+                        <div style="display: flex; align-items: center;"><div class="coordinate-label">R5</div></div>
+                        <div style="display: flex; align-items: center;"><div class="coordinate-label">R6</div></div>
+                        <div style="display: flex; align-items: center;"><div class="coordinate-label">R7</div></div>
+                        <div style="display: flex; align-items: center;"><div class="coordinate-label">R8</div></div>
+                        <div style="display: flex; align-items: center;"><div class="coordinate-label">R9</div></div>
+                    </div>
+                    
+                    <!-- Grille sudoku -->
+                    <div class="sudoku-grid">
+                        ${currentGrid.map((row, r) => 
+                            row.map((cell, c) => {
+                                const isGiven = originalGrid && originalGrid[r][c] !== 0;
+                                const isFilled = cell !== 0;
+                                const notes = notesGrid[r][c] || [];
+                                const notesText = notes.length > 0 ? notes.join('') : '';
+                                
+                                return `<div class="cell ${isGiven ? 'given' : isFilled ? 'filled' : ''}" data-row="${r}" data-col="${c}">
+                                    ${cell !== 0 ? cell : ''}
+                                    ${cell === 0 && notes.length > 0 ? `<div class="notes">${notesText}</div>` : ''}
+                                </div>`;
+                            }).join('')
+                        ).join('')}
                     </div>
                 </div>
             `;
