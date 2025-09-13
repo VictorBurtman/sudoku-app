@@ -297,7 +297,7 @@
             background: #2d2d2d;
             color: #ffffff;
             overflow: hidden;
-            transition: background-color 0.3s ease;
+            transition: background-color: 0.3s ease;
         }
 
         .sudoku-cell.thick-right { border-right: 2px solid #ffffff; }
@@ -2461,8 +2461,8 @@
                 return;
             }
 
-            // 'N' pour le mode notes
-            if (event.key.toLowerCase() === 'n') {
+            // 'N' ou '/' pour le mode notes
+            if (event.key.toLowerCase() === 'n' || event.key === '/') {
                 event.preventDefault();
                 toggleNotesMode();
             }
@@ -2479,6 +2479,12 @@
                 if (gameState.selectedRow !== null && gameState.selectedCol !== null) {
                     placeNumber(0);
                 }
+            }
+            
+            // 'Echap' pour retourner au menu
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                goBackToMenu();
             }
 
             // Touches numériques (1-9) pour placer les chiffres
@@ -2566,3 +2572,4 @@
     </script>
 </body>
 </html>
+
