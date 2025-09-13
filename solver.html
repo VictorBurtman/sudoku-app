@@ -370,7 +370,7 @@
     <div class="app-container">
         <div class="app-bar">
             <button class="back-button" onclick="window.close()">←</button>
-            <h1>Assistant Sudoku v2.7</h1>
+            <h1>Assistant Sudoku v2.8</h1>
             <div></div>
         </div>
 
@@ -910,7 +910,7 @@
         return null;
     }
 
-    // Technique 6: Triplets nus
+    // Technique 6: Triplets nus (avec vérification d'utilité)
     function findNakedTriples(candidates) {
         // Vérifier les lignes
         for (let r = 0; r < 9; r++) {
@@ -926,18 +926,74 @@
                         const union = [...new Set([...candidates[r][c1], ...candidates[r][c2], ...candidates[r][c3]])];
                         
                         if (union.length === 3) {
-                            return {
-                                type: 'elimination',
-                                cells: [{row: r, col: c1}, {row: r, col: c2}, {row: r, col: c3}],
-                                values: union,
-                                explanation: `Triplet nu ${union.join('-')} trouvé en (R${r+1}C${c1+1}), (R${r+1}C${c2+1}) et (R${r+1}C${c3+1}). Ces trois chiffres ne peuvent aller que dans ces trois cases.`,
-                                reasoning: `Éliminez ${union.join(', ')} des notes des autres cases de la ligne ${r+1}.`
-                            };
+                            // Vérifier s'il y a des candidats à éliminer dans cette ligne
+                            let canEliminateInRow = false;
+                            for (let c = 0; c < 9; c++) {
+                                if (c !== c1 && c !== c2 && c !== c3 && currentGrid[r][c] === 0) {
+                                    const hasAnyTripleCandidate = union.some(num => candidates[r][c].includes(num));
+                                    if (hasAnyTripleCandidate) {
+                                        canEliminateInRow = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            if (canEliminateInRow) {
+                                return {
+                                    type: 'elimination',
+                                    cells: [{row: r, col: c1}, {row: r, col: c2}, {row: r, col: c3}],
+                                    values: union,
+                                    explanation: `Triplet nu ${union.join('-')} trouvé en R${r+1}C${c1+1}, R${r+1}C${c2+1} et R${r+1}C${c3+1}. Ces trois chiffres ne peuvent aller que dans ces trois cases.`,
+                                    reasoning: `Éliminez ${union.join(', ')} des notes des autres cases de la ligne ${r+1}.`
+                                };
+                            }
                         }
                     }
                 }
             }
         }
+
+        // Vérifier les colonnes
+        for (let c = 0; c < 9; c++) {
+            for (let r1 = 0; r1 < 7; r1++) {
+                if (currentGrid[r1][c] !== 0 || candidates[r1][c].length > 3 || candidates[r1][c].length < 2) continue;
+                
+                for (let r2 = r1 + 1; r2 < 8; r2++) {
+                    if (currentGrid[r2][c] !== 0 || candidates[r2][c].length > 3 || candidates[r2][c].length < 2) continue;
+                    
+                    for (let r3 = r2 + 1; r3 < 9; r3++) {
+                        if (currentGrid[r3][c] !== 0 || candidates[r3][c].length > 3 || candidates[r3][c].length < 2) continue;
+                        
+                        const union = [...new Set([...candidates[r1][c], ...candidates[r2][c], ...candidates[r3][c]])];
+                        
+                        if (union.length === 3) {
+                            // Vérifier s'il y a des candidats à éliminer dans cette colonne
+                            let canEliminateInCol = false;
+                            for (let r = 0; r < 9; r++) {
+                                if (r !== r1 && r !== r2 && r !== r3 && currentGrid[r][c] === 0) {
+                                    const hasAnyTripleCandidate = union.some(num => candidates[r][c].includes(num));
+                                    if (hasAnyTripleCandidate) {
+                                        canEliminateInCol = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            if (canEliminateInCol) {
+                                return {
+                                    type: 'elimination',
+                                    cells: [{row: r1, col: c}, {row: r2, col: c}, {row: r3, col: c}],
+                                    values: union,
+                                    explanation: `Triplet nu ${union.join('-')} trouvé en R${r1+1}C${c+1}, R${r2+1}C${c+1} et R${r3+1}C${c+1}. Ces trois chiffres ne peuvent aller que dans ces trois cases.`,
+                                    reasoning: `Éliminez ${union.join(', ')} des notes des autres cases de la colonne ${c+1}.`
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         return null;
     }
 
