@@ -370,7 +370,7 @@
     <div class="app-container">
         <div class="app-bar">
             <button class="back-button" onclick="window.close()">←</button>
-            <h1>Assistant Sudoku v2.6</h1>
+            <h1>Assistant Sudoku v2.7</h1>
             <div></div>
         </div>
 
@@ -1077,12 +1077,40 @@
         let html = '';
 
         if (suggestion) {
-            // Surligner la case concernée
+            // Nettoyer d'abord toutes les surbrillances
             document.querySelectorAll('.cell').forEach(cell => {
-                cell.classList.remove('highlighted');
+                cell.classList.remove('highlighted', 'highlighted-secondary');
             });
 
-            if (suggestion.row !== undefined && suggestion.col !== undefined) {
+            // Ajouter une classe pour la surbrillance secondaire
+            const style = document.createElement('style');
+            style.textContent = `
+                .highlighted-secondary {
+                    background: #ff9800 !important;
+                    color: #ffffff;
+                    opacity: 0.8;
+                }
+            `;
+            if (!document.head.querySelector('style[data-highlight]')) {
+                style.setAttribute('data-highlight', 'true');
+                document.head.appendChild(style);
+            }
+
+            // Surligner selon le type de technique
+            if (suggestion.cells && suggestion.cells.length > 1) {
+                // Techniques multi-cases (paires nues, triplets, X-Wing, etc.)
+                suggestion.cells.forEach((cellInfo, index) => {
+                    const targetCell = document.querySelector(`[data-row="${cellInfo.row}"][data-col="${cellInfo.col}"]`);
+                    if (targetCell) {
+                        if (index === 0) {
+                            targetCell.classList.add('highlighted'); // Première case en surbrillance principale
+                        } else {
+                            targetCell.classList.add('highlighted-secondary'); // Autres cases en surbrillance secondaire
+                        }
+                    }
+                });
+            } else if (suggestion.row !== undefined && suggestion.col !== undefined) {
+                // Techniques mono-case
                 const targetCell = document.querySelector(`[data-row="${suggestion.row}"][data-col="${suggestion.col}"]`);
                 if (targetCell) {
                     targetCell.classList.add('highlighted');
@@ -1095,13 +1123,14 @@
                     <p>${suggestion.explanation}</p>
                     ${suggestion.reasoning ? `<p><em>${suggestion.reasoning}</em></p>` : ''}
                     ${suggestion.value ? `<p><strong>➤ Placez le chiffre ${suggestion.value} en R${suggestion.row + 1}C${suggestion.col + 1}</strong></p>` : ''}
+                    ${suggestion.cells && suggestion.cells.length > 1 ? `<p><strong>📍 Cases concernées : ${suggestion.cells.map(c => `R${c.row+1}C${c.col+1}`).join(', ')}</strong></p>` : ''}
                 </div>
             `;
         } else {
             html += `
                 <div class="technique">
                     <h4>🎉 Grille analysée</h4>
-                    <p>Aucune technique simple trouvée. La grille nécessite des techniques plus avancées (X-Wing, Swordfish, chaînes logiques...) ou est déjà résolue.</p>
+                    <p>Aucune technique simple trouvée. La grille nécessite des techniques plus avancées (chaînes logiques, coloration...) ou est déjà résolue.</p>
                 </div>
             `;
         }
