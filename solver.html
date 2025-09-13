@@ -286,16 +286,6 @@
         let originalGrid = null;
         let notesGrid = null;
 
-        const techniques = [
-            { name: "Dernier chiffre possible", description: "Un seul chiffre peut aller dans cette case" },
-            { name: "Case unique", description: "Ce chiffre ne peut aller que dans une seule case" },
-            { name: "Élimination simple", description: "Supprimer des candidats évidents" },
-            { name: "Paires nues", description: "Deux cases avec les mêmes candidats" },
-            { name: "Pointage", description: "Élimination par intersection" },
-            { name: "Triplets nus", description: "Trois cases avec les mêmes candidats" },
-            { name: "Techniques avancées", description: "X-Wing, Swordfish..." }
-        ];
-
         function showError(message) {
             const analysisResult = document.getElementById('analysisResult');
             if (analysisResult) {
@@ -313,16 +303,13 @@
 
         function loadDataFromURL() {
             const urlParams = new URLSearchParams(window.location.search);
-            console.log('🔍 Checking URL params:', window.location.search);
+            console.log('Checking URL params:', window.location.search);
             
             const encodedData = urlParams.get('data');
             if (encodedData) {
-                console.log('📥 Found data in URL, length:', encodedData.length);
                 try {
                     const decodedData = decodeURIComponent(encodedData);
-                    console.log('🔓 Decoded data length:', decodedData.length);
                     const data = JSON.parse(decodedData);
-                    console.log('✅ Parsed data successfully:', data);
                     
                     if (!data.currentGrid || !data.notesGrid) {
                         throw new Error("currentGrid ou notesGrid manquants");
@@ -332,11 +319,10 @@
                     originalGrid = data.originalGrid;
                     notesGrid = data.notesGrid;
                     
-                    console.log('🎯 Data loaded successfully from URL');
                     analyzeGrid();
                     return true;
                 } catch (error) {
-                    console.error('❌ Error loading data from URL:', error);
+                    console.error('Error loading data from URL:', error);
                     showError('Erreur URL: ' + error.message);
                     return false;
                 }
@@ -344,15 +330,11 @@
             
             const dataId = urlParams.get('id');
             if (dataId) {
-                console.log('🆔 Found ID in URL:', dataId);
                 try {
                     const storedData = localStorage.getItem(dataId);
                     if (storedData) {
-                        console.log('💾 Found stored data, length:', storedData.length);
                         localStorage.removeItem(dataId);
-                        
                         const data = JSON.parse(storedData);
-                        console.log('✅ Parsed stored data successfully:', data);
                         
                         if (!data.currentGrid || !data.notesGrid) {
                             throw new Error("currentGrid ou notesGrid manquants");
@@ -362,30 +344,24 @@
                         originalGrid = data.originalGrid;
                         notesGrid = data.notesGrid;
                         
-                        console.log('🎯 Data loaded successfully from localStorage');
                         analyzeGrid();
                         return true;
                     } else {
-                        console.log('❌ No data found in localStorage for ID:', dataId);
                         showError('Données expirées (ID: ' + dataId + ')');
                         return false;
                     }
                 } catch (error) {
-                    console.error('❌ Error with localStorage:', error);
+                    console.error('Error with localStorage:', error);
                     showError('Erreur localStorage: ' + error.message);
                     return false;
                 }
             }
             
-            console.log('❌ No data or id parameter found');
             return false;
         }
 
         function analyzeGrid() {
-            console.log('🧮 Starting grid analysis...');
-            
             if (!currentGrid || !notesGrid) {
-                console.error('❌ Missing grid data for analysis');
                 showError('Données de grille manquantes');
                 return;
             }
@@ -393,9 +369,8 @@
             try {
                 displayGrid();
                 performAnalysis();
-                console.log('✅ Analysis completed successfully');
             } catch (error) {
-                console.error('❌ Error during analysis:', error);
+                console.error('Error during analysis:', error);
                 showError('Erreur pendant l\'analyse: ' + error.message);
             }
         }
@@ -459,73 +434,27 @@
             document.getElementById('gridDisplay').innerHTML = gridHtml;
         }
 
-        function performAnalysis() {
-            let foundTechnique = null;
-            let suggestion = null;
-            let currentTechniqueIndex = -1;
-
-            // Générer les candidats une seule fois pour toutes les techniques
-            const correctCandidates = generateCandidates();
-
-            // 1. Dernier chiffre possible
-            const lastNumber = findLastPossibleNumber();
-            if (lastNumber) {
-                foundTechnique = "Dernier chiffre possible";
-                suggestion = lastNumber;
-                currentTechniqueIndex = 0;
+        function isValidPlacement(row, col, num) {
+            // Vérifier la ligne
+            for (let c = 0; c < 9; c++) {
+                if (currentGrid[row][c] === num) return false;
             }
-
-            // 2. Case unique
-            if (!foundTechnique) {
-                const uniquePlace = findUniquePlace();
-                if (uniquePlace) {
-                    foundTechnique = "Case unique";
-                    suggestion = uniquePlace;
-                    currentTechniqueIndex = 1;
+            
+            // Vérifier la colonne
+            for (let r = 0; r < 9; r++) {
+                if (currentGrid[r][col] === num) return false;
+            }
+            
+            // Vérifier la boîte 3x3
+            const boxRow = Math.floor(row / 3) * 3;
+            const boxCol = Math.floor(col / 3) * 3;
+            for (let r = boxRow; r < boxRow + 3; r++) {
+                for (let c = boxCol; c < boxCol + 3; c++) {
+                    if (currentGrid[r][c] === num) return false;
                 }
             }
-
-            // 3. Élimination simple
-            if (!foundTechnique) {
-                const simpleElimination = findSimpleElimination(correctCandidates);
-                if (simpleElimination) {
-                    foundTechnique = "Élimination simple";
-                    suggestion = simpleElimination;
-                    currentTechniqueIndex = 2;
-                }
-            }
-
-            // 4. Paires nues (avec vérification d'utilité)
-            if (!foundTechnique) {
-                const nakedPair = findNakedPairs(correctCandidates);
-                if (nakedPair) {
-                    foundTechnique = "Paires nues";
-                    suggestion = nakedPair;
-                    currentTechniqueIndex = 3;
-                }
-            }
-
-            // 5. Pointage
-            if (!foundTechnique) {
-                const pointing = findPointing(correctCandidates);
-                if (pointing) {
-                    foundTechnique = "Pointage";
-                    suggestion = pointing;
-                    currentTechniqueIndex = 4;
-                }
-            }
-
-            // 6. Triplets nus (avec vérification d'utilité)
-            if (!foundTechnique) {
-                const nakedTriple = findNakedTriples(correctCandidates);
-                if (nakedTriple) {
-                    foundTechnique = "Triplets nus";
-                    suggestion = nakedTriple;
-                    currentTechniqueIndex = 5;
-                }
-            }
-
-            displayAnalysis(foundTechnique, suggestion, currentTechniqueIndex);
+            
+            return true;
         }
 
         function generateCandidates() {
@@ -548,29 +477,6 @@
             }
             
             return candidates;
-        }
-
-        function isValidPlacement(row, col, num) {
-            // Vérifier la ligne
-            for (let c = 0; c < 9; c++) {
-                if (currentGrid[row][c] === num) return false;
-            }
-            
-            // Vérifier la colonne
-            for (let r = 0; r < 9; r++) {
-                if (currentGrid[r][col] === num) return false;
-            }
-            
-            // Vérifier la boîte 3x3
-            const boxRow = Math.floor(row / 3) * 3;
-            const boxCol = Math.floor(col / 3) * 3;
-            for (let r = boxRow; r < boxRow + 3; r++) {
-                for (let c = boxCol; c < boxCol + 3; c++) {
-                    if (currentGrid[r][c] === num) return false;
-                }
-            }
-            
-            return true;
         }
 
         function findLastPossibleNumber() {
@@ -651,361 +557,6 @@
             // Vérifier les boîtes 3x3
             for (let boxR = 0; boxR < 3; boxR++) {
                 for (let boxC = 0; boxC < 3; boxC++) {
-                    const boxCells = [];
-                    
-                    // Collecter toutes les cases vides de la boîte avec leurs coordonnées et candidats
-                    for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
-                        for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
-                            if (currentGrid[r][c] === 0 && candidates[r][c].length === 2) {
-                                boxCells.push({row: r, col: c, candidates: candidates[r][c]});
-                            }
-                        }
-                    }
-                    
-                    // Chercher des paires dans cette boîte
-                    for (let i = 0; i < boxCells.length - 1; i++) {
-                        for (let j = i + 1; j < boxCells.length; j++) {
-                            if (JSON.stringify(boxCells[i].candidates) === JSON.stringify(boxCells[j].candidates)) {
-                                const pair = boxCells[i].candidates;
-                                
-                                // Vérifier s'il y a des candidats à éliminer dans cette boîte
-                                let canEliminateInBox = false;
-                                for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
-                                    for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
-                                        if ((r !== boxCells[i].row || c !== boxCells[i].col) && 
-                                            (r !== boxCells[j].row || c !== boxCells[j].col) && 
-                                            currentGrid[r][c] === 0) {
-                                            const hasAnyPairCandidate = pair.some(num => candidates[r][c].includes(num));
-                                            if (hasAnyPairCandidate) {
-                                                canEliminateInBox = true;
-                                                break;
-                                            }
-                                        }
-                                    }
-                                    if (canEliminateInBox) break;
-                                }
-                                
-                                if (canEliminateInBox) {
-                                    return {
-                                        type: 'elimination',
-                                        cells: [{row: boxCells[i].row, col: boxCells[i].col}, {row: boxCells[j].row, col: boxCells[j].col}],
-                                        values: pair,
-                                        explanation: `Paire nue ${pair.join('-')} trouvée en R${boxCells[i].row+1}C${boxCells[i].col+1} et R${boxCells[j].row+1}C${boxCells[j].col+1} dans la boîte 3x3 (lignes ${boxR*3+1}-${boxR*3+3}, colonnes ${boxC*3+1}-${boxC*3+3}).`,
-                                        reasoning: `Éliminez ${pair.join(' et ')} des notes des autres cases de cette boîte 3x3.`
-                                    };
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            return null;
-        }
-
-        function findPointing(candidates) {
-            // Technique de pointage : si un chiffre dans une boîte 3x3 ne peut aller que dans une ligne/colonne,
-            // alors ce chiffre peut être éliminé du reste de cette ligne/colonne
-            
-            for (let boxR = 0; boxR < 3; boxR++) {
-                for (let boxC = 0; boxC < 3; boxC++) {
-                    for (let digit = 1; digit <= 9; digit++) {
-                        // Vérifier si ce chiffre est déjà placé dans cette boîte
-                        let digitFound = false;
-                        for (let r = boxR * 3; r < (boxR + 1) * 3 && !digitFound; r++) {
-                            for (let c = boxC * 3; c < (boxC + 1) * 3 && !digitFound; c++) {
-                                if (currentGrid[r][c] === digit) {
-                                    digitFound = true;
-                                }
-                            }
-                        }
-                        
-                        if (digitFound) continue;
-                        
-                        // Trouver toutes les cases possibles pour ce chiffre dans cette boîte
-                        const possibleCells = [];
-                        for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
-                            for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
-                                if (currentGrid[r][c] === 0 && candidates[r][c].includes(digit)) {
-                                    possibleCells.push({row: r, col: c});
-                                }
-                            }
-                        }
-                        
-                        if (possibleCells.length === 0) continue;
-                        
-                        // Vérifier si toutes les cases sont dans la même ligne
-                        const uniqueRows = [...new Set(possibleCells.map(cell => cell.row))];
-                        if (uniqueRows.length === 1) {
-                            const targetRow = uniqueRows[0];
-                            
-                            // Vérifier s'il y a des candidats à éliminer dans cette ligne (en dehors de la boîte)
-                            let canEliminateInRow = false;
-                            for (let c = 0; c < 9; c++) {
-                                const isInBox = c >= boxC * 3 && c < (boxC + 1) * 3;
-                                if (!isInBox && currentGrid[targetRow][c] === 0 && candidates[targetRow][c].includes(digit)) {
-                                    canEliminateInRow = true;
-                                    break;
-                                }
-                            }
-                            
-                            if (canEliminateInRow) {
-                                return {
-                                    type: 'elimination',
-                                    digit: digit,
-                                    cells: possibleCells,
-                                    explanation: `Pointage détecté : le chiffre ${digit} dans la boîte 3x3 (lignes ${boxR*3+1}-${boxR*3+3}, colonnes ${boxC*3+1}-${boxC*3+3}) ne peut aller que dans la ligne ${targetRow+1}.`,
-                                    reasoning: `Éliminez le ${digit} des autres cases de la ligne ${targetRow+1} en dehors de cette boîte.`
-                                };
-                            }
-                        }
-                        
-                        // Vérifier si toutes les cases sont dans la même colonne
-                        const uniqueCols = [...new Set(possibleCells.map(cell => cell.col))];
-                        if (uniqueCols.length === 1) {
-                            const targetCol = uniqueCols[0];
-                            
-                            // Vérifier s'il y a des candidats à éliminer dans cette colonne (en dehors de la boîte)
-                            let canEliminateInCol = false;
-                            for (let r = 0; r < 9; r++) {
-                                const isInBox = r >= boxR * 3 && r < (boxR + 1) * 3;
-                                if (!isInBox && currentGrid[r][targetCol] === 0 && candidates[r][targetCol].includes(digit)) {
-                                    canEliminateInCol = true;
-                                    break;
-                                }
-                            }
-                            
-                            if (canEliminateInCol) {
-                                return {
-                                    type: 'elimination',
-                                    digit: digit,
-                                    cells: possibleCells,
-                                    explanation: `Pointage détecté : le chiffre ${digit} dans la boîte 3x3 (lignes ${boxR*3+1}-${boxR*3+3}, colonnes ${boxC*3+1}-${boxC*3+3}) ne peut aller que dans la colonne ${targetCol+1}.`,
-                                    reasoning: `Éliminez le ${digit} des autres cases de la colonne ${targetCol+1} en dehors de cette boîte.`
-                                };
-                            }
-                        }
-                    }
-                }
-            }
-            
-            return null;
-        }
-
-        function findNakedTriples(candidates) {
-            // Vérifier les lignes
-            for (let r = 0; r < 9; r++) {
-                for (let c1 = 0; c1 < 7; c1++) {
-                    if (currentGrid[r][c1] !== 0 || candidates[r][c1].length > 3 || candidates[r][c1].length < 2) continue;
-                    
-                    for (let c2 = c1 + 1; c2 < 8; c2++) {
-                        if (currentGrid[r][c2] !== 0 || candidates[r][c2].length > 3 || candidates[r][c2].length < 2) continue;
-                        
-                        for (let c3 = c2 + 1; c3 < 9; c3++) {
-                            if (currentGrid[r][c3] !== 0 || candidates[r][c3].length > 3 || candidates[r][c3].length < 2) continue;
-                            
-                            const union = [...new Set([...candidates[r][c1], ...candidates[r][c2], ...candidates[r][c3]])];
-                            
-                            if (union.length === 3) {
-                                // Vérifier s'il y a des candidats à éliminer dans cette ligne
-                                let canEliminateInRow = false;
-                                for (let c = 0; c < 9; c++) {
-                                    if (c !== c1 && c !== c2 && c !== c3 && currentGrid[r][c] === 0) {
-                                        const hasAnyTripleCandidate = union.some(num => candidates[r][c].includes(num));
-                                        if (hasAnyTripleCandidate) {
-                                            canEliminateInRow = true;
-                                            break;
-                                        }
-                                    }
-                                }
-                                
-                                if (canEliminateInRow) {
-                                    return {
-                                        type: 'elimination',
-                                        cells: [{row: r, col: c1}, {row: r, col: c2}, {row: r, col: c3}],
-                                        values: union,
-                                        explanation: `Triplet nu ${union.join('-')} trouvé en R${r+1}C${c1+1}, R${r+1}C${c2+1} et R${r+1}C${c3+1}. Ces trois chiffres ne peuvent aller que dans ces trois cases.`,
-                                        reasoning: `Éliminez ${union.join(', ')} des notes des autres cases de la ligne ${r+1}.`
-                                    };
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Vérifier les colonnes
-            for (let c = 0; c < 9; c++) {
-                for (let r1 = 0; r1 < 7; r1++) {
-                    if (currentGrid[r1][c] !== 0 || candidates[r1][c].length > 3 || candidates[r1][c].length < 2) continue;
-                    
-                    for (let r2 = r1 + 1; r2 < 8; r2++) {
-                        if (currentGrid[r2][c] !== 0 || candidates[r2][c].length > 3 || candidates[r2][c].length < 2) continue;
-                        
-                        for (let r3 = r2 + 1; r3 < 9; r3++) {
-                            if (currentGrid[r3][c] !== 0 || candidates[r3][c].length > 3 || candidates[r3][c].length < 2) continue;
-                            
-                            const union = [...new Set([...candidates[r1][c], ...candidates[r2][c], ...candidates[r3][c]])];
-                            
-                            if (union.length === 3) {
-                                // Vérifier s'il y a des candidats à éliminer dans cette colonne
-                                let canEliminateInCol = false;
-                                for (let r = 0; r < 9; r++) {
-                                    if (r !== r1 && r !== r2 && r !== r3 && currentGrid[r][c] === 0) {
-                                        const hasAnyTripleCandidate = union.some(num => candidates[r][c].includes(num));
-                                        if (hasAnyTripleCandidate) {
-                                            canEliminateInCol = true;
-                                            break;
-                                        }
-                                    }
-                                }
-                                
-                                if (canEliminateInCol) {
-                                    return {
-                                        type: 'elimination',
-                                        cells: [{row: r1, col: c}, {row: r2, col: c}, {row: r3, col: c}],
-                                        values: union,
-                                        explanation: `Triplet nu ${union.join('-')} trouvé en R${r1+1}C${c+1}, R${r2+1}C${c+1} et R${r3+1}C${c+1}. Ces trois chiffres ne peuvent aller que dans ces trois cases.`,
-                                        reasoning: `Éliminez ${union.join(', ')} des notes des autres cases de la colonne ${c+1}.`
-                                    };
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Vérifier les boîtes 3x3
-            for (let boxR = 0; boxR < 3; boxR++) {
-                for (let boxC = 0; boxC < 3; boxC++) {
-                    const boxCells = [];
-                    
-                    // Collecter toutes les cases vides de la boîte avec leurs coordonnées et candidats
-                    for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
-                        for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
-                            if (currentGrid[r][c] === 0 && candidates[r][c].length >= 2 && candidates[r][c].length <= 3) {
-                                boxCells.push({row: r, col: c, candidates: candidates[r][c]});
-                            }
-                        }
-                    }
-                    
-                    // Chercher des triplets dans cette boîte
-                    for (let i = 0; i < boxCells.length - 2; i++) {
-                        for (let j = i + 1; j < boxCells.length - 1; j++) {
-                            for (let k = j + 1; k < boxCells.length; k++) {
-                                const union = [...new Set([
-                                    ...boxCells[i].candidates,
-                                    ...boxCells[j].candidates,
-                                    ...boxCells[k].candidates
-                                ])];
-                                
-                                if (union.length === 3) {
-                                    // Vérifier s'il y a des candidats à éliminer dans cette boîte
-                                    let canEliminateInBox = false;
-                                    for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
-                                        for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
-                                            if ((r !== boxCells[i].row || c !== boxCells[i].col) && 
-                                                (r !== boxCells[j].row || c !== boxCells[j].col) && 
-                                                (r !== boxCells[k].row || c !== boxCells[k].col) && 
-                                                currentGrid[r][c] === 0) {
-                                                const hasAnyTripleCandidate = union.some(num => candidates[r][c].includes(num));
-                                                if (hasAnyTripleCandidate) {
-                                                    canEliminateInBox = true;
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                        if (canEliminateInBox) break;
-                                    }
-                                    
-                                    if (canEliminateInBox) {
-                                        return {
-                                            type: 'elimination',
-                                            cells: [
-                                                {row: boxCells[i].row, col: boxCells[i].col}, 
-                                                {row: boxCells[j].row, col: boxCells[j].col}, 
-                                                {row: boxCells[k].row, col: boxCells[k].col}
-                                            ],
-                                            values: union,
-                                            explanation: `Triplet nu ${union.join('-')} trouvé en R${boxCells[i].row+1}C${boxCells[i].col+1}, R${boxCells[j].row+1}C${boxCells[j].col+1} et R${boxCells[k].row+1}C${boxCells[k].col+1} dans la boîte 3x3.`,
-                                            reasoning: `Éliminez ${union.join(', ')} des notes des autres cases de cette boîte 3x3.`
-                                        };
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            return null;
-        }
-
-        function displayAnalysis(foundTechnique, suggestion, currentTechniqueIndex) {
-            let html = '';
-
-            if (suggestion) {
-                // Nettoyer d'abord toutes les surbrillances
-                document.querySelectorAll('.cell').forEach(cell => {
-                    cell.classList.remove('highlighted', 'highlighted-secondary');
-                });
-
-                // Surligner selon le type de technique
-                if (suggestion.cells && suggestion.cells.length > 1) {
-                    // Techniques multi-cases (paires nues, triplets, pointage, etc.)
-                    suggestion.cells.forEach((cellInfo, index) => {
-                        const targetCell = document.querySelector(`[data-row="${cellInfo.row}"][data-col="${cellInfo.col}"]`);
-                        if (targetCell) {
-                            if (index === 0) {
-                                targetCell.classList.add('highlighted'); // Première case en surbrillance principale
-                            } else {
-                                targetCell.classList.add('highlighted-secondary'); // Autres cases en surbrillance secondaire
-                            }
-                        }
-                    });
-                } else if (suggestion.row !== undefined && suggestion.col !== undefined) {
-                    // Techniques mono-case
-                    const targetCell = document.querySelector(`[data-row="${suggestion.row}"][data-col="${suggestion.col}"]`);
-                    if (targetCell) {
-                        targetCell.classList.add('highlighted');
-                    }
-                }
-
-                html += `
-                    <div class="move-suggestion">
-                        <h4>🎯 ${foundTechnique}</h4>
-                        <p>${suggestion.explanation}</p>
-                        ${suggestion.reasoning ? `<p><em>${suggestion.reasoning}</em></p>` : ''}
-                        ${suggestion.value ? `<p><strong>➤ Placez le chiffre ${suggestion.value} en R${suggestion.row + 1}C${suggestion.col + 1}</strong></p>` : ''}
-                        ${suggestion.cells && suggestion.cells.length > 1 ? `<p><strong>📍 Cases concernées : ${suggestion.cells.map(c => `R${c.row+1}C${c.col+1}`).join(', ')}</strong></p>` : ''}
-                        ${suggestion.digit ? `<p><strong>🔢 Chiffre concerné : ${suggestion.digit}</strong></p>` : ''}
-                    </div>
-                `;
-            } else {
-                html += `
-                    <div class="technique">
-                        <h4>🎉 Grille analysée</h4>
-                        <p>Aucune technique simple trouvée. La grille nécessite des techniques plus avancées (chaînes logiques, coloration...) ou est déjà résolue.</p>
-                    </div>
-                `;
-            }
-
-            document.getElementById('analysisResult').innerHTML = html;
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Assistant Sudoku v2.0 started');
-            showLoading('Chargement des données...');
-            
-            setTimeout(() => {
-                if (!loadDataFromURL()) {
-                    showError('Aucune grille trouvée. Ouvrez cette page depuis l\'app Sudoku.');
-                }
-            }, 100);
-        });
-    </script>
-</body>
-</html>; boxC++) {
                     for (let digit = 1; digit <= 9; digit++) {
                         let digitFound = false;
                         const possibleCells = [];
@@ -1039,12 +590,12 @@
             return null;
         }
 
-        function findSimpleElimination(correctCandidates) {
+        function findSimpleElimination(candidates) {
             for (let r = 0; r < 9; r++) {
                 for (let c = 0; c < 9; c++) {
-                    if (currentGrid[r][c] === 0 && correctCandidates[r][c].length === 1) {
+                    if (currentGrid[r][c] === 0 && candidates[r][c].length === 1) {
                         const userNotes = notesGrid[r][c] || [];
-                        const correctValue = correctCandidates[r][c][0];
+                        const correctValue = candidates[r][c][0];
                         
                         if (userNotes.length > 1) {
                             return {
@@ -1138,4 +689,266 @@
 
             // Vérifier les boîtes 3x3
             for (let boxR = 0; boxR < 3; boxR++) {
-                for (let boxC = 0; boxC < 3
+                for (let boxC = 0; boxC < 3; boxC++) {
+                    const boxCells = [];
+                    
+                    // Collecter toutes les cases vides de la boîte avec leurs coordonnées et candidats
+                    for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
+                        for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
+                            if (currentGrid[r][c] === 0 && candidates[r][c].length === 2) {
+                                boxCells.push({row: r, col: c, candidates: candidates[r][c]});
+                            }
+                        }
+                    }
+                    
+                    // Chercher des paires dans cette boîte
+                    for (let i = 0; i < boxCells.length - 1; i++) {
+                        for (let j = i + 1; j < boxCells.length; j++) {
+                            if (JSON.stringify(boxCells[i].candidates) === JSON.stringify(boxCells[j].candidates)) {
+                                const pair = boxCells[i].candidates;
+                                
+                                // Vérifier s'il y a des candidats à éliminer dans cette boîte
+                                let canEliminateInBox = false;
+                                for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
+                                    for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
+                                        if ((r !== boxCells[i].row || c !== boxCells[i].col) && 
+                                            (r !== boxCells[j].row || c !== boxCells[j].col) && 
+                                            currentGrid[r][c] === 0) {
+                                            const hasAnyPairCandidate = pair.some(num => candidates[r][c].includes(num));
+                                            if (hasAnyPairCandidate) {
+                                                canEliminateInBox = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if (canEliminateInBox) break;
+                                }
+                                
+                                if (canEliminateInBox) {
+                                    return {
+                                        type: 'elimination',
+                                        cells: [{row: boxCells[i].row, col: boxCells[i].col}, {row: boxCells[j].row, col: boxCells[j].col}],
+                                        values: pair,
+                                        explanation: `Paire nue ${pair.join('-')} trouvée en R${boxCells[i].row+1}C${boxCells[i].col+1} et R${boxCells[j].row+1}C${boxCells[j].col+1} dans la boîte 3x3 (lignes ${boxR*3+1}-${boxR*3+3}, colonnes ${boxC*3+1}-${boxC*3+3}).`,
+                                        reasoning: `Éliminez ${pair.join(' et ')} des notes des autres cases de cette boîte 3x3.`
+                                    };
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        function findPointing(candidates) {
+            for (let boxR = 0; boxR < 3; boxR++) {
+                for (let boxC = 0; boxC < 3; boxC++) {
+                    for (let digit = 1; digit <= 9; digit++) {
+                        // Vérifier si ce chiffre est déjà placé dans cette boîte
+                        let digitFound = false;
+                        for (let r = boxR * 3; r < (boxR + 1) * 3 && !digitFound; r++) {
+                            for (let c = boxC * 3; c < (boxC + 1) * 3 && !digitFound; c++) {
+                                if (currentGrid[r][c] === digit) {
+                                    digitFound = true;
+                                }
+                            }
+                        }
+                        
+                        if (digitFound) continue;
+                        
+                        // Trouver toutes les cases possibles pour ce chiffre dans cette boîte
+                        const possibleCells = [];
+                        for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
+                            for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
+                                if (currentGrid[r][c] === 0 && candidates[r][c].includes(digit)) {
+                                    possibleCells.push({row: r, col: c});
+                                }
+                            }
+                        }
+                        
+                        if (possibleCells.length === 0) continue;
+                        
+                        // Vérifier si toutes les cases sont dans la même ligne
+                        const uniqueRows = [...new Set(possibleCells.map(cell => cell.row))];
+                        if (uniqueRows.length === 1) {
+                            const targetRow = uniqueRows[0];
+                            
+                            // Vérifier s'il y a des candidats à éliminer dans cette ligne (en dehors de la boîte)
+                            let canEliminateInRow = false;
+                            for (let c = 0; c < 9; c++) {
+                                const isInBox = c >= boxC * 3 && c < (boxC + 1) * 3;
+                                if (!isInBox && currentGrid[targetRow][c] === 0 && candidates[targetRow][c].includes(digit)) {
+                                    canEliminateInRow = true;
+                                    break;
+                                }
+                            }
+                            
+                            if (canEliminateInRow) {
+                                return {
+                                    type: 'elimination',
+                                    digit: digit,
+                                    cells: possibleCells,
+                                    explanation: `Pointage détecté : le chiffre ${digit} dans la boîte 3x3 (lignes ${boxR*3+1}-${boxR*3+3}, colonnes ${boxC*3+1}-${boxC*3+3}) ne peut aller que dans la ligne ${targetRow+1}.`,
+                                    reasoning: `Éliminez le ${digit} des autres cases de la ligne ${targetRow+1} en dehors de cette boîte.`
+                                };
+                            }
+                        }
+                        
+                        // Vérifier si toutes les cases sont dans la même colonne
+                        const uniqueCols = [...new Set(possibleCells.map(cell => cell.col))];
+                        if (uniqueCols.length === 1) {
+                            const targetCol = uniqueCols[0];
+                            
+                            // Vérifier s'il y a des candidats à éliminer dans cette colonne (en dehors de la boîte)
+                            let canEliminateInCol = false;
+                            for (let r = 0; r < 9; r++) {
+                                const isInBox = r >= boxR * 3 && r < (boxR + 1) * 3;
+                                if (!isInBox && currentGrid[r][targetCol] === 0 && candidates[r][targetCol].includes(digit)) {
+                                    canEliminateInCol = true;
+                                    break;
+                                }
+                            }
+                            
+                            if (canEliminateInCol) {
+                                return {
+                                    type: 'elimination',
+                                    digit: digit,
+                                    cells: possibleCells,
+                                    explanation: `Pointage détecté : le chiffre ${digit} dans la boîte 3x3 (lignes ${boxR*3+1}-${boxR*3+3}, colonnes ${boxC*3+1}-${boxC*3+3}) ne peut aller que dans la colonne ${targetCol+1}.`,
+                                    reasoning: `Éliminez le ${digit} des autres cases de la colonne ${targetCol+1} en dehors de cette boîte.`
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return null;
+        }
+
+        function performAnalysis() {
+            let foundTechnique = null;
+            let suggestion = null;
+            let currentTechniqueIndex = -1;
+
+            // Générer les candidats une seule fois pour toutes les techniques
+            const correctCandidates = generateCandidates();
+
+            // 1. Dernier chiffre possible
+            const lastNumber = findLastPossibleNumber();
+            if (lastNumber) {
+                foundTechnique = "Dernier chiffre possible";
+                suggestion = lastNumber;
+                currentTechniqueIndex = 0;
+            }
+
+            // 2. Case unique
+            if (!foundTechnique) {
+                const uniquePlace = findUniquePlace();
+                if (uniquePlace) {
+                    foundTechnique = "Case unique";
+                    suggestion = uniquePlace;
+                    currentTechniqueIndex = 1;
+                }
+            }
+
+            // 3. Élimination simple
+            if (!foundTechnique) {
+                const simpleElimination = findSimpleElimination(correctCandidates);
+                if (simpleElimination) {
+                    foundTechnique = "Élimination simple";
+                    suggestion = simpleElimination;
+                    currentTechniqueIndex = 2;
+                }
+            }
+
+            // 4. Paires nues (avec vérification d'utilité)
+            if (!foundTechnique) {
+                const nakedPair = findNakedPairs(correctCandidates);
+                if (nakedPair) {
+                    foundTechnique = "Paires nues";
+                    suggestion = nakedPair;
+                    currentTechniqueIndex = 3;
+                }
+            }
+
+            // 5. Pointage
+            if (!foundTechnique) {
+                const pointing = findPointing(correctCandidates);
+                if (pointing) {
+                    foundTechnique = "Pointage";
+                    suggestion = pointing;
+                    currentTechniqueIndex = 4;
+                }
+            }
+
+            displayAnalysis(foundTechnique, suggestion, currentTechniqueIndex);
+        }
+
+        function displayAnalysis(foundTechnique, suggestion, currentTechniqueIndex) {
+            let html = '';
+
+            if (suggestion) {
+                // Nettoyer d'abord toutes les surbrillances
+                document.querySelectorAll('.cell').forEach(cell => {
+                    cell.classList.remove('highlighted', 'highlighted-secondary');
+                });
+
+                // Surligner selon le type de technique
+                if (suggestion.cells && suggestion.cells.length > 1) {
+                    // Techniques multi-cases (paires nues, triplets, pointage, etc.)
+                    suggestion.cells.forEach((cellInfo, index) => {
+                        const targetCell = document.querySelector(`[data-row="${cellInfo.row}"][data-col="${cellInfo.col}"]`);
+                        if (targetCell) {
+                            if (index === 0) {
+                                targetCell.classList.add('highlighted'); // Première case en surbrillance principale
+                            } else {
+                                targetCell.classList.add('highlighted-secondary'); // Autres cases en surbrillance secondaire
+                            }
+                        }
+                    });
+                } else if (suggestion.row !== undefined && suggestion.col !== undefined) {
+                    // Techniques mono-case
+                    const targetCell = document.querySelector(`[data-row="${suggestion.row}"][data-col="${suggestion.col}"]`);
+                    if (targetCell) {
+                        targetCell.classList.add('highlighted');
+                    }
+                }
+
+                html += `
+                    <div class="move-suggestion">
+                        <h4>🎯 ${foundTechnique}</h4>
+                        <p>${suggestion.explanation}</p>
+                        ${suggestion.reasoning ? `<p><em>${suggestion.reasoning}</em></p>` : ''}
+                        ${suggestion.value ? `<p><strong>➤ Placez le chiffre ${suggestion.value} en R${suggestion.row + 1}C${suggestion.col + 1}</strong></p>` : ''}
+                        ${suggestion.cells && suggestion.cells.length > 1 ? `<p><strong>📍 Cases concernées : ${suggestion.cells.map(c => `R${c.row+1}C${c.col+1}`).join(', ')}</strong></p>` : ''}
+                        ${suggestion.digit ? `<p><strong>🔢 Chiffre concerné : ${suggestion.digit}</strong></p>` : ''}
+                    </div>
+                `;
+            } else {
+                html += `
+                    <div class="technique">
+                        <h4>🎉 Grille analysée</h4>
+                        <p>Aucune technique simple trouvée. La grille nécessite des techniques plus avancées (chaînes logiques, coloration...) ou est déjà résolue.</p>
+                    </div>
+                `;
+            }
+
+            document.getElementById('analysisResult').innerHTML = html;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🚀 Assistant Sudoku v2.1 started');
+            showLoading('Chargement des données...');
+            
+            setTimeout(() => {
+                if (!loadDataFromURL()) {
+                    showError('Aucune grille trouvée. Ouvrez cette page depuis l\'app Sudoku.');
+                }
+            }, 100);
+        });
+    </script>
+</body>
+</html>
