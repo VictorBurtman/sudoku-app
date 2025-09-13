@@ -261,7 +261,7 @@
     <div class="app-container">
         <div class="app-bar">
             <button class="back-button" onclick="window.close()">←</button>
-            <h1>Assistant Sudoku v2.2</h1>
+            <h1>Assistant Sudoku v2.1</h1>
             <div></div>
         </div>
         
@@ -941,6 +941,34 @@
             return null;
         }
 
+        function findNotesIncomplete(candidates) {
+            // Vérifier si les notes de l'utilisateur sont complètes
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    if (currentGrid[r][c] === 0) {
+                        const userNotes = notesGrid[r][c] || [];
+                        const calculated = candidates[r][c];
+                        
+                        // Vérifier si l'utilisateur manque des candidats valides
+                        const missingCandidates = calculated.filter(cand => !userNotes.includes(cand));
+                        
+                        if (missingCandidates.length > 0) {
+                            return {
+                                row: r,
+                                col: c,
+                                userNotes: userNotes,
+                                correctCandidates: calculated,
+                                missingCandidates: missingCandidates,
+                                explanation: `Vos notes en R${r+1}C${c+1} sont incomplètes. Vous avez noté [${userNotes.join(',')}] mais les candidats possibles sont [${calculated.join(',')}].`,
+                                reasoning: `Ajoutez ${missingCandidates.length === 1 ? 'le candidat' : 'les candidats'} ${missingCandidates.join(', ')} à vos notes en R${r+1}C${c+1}.`
+                            };
+                        }
+                    }
+                }
+            }
+            return null;
+        }
+
         function performAnalysis() {
             let foundTechnique = null;
             let suggestion = null;
@@ -948,6 +976,16 @@
 
             // Générer les candidats une seule fois pour toutes les techniques
             const correctCandidates = generateCandidates();
+
+            // 0. Vérifier d'abord si les notes sont complètes
+            const incompleteNotes = findNotesIncomplete(correctCandidates);
+            if (incompleteNotes) {
+                foundTechnique = "Notes incomplètes détectées";
+                suggestion = incompleteNotes;
+                currentTechniqueIndex = -1;
+                displayAnalysis(foundTechnique, suggestion, currentTechniqueIndex);
+                return;
+            }
 
             // 1. Dernier chiffre possible
             const lastNumber = findLastPossibleNumber();
