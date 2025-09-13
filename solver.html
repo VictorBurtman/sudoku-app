@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
@@ -14,248 +15,251 @@
             box-sizing: border-box;
         }
 
-        html, body {
-            font-family: 'Courier New', monospace;
-            background: #121212;
-            color: #ffffff;
-            user-select: none;
-            overflow-x: hidden;
-            touch-action: manipulation;
-            -webkit-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            min-height: 100vh;
-        }
+```
+    html, body {
+        font-family: 'Courier New', monospace;
+        background: #121212;
+        color: #ffffff;
+        user-select: none;
+        overflow-x: hidden;
+        touch-action: manipulation;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        min-height: 100vh;
+    }
 
-        .app-container {
-            max-width: 480px;
-            margin: 0 auto;
-            background: #1e1e1e;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
+    .app-container {
+        max-width: 480px;
+        margin: 0 auto;
+        background: #1e1e1e;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
 
-        .app-bar {
-            background: #2d2d2d;
-            padding: 12px 16px;
-            border-bottom: 1px solid #404040;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-shrink: 0;
-        }
+    .app-bar {
+        background: #2d2d2d;
+        padding: 12px 16px;
+        border-bottom: 1px solid #404040;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+    }
 
-        .app-bar h1 {
-            font-size: 18px;
-            font-weight: bold;
-            color: #ffffff;
-        }
+    .app-bar h1 {
+        font-size: 18px;
+        font-weight: bold;
+        color: #ffffff;
+    }
 
-        .back-button {
-            background: none;
-            border: none;
-            color: #ffffff;
-            font-size: 18px;
-            cursor: pointer;
-            padding: 4px;
-            opacity: 0.8;
-        }
+    .back-button {
+        background: none;
+        border: none;
+        color: #ffffff;
+        font-size: 18px;
+        cursor: pointer;
+        padding: 4px;
+        opacity: 0.8;
+    }
 
-        .back-button:hover {
-            opacity: 1;
-        }
+    .back-button:hover {
+        opacity: 1;
+    }
 
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-        }
+    .main-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+    }
 
-        .grid-section {
-            padding: 16px;
-            border-bottom: 1px solid #404040;
-            flex-shrink: 0;
-        }
+    .grid-section {
+        padding: 16px;
+        border-bottom: 1px solid #404040;
+        flex-shrink: 0;
+    }
 
+    .sudoku-grid {
+        width: 100%;
+        max-width: 320px;
+        aspect-ratio: 1;
+        border: 2px solid #ffffff;
+        display: grid;
+        grid-template-columns: repeat(9, 1fr);
+        grid-template-rows: repeat(9, 1fr);
+        margin: 0 auto;
+        background: #2d2d2d;
+    }
+
+    .cell {
+        border: 0.5px solid #666666;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: bold;
+        position: relative;
+        background: #2d2d2d;
+        color: #ffffff;
+        overflow: hidden;
+    }
+
+    .cell:nth-child(3n):not(:nth-child(9n)) {
+        border-right: 1px solid #ffffff;
+    }
+
+    .cell:nth-child(n+19):nth-child(-n+27),
+    .cell:nth-child(n+46):nth-child(-n+54) {
+        border-bottom: 1px solid #ffffff;
+    }
+
+    .cell.given {
+        color: #ffffff;
+        background: #2d2d2d;
+    }
+
+    .cell.filled {
+        color: #90caf9;
+        background: #2d2d2d;
+    }
+
+    .cell.highlighted {
+        background: #ffb74d !important;
+        color: #ffffff;
+        animation: pulse 2s infinite;
+    }
+
+    .cell.highlighted-secondary {
+        background: #ff9800 !important;
+        color: #ffffff;
+        opacity: 0.8;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
+
+    .notes {
+        position: absolute;
+        top: 1px;
+        left: 1px;
+        font-size: 6px;
+        color: #ffffff;
+        line-height: 1;
+    }
+
+    .coordinate-label {
+        font-size: 10px;
+        color: #888;
+        text-align: center;
+    }
+
+    .analysis-section {
+        flex: 1;
+        padding: 16px;
+        overflow-y: auto;
+    }
+
+    .analysis-section h3 {
+        color: #ffffff;
+        margin-bottom: 16px;
+        font-size: 16px;
+    }
+
+    .technique {
+        background: #2d2d2d;
+        border-left: 4px solid #2196f3;
+        padding: 12px;
+        margin-bottom: 12px;
+        border-radius: 5px;
+        border: 1px solid #404040;
+    }
+
+    .technique h4 {
+        color: #2196f3;
+        margin-bottom: 8px;
+        font-size: 14px;
+    }
+
+    .technique p {
+        font-size: 12px;
+        line-height: 1.4;
+        color: #b0b0b0;
+    }
+
+    .technique.found {
+        border-left-color: #4caf50;
+        background: #1b5e20;
+        border-color: #4caf50;
+    }
+
+    .technique.found h4 {
+        color: #4caf50;
+    }
+
+    .move-suggestion {
+        background: #4caf50;
+        color: white;
+        padding: 16px;
+        border-radius: 8px;
+        margin-top: 16px;
+        text-align: center;
+    }
+
+    .move-suggestion h4 {
+        font-size: 16px;
+        margin-bottom: 8px;
+    }
+
+    .move-suggestion p {
+        font-size: 13px;
+        margin-bottom: 4px;
+    }
+
+    .loading-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #b0b0b0;
+    }
+
+    .error-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #f44336;
+    }
+
+    /* Media queries pour très petits écrans */
+    @media (max-width: 360px) {
         .sudoku-grid {
-            width: 100%;
-            max-width: 320px;
-            aspect-ratio: 1;
-            border: 2px solid #ffffff;
-            display: grid;
-            grid-template-columns: repeat(9, 1fr);
-            grid-template-rows: repeat(9, 1fr);
-            margin: 0 auto;
-            background: #2d2d2d;
+            max-width: 280px;
         }
-
+        
         .cell {
-            border: 0.5px solid #666666;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            font-weight: bold;
-            position: relative;
-            background: #2d2d2d;
-            color: #ffffff;
-            overflow: hidden;
-        }
-
-        .cell:nth-child(3n):not(:nth-child(9n)) {
-            border-right: 1px solid #ffffff;
-        }
-
-        .cell:nth-child(n+19):nth-child(-n+27),
-        .cell:nth-child(n+46):nth-child(-n+54) {
-            border-bottom: 1px solid #ffffff;
-        }
-
-        .cell.given {
-            color: #ffffff;
-            background: #2d2d2d;
-        }
-
-        .cell.filled {
-            color: #90caf9;
-            background: #2d2d2d;
-        }
-
-        .cell.highlighted {
-            background: #ffb74d !important;
-            color: #ffffff;
-            animation: pulse 2s infinite;
-        }
-
-        .cell.highlighted-secondary {
-            background: #ff9800 !important;
-            color: #ffffff;
-            opacity: 0.8;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-
-        .notes {
-            position: absolute;
-            top: 1px;
-            left: 1px;
-            font-size: 6px;
-            color: #ffffff;
-            line-height: 1;
-        }
-
-        .coordinate-label {
-            font-size: 10px;
-            color: #888;
-            text-align: center;
-        }
-
-        .analysis-section {
-            flex: 1;
-            padding: 16px;
-            overflow-y: auto;
-        }
-
-        .analysis-section h3 {
-            color: #ffffff;
-            margin-bottom: 16px;
-            font-size: 16px;
-        }
-
-        .technique {
-            background: #2d2d2d;
-            border-left: 4px solid #2196f3;
-            padding: 12px;
-            margin-bottom: 12px;
-            border-radius: 5px;
-            border: 1px solid #404040;
-        }
-
-        .technique h4 {
-            color: #2196f3;
-            margin-bottom: 8px;
             font-size: 14px;
         }
-
-        .technique p {
-            font-size: 12px;
-            line-height: 1.4;
-            color: #b0b0b0;
+        
+        .notes {
+            font-size: 5px;
         }
-
-        .technique.found {
-            border-left-color: #4caf50;
-            background: #1b5e20;
-            border-color: #4caf50;
+        
+        .grid-section, .analysis-section {
+            padding: 12px;
         }
+    }
 
-        .technique.found h4 {
-            color: #4caf50;
+    /* Style pour les éléments interactifs sur mobile */
+    @media (hover: none) and (pointer: coarse) {
+        .back-button:active {
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
         }
+    }
+</style>
+```
 
-        .move-suggestion {
-            background: #4caf50;
-            color: white;
-            padding: 16px;
-            border-radius: 8px;
-            margin-top: 16px;
-            text-align: center;
-        }
-
-        .move-suggestion h4 {
-            font-size: 16px;
-            margin-bottom: 8px;
-        }
-
-        .move-suggestion p {
-            font-size: 13px;
-            margin-bottom: 4px;
-        }
-
-        .loading-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: #b0b0b0;
-        }
-
-        .error-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: #f44336;
-        }
-
-        /* Media queries pour très petits écrans */
-        @media (max-width: 360px) {
-            .sudoku-grid {
-                max-width: 280px;
-            }
-            
-            .cell {
-                font-size: 14px;
-            }
-            
-            .notes {
-                font-size: 5px;
-            }
-            
-            .grid-section, .analysis-section {
-                padding: 12px;
-            }
-        }
-
-        /* Style pour les éléments interactifs sur mobile */
-        @media (hover: none) and (pointer: coarse) {
-            .back-button:active {
-                background: rgba(255,255,255,0.1);
-                border-radius: 4px;
-            }
-        }
-    </style>
 </head>
 <body>
     <div class="app-container">
@@ -264,52 +268,78 @@
             <h1>Assistant Sudoku v2.1</h1>
             <div></div>
         </div>
+
+```
+    <div class="main-content">
+        <div class="grid-section" id="gridSection">
+            <div id="gridDisplay"></div>
+        </div>
         
-        <div class="main-content">
-            <div class="grid-section" id="gridSection">
-                <div id="gridDisplay"></div>
-            </div>
-            
-            <div class="analysis-section">
-                <h3>Analyse des techniques</h3>
-                <div id="analysisResult">
-                    <div class="loading-state">
-                        Chargement de la grille...
-                    </div>
+        <div class="analysis-section">
+            <h3>Analyse des techniques</h3>
+            <div id="analysisResult">
+                <div class="loading-state">
+                    Chargement de la grille...
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <script>
-        let currentGrid = null;
-        let originalGrid = null;
-        let notesGrid = null;
+<script>
+    let currentGrid = null;
+    let originalGrid = null;
+    let notesGrid = null;
 
-        function showError(message) {
-            const analysisResult = document.getElementById('analysisResult');
-            if (analysisResult) {
-                analysisResult.innerHTML = `<div class="error-state">${message}</div>`;
-            }
-            console.error('Error:', message);
+    function showError(message) {
+        const analysisResult = document.getElementById('analysisResult');
+        if (analysisResult) {
+            analysisResult.innerHTML = `<div class="error-state">${message}</div>`;
         }
+        console.error('Error:', message);
+    }
 
-        function showLoading(message) {
-            const analysisResult = document.getElementById('analysisResult');
-            if (analysisResult) {
-                analysisResult.innerHTML = `<div class="loading-state">${message}</div>`;
+    function showLoading(message) {
+        const analysisResult = document.getElementById('analysisResult');
+        if (analysisResult) {
+            analysisResult.innerHTML = `<div class="loading-state">${message}</div>`;
+        }
+    }
+
+    function loadDataFromURL() {
+        const urlParams = new URLSearchParams(window.location.search);
+        console.log('Checking URL params:', window.location.search);
+        
+        const encodedData = urlParams.get('data');
+        if (encodedData) {
+            try {
+                const decodedData = decodeURIComponent(encodedData);
+                const data = JSON.parse(decodedData);
+                
+                if (!data.currentGrid || !data.notesGrid) {
+                    throw new Error("currentGrid ou notesGrid manquants");
+                }
+                
+                currentGrid = data.currentGrid;
+                originalGrid = data.originalGrid;
+                notesGrid = data.notesGrid;
+                
+                analyzeGrid();
+                return true;
+            } catch (error) {
+                console.error('Error loading data from URL:', error);
+                showError('Erreur URL: ' + error.message);
+                return false;
             }
         }
-
-        function loadDataFromURL() {
-            const urlParams = new URLSearchParams(window.location.search);
-            console.log('Checking URL params:', window.location.search);
-            
-            const encodedData = urlParams.get('data');
-            if (encodedData) {
-                try {
-                    const decodedData = decodeURIComponent(encodedData);
-                    const data = JSON.parse(decodedData);
+        
+        const dataId = urlParams.get('id');
+        if (dataId) {
+            try {
+                const storedData = localStorage.getItem(dataId);
+                if (storedData) {
+                    localStorage.removeItem(dataId);
+                    const data = JSON.parse(storedData);
                     
                     if (!data.currentGrid || !data.notesGrid) {
                         throw new Error("currentGrid ou notesGrid manquants");
@@ -321,795 +351,856 @@
                     
                     analyzeGrid();
                     return true;
-                } catch (error) {
-                    console.error('Error loading data from URL:', error);
-                    showError('Erreur URL: ' + error.message);
+                } else {
+                    showError('Données expirées (ID: ' + dataId + ')');
                     return false;
                 }
-            }
-            
-            const dataId = urlParams.get('id');
-            if (dataId) {
-                try {
-                    const storedData = localStorage.getItem(dataId);
-                    if (storedData) {
-                        localStorage.removeItem(dataId);
-                        const data = JSON.parse(storedData);
-                        
-                        if (!data.currentGrid || !data.notesGrid) {
-                            throw new Error("currentGrid ou notesGrid manquants");
-                        }
-                        
-                        currentGrid = data.currentGrid;
-                        originalGrid = data.originalGrid;
-                        notesGrid = data.notesGrid;
-                        
-                        analyzeGrid();
-                        return true;
-                    } else {
-                        showError('Données expirées (ID: ' + dataId + ')');
-                        return false;
-                    }
-                } catch (error) {
-                    console.error('Error with localStorage:', error);
-                    showError('Erreur localStorage: ' + error.message);
-                    return false;
-                }
-            }
-            
-            return false;
-        }
-
-        function analyzeGrid() {
-            if (!currentGrid || !notesGrid) {
-                showError('Données de grille manquantes');
-                return;
-            }
-            
-            try {
-                displayGrid();
-                performAnalysis();
             } catch (error) {
-                console.error('Error during analysis:', error);
-                showError('Erreur pendant l\'analyse: ' + error.message);
+                console.error('Error with localStorage:', error);
+                showError('Erreur localStorage: ' + error.message);
+                return false;
             }
         }
+        
+        return false;
+    }
 
-        function displayGrid() {
-            let gridHtml = `
-                <div style="display: inline-block; position: relative;">
-                    <!-- Coordonnées colonnes -->
-                    <div style="display: flex; justify-content: center; margin-bottom: 5px; padding-left: 25px;">
-                        <div style="display: flex; width: 320px; justify-content: space-around;">
-                            <div class="coordinate-label">C1</div>
-                            <div class="coordinate-label">C2</div>
-                            <div class="coordinate-label">C3</div>
-                            <div class="coordinate-label">C4</div>
-                            <div class="coordinate-label">C5</div>
-                            <div class="coordinate-label">C6</div>
-                            <div class="coordinate-label">C7</div>
-                            <div class="coordinate-label">C8</div>
-                            <div class="coordinate-label">C9</div>
-                        </div>
-                    </div>
-                    
-                    <div style="display: flex; align-items: center;">
-                        <!-- Coordonnées lignes -->
-                        <div style="display: flex; flex-direction: column; justify-content: space-around; height: 320px; margin-right: 5px;">
-                            <div class="coordinate-label">R1</div>
-                            <div class="coordinate-label">R2</div>
-                            <div class="coordinate-label">R3</div>
-                            <div class="coordinate-label">R4</div>
-                            <div class="coordinate-label">R5</div>
-                            <div class="coordinate-label">R6</div>
-                            <div class="coordinate-label">R7</div>
-                            <div class="coordinate-label">R8</div>
-                            <div class="coordinate-label">R9</div>
-                        </div>
-                        
-                        <!-- Grille sudoku -->
-                        <div class="sudoku-grid">
-                            ${currentGrid.map((row, r) => 
-                                row.map((cell, c) => {
-                                    const isGiven = originalGrid && originalGrid[r][c] !== 0;
-                                    const isFilled = cell !== 0;
-                                    const notes = notesGrid[r][c] || [];
-                                    const notesText = notes.length > 0 ? notes.join('') : '';
-                                    
-                                    let cellClass = 'cell';
-                                    if (isGiven) cellClass += ' given';
-                                    else if (isFilled) cellClass += ' filled';
-                                    
-                                    return `<div class="${cellClass}" data-row="${r}" data-col="${c}">
-                                        ${cell !== 0 ? cell : ''}
-                                        ${cell === 0 && notes.length > 0 ? `<div class="notes">${notesText}</div>` : ''}
-                                    </div>`;
-                                }).join('')
-                            ).join('')}
-                        </div>
+    function analyzeGrid() {
+        if (!currentGrid || !notesGrid) {
+            showError('Données de grille manquantes');
+            return;
+        }
+        
+        try {
+            displayGrid();
+            performAnalysis();
+        } catch (error) {
+            console.error('Error during analysis:', error);
+            showError('Erreur pendant l\'analyse: ' + error.message);
+        }
+    }
+
+    function displayGrid() {
+        let gridHtml = `
+            <div style="display: inline-block; position: relative;">
+                <!-- Coordonnées colonnes -->
+                <div style="display: flex; justify-content: center; margin-bottom: 5px; padding-left: 25px;">
+                    <div style="display: flex; width: 320px; justify-content: space-around;">
+                        <div class="coordinate-label">C1</div>
+                        <div class="coordinate-label">C2</div>
+                        <div class="coordinate-label">C3</div>
+                        <div class="coordinate-label">C4</div>
+                        <div class="coordinate-label">C5</div>
+                        <div class="coordinate-label">C6</div>
+                        <div class="coordinate-label">C7</div>
+                        <div class="coordinate-label">C8</div>
+                        <div class="coordinate-label">C9</div>
                     </div>
                 </div>
-            `;
-            
-            document.getElementById('gridDisplay').innerHTML = gridHtml;
-        }
+                
+                <div style="display: flex; align-items: center;">
+                    <!-- Coordonnées lignes -->
+                    <div style="display: flex; flex-direction: column; justify-content: space-around; height: 320px; margin-right: 5px;">
+                        <div class="coordinate-label">R1</div>
+                        <div class="coordinate-label">R2</div>
+                        <div class="coordinate-label">R3</div>
+                        <div class="coordinate-label">R4</div>
+                        <div class="coordinate-label">R5</div>
+                        <div class="coordinate-label">R6</div>
+                        <div class="coordinate-label">R7</div>
+                        <div class="coordinate-label">R8</div>
+                        <div class="coordinate-label">R9</div>
+                    </div>
+                    
+                    <!-- Grille sudoku -->
+                    <div class="sudoku-grid">
+                        ${currentGrid.map((row, r) => 
+                            row.map((cell, c) => {
+                                const isGiven = originalGrid && originalGrid[r][c] !== 0;
+                                const isFilled = cell !== 0;
+                                const notes = notesGrid[r][c] || [];
+                                const notesText = notes.length > 0 ? notes.join('') : '';
+                                
+                                let cellClass = 'cell';
+                                if (isGiven) cellClass += ' given';
+                                else if (isFilled) cellClass += ' filled';
+                                
+                                return `<div class="${cellClass}" data-row="${r}" data-col="${c}">
+                                    ${cell !== 0 ? cell : ''}
+                                    ${cell === 0 && notes.length > 0 ? `<div class="notes">${notesText}</div>` : ''}
+                                </div>`;
+                            }).join('')
+                        ).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        document.getElementById('gridDisplay').innerHTML = gridHtml;
+    }
 
-        function isValidPlacement(row, col, num) {
-            // Vérifier la ligne
+    function isValidPlacement(row, col, num) {
+        // Vérifier la ligne
+        for (let c = 0; c < 9; c++) {
+            if (currentGrid[row][c] === num) return false;
+        }
+        
+        // Vérifier la colonne
+        for (let r = 0; r < 9; r++) {
+            if (currentGrid[r][col] === num) return false;
+        }
+        
+        // Vérifier la boîte 3x3
+        const boxRow = Math.floor(row / 3) * 3;
+        const boxCol = Math.floor(col / 3) * 3;
+        for (let r = boxRow; r < boxRow + 3; r++) {
+            for (let c = boxCol; c < boxCol + 3; c++) {
+                if (currentGrid[r][c] === num) return false;
+            }
+        }
+        
+        return true;
+    }
+
+    function generateCandidates() {
+        const candidates = [];
+        
+        for (let r = 0; r < 9; r++) {
+            candidates[r] = [];
             for (let c = 0; c < 9; c++) {
-                if (currentGrid[row][c] === num) return false;
-            }
-            
-            // Vérifier la colonne
-            for (let r = 0; r < 9; r++) {
-                if (currentGrid[r][col] === num) return false;
-            }
-            
-            // Vérifier la boîte 3x3
-            const boxRow = Math.floor(row / 3) * 3;
-            const boxCol = Math.floor(col / 3) * 3;
-            for (let r = boxRow; r < boxRow + 3; r++) {
-                for (let c = boxCol; c < boxCol + 3; c++) {
-                    if (currentGrid[r][c] === num) return false;
-                }
-            }
-            
-            return true;
-        }
-
-        function generateCandidates() {
-            const candidates = [];
-            
-            for (let r = 0; r < 9; r++) {
-                candidates[r] = [];
-                for (let c = 0; c < 9; c++) {
-                    if (currentGrid[r][c] !== 0) {
-                        candidates[r][c] = [];
-                    } else {
-                        candidates[r][c] = [];
-                        for (let num = 1; num <= 9; num++) {
-                            if (isValidPlacement(r, c, num)) {
-                                candidates[r][c].push(num);
-                            }
+                if (currentGrid[r][c] !== 0) {
+                    candidates[r][c] = [];
+                } else {
+                    candidates[r][c] = [];
+                    for (let num = 1; num <= 9; num++) {
+                        if (isValidPlacement(r, c, num)) {
+                            candidates[r][c].push(num);
                         }
                     }
                 }
             }
-            
-            return candidates;
         }
+        
+        return candidates;
+    }
 
-        function findLastPossibleNumber() {
-            for (let r = 0; r < 9; r++) {
-                for (let c = 0; c < 9; c++) {
-                    if (currentGrid[r][c] === 0) {
-                        const possibleNumbers = [];
-                        for (let num = 1; num <= 9; num++) {
-                            if (isValidPlacement(r, c, num)) {
-                                possibleNumbers.push(num);
-                            }
-                        }
-                        
-                        if (possibleNumbers.length === 1) {
-                            return {
-                                row: r,
-                                col: c,
-                                value: possibleNumbers[0],
-                                explanation: `La case R${r+1}C${c+1} ne peut contenir que le chiffre ${possibleNumbers[0]}. Tous les autres chiffres (1-9) apparaissent déjà dans sa ligne, colonne ou boîte 3x3.`,
-                                reasoning: `Élimination par contraintes : ligne ${r+1}, colonne ${c+1}, boîte 3x3`
-                            };
-                        }
-                    }
-                }
-            }
-            return null;
-        }
-
-        function findUniquePlace() {
-            // Vérifier les lignes
-            for (let r = 0; r < 9; r++) {
-                for (let digit = 1; digit <= 9; digit++) {
-                    if (currentGrid[r].includes(digit)) continue;
-                    
-                    const possibleCols = [];
-                    for (let c = 0; c < 9; c++) {
-                        if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
-                            possibleCols.push(c);
+    function findLastPossibleNumber() {
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                if (currentGrid[r][c] === 0) {
+                    const possibleNumbers = [];
+                    for (let num = 1; num <= 9; num++) {
+                        if (isValidPlacement(r, c, num)) {
+                            possibleNumbers.push(num);
                         }
                     }
                     
-                    if (possibleCols.length === 1) {
+                    if (possibleNumbers.length === 1) {
                         return {
                             row: r,
-                            col: possibleCols[0],
-                            value: digit,
-                            explanation: `Le chiffre ${digit} ne peut aller qu'en R${r+1}C${possibleCols[0]+1} dans la ligne ${r+1}. Toutes les autres cases de cette ligne contiennent déjà ce chiffre ou ne peuvent pas l'accueillir.`,
-                            reasoning: `Case unique dans la ligne ${r+1}`
-                        };
-                    }
-                }
-            }
-
-            // Vérifier les colonnes
-            for (let c = 0; c < 9; c++) {
-                for (let digit = 1; digit <= 9; digit++) {
-                    if (currentGrid.some(row => row[c] === digit)) continue;
-                    
-                    const possibleRows = [];
-                    for (let r = 0; r < 9; r++) {
-                        if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
-                            possibleRows.push(r);
-                        }
-                    }
-                    
-                    if (possibleRows.length === 1) {
-                        return {
-                            row: possibleRows[0],
                             col: c,
-                            value: digit,
-                            explanation: `Le chiffre ${digit} ne peut aller qu'en R${possibleRows[0]+1}C${c+1} dans la colonne ${c+1}. Toutes les autres cases de cette colonne contiennent déjà ce chiffre ou ne peuvent pas l'accueillir.`,
-                            reasoning: `Case unique dans la colonne ${c+1}`
+                            value: possibleNumbers[0],
+                            explanation: `La case R${r+1}C${c+1} ne peut contenir que le chiffre ${possibleNumbers[0]}. Tous les autres chiffres (1-9) apparaissent déjà dans sa ligne, colonne ou boîte 3x3.`,
+                            reasoning: `Élimination par contraintes : ligne ${r+1}, colonne ${c+1}, boîte 3x3`
                         };
                     }
                 }
             }
-
-            // Vérifier les boîtes 3x3
-            for (let boxR = 0; boxR < 3; boxR++) {
-                for (let boxC = 0; boxC < 3; boxC++) {
-                    for (let digit = 1; digit <= 9; digit++) {
-                        let digitFound = false;
-                        const possibleCells = [];
-                        
-                        for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
-                            for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
-                                if (currentGrid[r][c] === digit) {
-                                    digitFound = true;
-                                    break;
-                                }
-                                if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
-                                    possibleCells.push({r, c});
-                                }
-                            }
-                            if (digitFound) break;
-                        }
-                        
-                        if (!digitFound && possibleCells.length === 1) {
-                            return {
-                                row: possibleCells[0].r,
-                                col: possibleCells[0].c,
-                                value: digit,
-                                explanation: `Le chiffre ${digit} ne peut aller qu'en R${possibleCells[0].r+1}C${possibleCells[0].c+1} dans la boîte 3x3 (lignes ${boxR*3+1}-${boxR*3+3}, colonnes ${boxC*3+1}-${boxC*3+3}).`,
-                                reasoning: `Case unique dans la boîte 3x3`
-                            };
-                        }
-                    }
-                }
-            }
-
-            return null;
         }
+        return null;
+    }
 
-        function findSimpleElimination(candidates) {
-            for (let r = 0; r < 9; r++) {
+    function findUniquePlace() {
+        // Vérifier les lignes
+        for (let r = 0; r < 9; r++) {
+            for (let digit = 1; digit <= 9; digit++) {
+                if (currentGrid[r].includes(digit)) continue;
+                
+                const possibleCols = [];
                 for (let c = 0; c < 9; c++) {
-                    if (currentGrid[r][c] === 0 && candidates[r][c].length === 1) {
-                        const userNotes = notesGrid[r][c] || [];
-                        const correctValue = candidates[r][c][0];
-                        
-                        if (userNotes.length > 1) {
-                            return {
-                                row: r,
-                                col: c,
-                                value: correctValue,
-                                explanation: `En R${r+1}C${c+1}, seul le ${correctValue} est possible. Vous pouvez éliminer les autres candidats de vos notes et placer ce chiffre.`,
-                                reasoning: `Éliminez de vos notes : ${userNotes.filter(n => n !== correctValue).join(', ')}`
-                            };
-                        }
+                    if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
+                        possibleCols.push(c);
                     }
                 }
+                
+                if (possibleCols.length === 1) {
+                    return {
+                        row: r,
+                        col: possibleCols[0],
+                        value: digit,
+                        explanation: `Le chiffre ${digit} ne peut aller qu'en R${r+1}C${possibleCols[0]+1} dans la ligne ${r+1}. Toutes les autres cases de cette ligne contiennent déjà ce chiffre ou ne peuvent pas l'accueillir.`,
+                        reasoning: `Case unique dans la ligne ${r+1}`
+                    };
+                }
             }
-            return null;
         }
 
-        function findNakedPairs(candidates) {
-            // Vérifier les lignes
-            for (let r = 0; r < 9; r++) {
-                for (let c1 = 0; c1 < 8; c1++) {
-                    if (currentGrid[r][c1] !== 0 || candidates[r][c1].length !== 2) continue;
-                    
-                    for (let c2 = c1 + 1; c2 < 9; c2++) {
-                        if (currentGrid[r][c2] !== 0 || candidates[r][c2].length !== 2) continue;
-                        
-                        if (JSON.stringify(candidates[r][c1]) === JSON.stringify(candidates[r][c2])) {
-                            const pair = candidates[r][c1];
-                            
-                            // Vérifier s'il y a des candidats à éliminer dans cette ligne
-                            let canEliminateInRow = false;
-                            for (let c = 0; c < 9; c++) {
-                                if (c !== c1 && c !== c2 && currentGrid[r][c] === 0) {
-                                    const hasAnyPairCandidate = pair.some(num => candidates[r][c].includes(num));
-                                    if (hasAnyPairCandidate) {
-                                        canEliminateInRow = true;
-                                        break;
-                                    }
-                                }
-                            }
-                            
-                            if (canEliminateInRow) {
-                                return {
-                                    type: 'elimination',
-                                    cells: [{row: r, col: c1}, {row: r, col: c2}],
-                                    values: pair,
-                                    explanation: `Paire nue ${pair.join('-')} trouvée en R${r+1}C${c1+1} et R${r+1}C${c2+1}. Ces deux chiffres ne peuvent aller que dans ces deux cases de la ligne ${r+1}.`,
-                                    reasoning: `Éliminez ${pair.join(' et ')} des notes des autres cases de la ligne ${r+1}.`
-                                };
-                            }
-                        }
+        // Vérifier les colonnes
+        for (let c = 0; c < 9; c++) {
+            for (let digit = 1; digit <= 9; digit++) {
+                if (currentGrid.some(row => row[c] === digit)) continue;
+                
+                const possibleRows = [];
+                for (let r = 0; r < 9; r++) {
+                    if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
+                        possibleRows.push(r);
                     }
                 }
-            }
-
-            // Vérifier les colonnes
-            for (let c = 0; c < 9; c++) {
-                for (let r1 = 0; r1 < 8; r1++) {
-                    if (currentGrid[r1][c] !== 0 || candidates[r1][c].length !== 2) continue;
-                    
-                    for (let r2 = r1 + 1; r2 < 9; r2++) {
-                        if (currentGrid[r2][c] !== 0 || candidates[r2][c].length !== 2) continue;
-                        
-                        if (JSON.stringify(candidates[r1][c]) === JSON.stringify(candidates[r2][c])) {
-                            const pair = candidates[r1][c];
-                            
-                            // Vérifier s'il y a des candidats à éliminer dans cette colonne
-                            let canEliminateInCol = false;
-                            for (let r = 0; r < 9; r++) {
-                                if (r !== r1 && r !== r2 && currentGrid[r][c] === 0) {
-                                    const hasAnyPairCandidate = pair.some(num => candidates[r][c].includes(num));
-                                    if (hasAnyPairCandidate) {
-                                        canEliminateInCol = true;
-                                        break;
-                                    }
-                                }
-                            }
-                            
-                            if (canEliminateInCol) {
-                                return {
-                                    type: 'elimination',
-                                    cells: [{row: r1, col: c}, {row: r2, col: c}],
-                                    values: pair,
-                                    explanation: `Paire nue ${pair.join('-')} trouvée en R${r1+1}C${c+1} et R${r2+1}C${c+1}. Ces deux chiffres ne peuvent aller que dans ces deux cases de la colonne ${c+1}.`,
-                                    reasoning: `Éliminez ${pair.join(' et ')} des notes des autres cases de la colonne ${c+1}.`
-                                };
-                            }
-                        }
-                    }
+                
+                if (possibleRows.length === 1) {
+                    return {
+                        row: possibleRows[0],
+                        col: c,
+                        value: digit,
+                        explanation: `Le chiffre ${digit} ne peut aller qu'en R${possibleRows[0]+1}C${c+1} dans la colonne ${c+1}. Toutes les autres cases de cette colonne contiennent déjà ce chiffre ou ne peuvent pas l'accueillir.`,
+                        reasoning: `Case unique dans la colonne ${c+1}`
+                    };
                 }
             }
+        }
 
-            // Vérifier les boîtes 3x3
-            for (let boxR = 0; boxR < 3; boxR++) {
-                for (let boxC = 0; boxC < 3; boxC++) {
-                    const boxCells = [];
+        // Vérifier les boîtes 3x3
+        for (let boxR = 0; boxR < 3; boxR++) {
+            for (let boxC = 0; boxC < 3; boxC++) {
+                for (let digit = 1; digit <= 9; digit++) {
+                    let digitFound = false;
+                    const possibleCells = [];
                     
-                    // Collecter toutes les cases vides de la boîte avec leurs coordonnées et candidats
                     for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
                         for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
-                            if (currentGrid[r][c] === 0 && candidates[r][c].length === 2) {
-                                boxCells.push({row: r, col: c, candidates: candidates[r][c]});
+                            if (currentGrid[r][c] === digit) {
+                                digitFound = true;
+                                break;
+                            }
+                            if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
+                                possibleCells.push({r, c});
                             }
                         }
+                        if (digitFound) break;
                     }
                     
-                    // Chercher des paires dans cette boîte
-                    for (let i = 0; i < boxCells.length - 1; i++) {
-                        for (let j = i + 1; j < boxCells.length; j++) {
-                            if (JSON.stringify(boxCells[i].candidates) === JSON.stringify(boxCells[j].candidates)) {
-                                const pair = boxCells[i].candidates;
-                                
-                                // Vérifier s'il y a des candidats à éliminer dans cette boîte
-                                let canEliminateInBox = false;
-                                for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
-                                    for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
-                                        if ((r !== boxCells[i].row || c !== boxCells[i].col) && 
-                                            (r !== boxCells[j].row || c !== boxCells[j].col) && 
-                                            currentGrid[r][c] === 0) {
-                                            const hasAnyPairCandidate = pair.some(num => candidates[r][c].includes(num));
-                                            if (hasAnyPairCandidate) {
-                                                canEliminateInBox = true;
-                                                break;
-                                            }
-                                        }
-                                    }
-                                    if (canEliminateInBox) break;
-                                }
-                                
-                                if (canEliminateInBox) {
-                                    return {
-                                        type: 'elimination',
-                                        cells: [{row: boxCells[i].row, col: boxCells[i].col}, {row: boxCells[j].row, col: boxCells[j].col}],
-                                        values: pair,
-                                        explanation: `Paire nue ${pair.join('-')} trouvée en R${boxCells[i].row+1}C${boxCells[i].col+1} et R${boxCells[j].row+1}C${boxCells[j].col+1} dans la boîte 3x3 (lignes ${boxR*3+1}-${boxR*3+3}, colonnes ${boxC*3+1}-${boxC*3+3}).`,
-                                        reasoning: `Éliminez ${pair.join(' et ')} des notes des autres cases de cette boîte 3x3.`
-                                    };
-                                }
-                            }
-                        }
+                    if (!digitFound && possibleCells.length === 1) {
+                        return {
+                            row: possibleCells[0].r,
+                            col: possibleCells[0].c,
+                            value: digit,
+                            explanation: `Le chiffre ${digit} ne peut aller qu'en R${possibleCells[0].r+1}C${possibleCells[0].c+1} dans la boîte 3x3 (lignes ${boxR*3+1}-${boxR*3+3}, colonnes ${boxC*3+1}-${boxC*3+3}).`,
+                            reasoning: `Case unique dans la boîte 3x3`
+                        };
                     }
                 }
             }
-
-            return null;
         }
 
-        function findPointing(candidates) {
-            for (let boxR = 0; boxR < 3; boxR++) {
-                for (let boxC = 0; boxC < 3; boxC++) {
-                    for (let digit = 1; digit <= 9; digit++) {
-                        // Vérifier si ce chiffre est déjà placé dans cette boîte
-                        let digitFound = false;
-                        for (let r = boxR * 3; r < (boxR + 1) * 3 && !digitFound; r++) {
-                            for (let c = boxC * 3; c < (boxC + 1) * 3 && !digitFound; c++) {
-                                if (currentGrid[r][c] === digit) {
-                                    digitFound = true;
-                                }
-                            }
-                        }
-                        
-                        if (digitFound) continue;
-                        
-                        // Trouver toutes les cases possibles pour ce chiffre dans cette boîte
-                        const possibleCells = [];
-                        for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
-                            for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
-                                if (currentGrid[r][c] === 0 && candidates[r][c].includes(digit)) {
-                                    possibleCells.push({row: r, col: c});
-                                }
-                            }
-                        }
-                        
-                        if (possibleCells.length === 0) continue;
-                        
-                        // Vérifier si toutes les cases sont dans la même ligne
-                        const uniqueRows = [...new Set(possibleCells.map(cell => cell.row))];
-                        if (uniqueRows.length === 1) {
-                            const targetRow = uniqueRows[0];
-                            
-                            // Vérifier s'il y a des notes utilisateur à éliminer dans cette ligne (en dehors de la boîte)
-                            let canEliminateInRow = false;
-                            for (let c = 0; c < 9; c++) {
-                                const isInBox = c >= boxC * 3 && c < (boxC + 1) * 3;
-                                if (!isInBox && currentGrid[targetRow][c] === 0) {
-                                    const userNotes = notesGrid[targetRow][c] || [];
-                                    if (userNotes.includes(digit)) {
-                                        canEliminateInRow = true;
-                                        break;
-                                    }
-                                }
-                            }
-                            
-                            if (canEliminateInRow) {
-                                return {
-                                    type: 'elimination',
-                                    digit: digit,
-                                    cells: possibleCells,
-                                    explanation: `Pointage détecté : le chiffre ${digit} dans la boîte 3x3 (lignes ${boxR*3+1}-${boxR*3+3}, colonnes ${boxC*3+1}-${boxC*3+3}) ne peut aller que dans la ligne ${targetRow+1}.`,
-                                    reasoning: `Éliminez le ${digit} de vos notes dans les autres cases de la ligne ${targetRow+1} en dehors de cette boîte.`
-                                };
-                            }
-                        }
-                        
-                        // Vérifier si toutes les cases sont dans la même colonne
-                        const uniqueCols = [...new Set(possibleCells.map(cell => cell.col))];
-                        if (uniqueCols.length === 1) {
-                            const targetCol = uniqueCols[0];
-                            
-                            // Vérifier s'il y a des notes utilisateur à éliminer dans cette colonne (en dehors de la boîte)
-                            let canEliminateInCol = false;
-                            for (let r = 0; r < 9; r++) {
-                                const isInBox = r >= boxR * 3 && r < (boxR + 1) * 3;
-                                if (!isInBox && currentGrid[r][targetCol] === 0) {
-                                    const userNotes = notesGrid[r][targetCol] || [];
-                                    if (userNotes.includes(digit)) {
-                                        canEliminateInCol = true;
-                                        break;
-                                    }
-                                }
-                            }
-                            
-                            if (canEliminateInCol) {
-                                return {
-                                    type: 'elimination',
-                                    digit: digit,
-                                    cells: possibleCells,
-                                    explanation: `Pointage détecté : le chiffre ${digit} dans la boîte 3x3 (lignes ${boxR*3+1}-${boxR*3+3}, colonnes ${boxC*3+1}-${boxC*3+3}) ne peut aller que dans la colonne ${targetCol+1}.`,
-                                    reasoning: `Éliminez le ${digit} de vos notes dans les autres cases de la colonne ${targetCol+1} en dehors de cette boîte.`
-                                };
-                            }
-                        }
-                    }
-                }
-            }
-            
-            return null;
-        }
+        return null;
+    }
 
-        function findHiddenPairs(candidates) {
-            // Vérifier les lignes
-            for (let r = 0; r < 9; r++) {
-                const digitCells = {}; // digit -> [colonnes où il peut aller]
-                
-                // Construire la map des chiffres et leurs positions possibles
-                for (let digit = 1; digit <= 9; digit++) {
-                    if (currentGrid[r].includes(digit)) continue; // déjà placé
-                    
-                    digitCells[digit] = [];
-                    for (let c = 0; c < 9; c++) {
-                        if (currentGrid[r][c] === 0 && candidates[r][c].includes(digit)) {
-                            digitCells[digit].push(c);
-                        }
-                    }
-                }
-                
-                // Chercher des paires cachées
-                const digits = Object.keys(digitCells).map(d => parseInt(d));
-                for (let i = 0; i < digits.length - 1; i++) {
-                    for (let j = i + 1; j < digits.length; j++) {
-                        const digit1 = digits[i];
-                        const digit2 = digits[j];
-                        
-                        if (digitCells[digit1].length === 2 && digitCells[digit2].length === 2 &&
-                            JSON.stringify(digitCells[digit1]) === JSON.stringify(digitCells[digit2])) {
-                            
-                            const [col1, col2] = digitCells[digit1];
-                            
-                            // Vérifier s'il y a des candidats à éliminer
-                            let canEliminate = false;
-                            for (const col of [col1, col2]) {
-                                const userNotes = notesGrid[r][col] || [];
-                                const otherCandidates = userNotes.filter(n => n !== digit1 && n !== digit2);
-                                if (otherCandidates.length > 0) {
-                                    canEliminate = true;
-                                    break;
-                                }
-                            }
-                            
-                            if (canEliminate) {
-                                return {
-                                    type: 'elimination',
-                                    cells: [{row: r, col: col1}, {row: r, col: col2}],
-                                    values: [digit1, digit2],
-                                    explanation: `Paire cachée ${digit1}-${digit2} trouvée en R${r+1}C${col1+1} et R${r+1}C${col2+1}. Ces deux chiffres ne peuvent aller que dans ces deux cases de la ligne ${r+1}.`,
-                                    reasoning: `Éliminez tous les autres candidats de vos notes dans ces deux cases, ne gardez que ${digit1} et ${digit2}.`
-                                };
-                            }
-                        }
-                    }
-                }
-            }
-            
-            // Vérifier les colonnes
+    function findSimpleElimination(candidates) {
+        for (let r = 0; r < 9; r++) {
             for (let c = 0; c < 9; c++) {
-                const digitCells = {};
-                
-                for (let digit = 1; digit <= 9; digit++) {
-                    if (currentGrid.some(row => row[c] === digit)) continue;
+                if (currentGrid[r][c] === 0 && candidates[r][c].length === 1) {
+                    const userNotes = notesGrid[r][c] || [];
+                    const correctValue = candidates[r][c][0];
                     
-                    digitCells[digit] = [];
-                    for (let r = 0; r < 9; r++) {
-                        if (currentGrid[r][c] === 0 && candidates[r][c].includes(digit)) {
-                            digitCells[digit].push(r);
-                        }
-                    }
-                }
-                
-                const digits = Object.keys(digitCells).map(d => parseInt(d));
-                for (let i = 0; i < digits.length - 1; i++) {
-                    for (let j = i + 1; j < digits.length; j++) {
-                        const digit1 = digits[i];
-                        const digit2 = digits[j];
-                        
-                        if (digitCells[digit1].length === 2 && digitCells[digit2].length === 2 &&
-                            JSON.stringify(digitCells[digit1]) === JSON.stringify(digitCells[digit2])) {
-                            
-                            const [row1, row2] = digitCells[digit1];
-                            
-                            let canEliminate = false;
-                            for (const row of [row1, row2]) {
-                                const userNotes = notesGrid[row][c] || [];
-                                const otherCandidates = userNotes.filter(n => n !== digit1 && n !== digit2);
-                                if (otherCandidates.length > 0) {
-                                    canEliminate = true;
-                                    break;
-                                }
-                            }
-                            
-                            if (canEliminate) {
-                                return {
-                                    type: 'elimination',
-                                    cells: [{row: row1, col: c}, {row: row2, col: c}],
-                                    values: [digit1, digit2],
-                                    explanation: `Paire cachée ${digit1}-${digit2} trouvée en R${row1+1}C${c+1} et R${row2+1}C${c+1}. Ces deux chiffres ne peuvent aller que dans ces deux cases de la colonne ${c+1}.`,
-                                    reasoning: `Éliminez tous les autres candidats de vos notes dans ces deux cases, ne gardez que ${digit1} et ${digit2}.`
-                                };
-                            }
-                        }
+                    if (userNotes.length > 1) {
+                        return {
+                            row: r,
+                            col: c,
+                            value: correctValue,
+                            explanation: `En R${r+1}C${c+1}, seul le ${correctValue} est possible. Vous pouvez éliminer les autres candidats de vos notes et placer ce chiffre.`,
+                            reasoning: `Éliminez de vos notes : ${userNotes.filter(n => n !== correctValue).join(', ')}`
+                        };
                     }
                 }
             }
-            
-            return null;
         }
+        return null;
+    }
 
-        function findNotesIncomplete(candidates) {
-            // Vérifier si les notes de l'utilisateur sont complètes
-            for (let r = 0; r < 9; r++) {
-                for (let c = 0; c < 9; c++) {
-                    if (currentGrid[r][c] === 0) {
-                        const userNotes = notesGrid[r][c] || [];
-                        const calculated = candidates[r][c];
+    function findNakedPairs(candidates) {
+        // Vérifier les lignes
+        for (let r = 0; r < 9; r++) {
+            for (let c1 = 0; c1 < 8; c1++) {
+                if (currentGrid[r][c1] !== 0 || candidates[r][c1].length !== 2) continue;
+                
+                for (let c2 = c1 + 1; c2 < 9; c2++) {
+                    if (currentGrid[r][c2] !== 0 || candidates[r][c2].length !== 2) continue;
+                    
+                    if (JSON.stringify(candidates[r][c1]) === JSON.stringify(candidates[r][c2])) {
+                        const pair = candidates[r][c1];
                         
-                        // Vérifier si l'utilisateur manque des candidats valides
-                        const missingCandidates = calculated.filter(cand => !userNotes.includes(cand));
+                        // Vérifier s'il y a des candidats à éliminer dans cette ligne
+                        let canEliminateInRow = false;
+                        for (let c = 0; c < 9; c++) {
+                            if (c !== c1 && c !== c2 && currentGrid[r][c] === 0) {
+                                const hasAnyPairCandidate = pair.some(num => candidates[r][c].includes(num));
+                                if (hasAnyPairCandidate) {
+                                    canEliminateInRow = true;
+                                    break;
+                                }
+                            }
+                        }
                         
-                        if (missingCandidates.length > 0) {
+                        if (canEliminateInRow) {
                             return {
-                                row: r,
-                                col: c,
-                                userNotes: userNotes,
-                                correctCandidates: calculated,
-                                missingCandidates: missingCandidates,
-                                explanation: `Vos notes en R${r+1}C${c+1} sont incomplètes. Vous avez noté [${userNotes.join(',')}] mais les candidats possibles sont [${calculated.join(',')}].`,
-                                reasoning: `Ajoutez ${missingCandidates.length === 1 ? 'le candidat' : 'les candidats'} ${missingCandidates.join(', ')} à vos notes en R${r+1}C${c+1}.`
+                                type: 'elimination',
+                                cells: [{row: r, col: c1}, {row: r, col: c2}],
+                                values: pair,
+                                explanation: `Paire nue ${pair.join('-')} trouvée en R${r+1}C${c1+1} et R${r+1}C${c2+1}. Ces deux chiffres ne peuvent aller que dans ces deux cases de la ligne ${r+1}.`,
+                                reasoning: `Éliminez ${pair.join(' et ')} des notes des autres cases de la ligne ${r+1}.`
                             };
                         }
                     }
                 }
             }
-            return null;
         }
 
-        function performAnalysis() {
-            let foundTechnique = null;
-            let suggestion = null;
-            let currentTechniqueIndex = -1;
-
-            // Générer les candidats une seule fois pour toutes les techniques
-            const correctCandidates = generateCandidates();
-
-            // 0. Vérifier d'abord si les notes sont complètes
-            const incompleteNotes = findNotesIncomplete(correctCandidates);
-            if (incompleteNotes) {
-                foundTechnique = "Notes incomplètes détectées";
-                suggestion = incompleteNotes;
-                currentTechniqueIndex = -1;
-                displayAnalysis(foundTechnique, suggestion, currentTechniqueIndex);
-                return;
-            }
-
-            // 1. Dernier chiffre possible
-            const lastNumber = findLastPossibleNumber();
-            if (lastNumber) {
-                foundTechnique = "Dernier chiffre possible";
-                suggestion = lastNumber;
-                currentTechniqueIndex = 0;
-            }
-
-            // 2. Case unique
-            if (!foundTechnique) {
-                const uniquePlace = findUniquePlace();
-                if (uniquePlace) {
-                    foundTechnique = "Case unique";
-                    suggestion = uniquePlace;
-                    currentTechniqueIndex = 1;
-                }
-            }
-
-            // 3. Élimination simple
-            if (!foundTechnique) {
-                const simpleElimination = findSimpleElimination(correctCandidates);
-                if (simpleElimination) {
-                    foundTechnique = "Élimination simple";
-                    suggestion = simpleElimination;
-                    currentTechniqueIndex = 2;
-                }
-            }
-
-            // 4. Paires nues (avec vérification d'utilité)
-            if (!foundTechnique) {
-                const nakedPair = findNakedPairs(correctCandidates);
-                if (nakedPair) {
-                    foundTechnique = "Paires nues";
-                    suggestion = nakedPair;
-                    currentTechniqueIndex = 3;
-                }
-            }
-
-            // 5. Paires cachées
-            if (!foundTechnique) {
-                const hiddenPair = findHiddenPairs(correctCandidates);
-                if (hiddenPair) {
-                    foundTechnique = "Paires cachées";
-                    suggestion = hiddenPair;
-                    currentTechniqueIndex = 4;
-                }
-            }
-
-            // 6. Pointage
-            if (!foundTechnique) {
-                const pointing = findPointing(correctCandidates);
-                if (pointing) {
-                    foundTechnique = "Pointage";
-                    suggestion = pointing;
-                    currentTechniqueIndex = 5;
-                }
-            }
-
-            displayAnalysis(foundTechnique, suggestion, currentTechniqueIndex);
-        }
-
-        function displayAnalysis(foundTechnique, suggestion, currentTechniqueIndex) {
-            let html = '';
-
-            if (suggestion) {
-                // Nettoyer d'abord toutes les surbrillances
-                document.querySelectorAll('.cell').forEach(cell => {
-                    cell.classList.remove('highlighted', 'highlighted-secondary');
-                });
-
-                // Surligner selon le type de technique
-                if (suggestion.cells && suggestion.cells.length > 1) {
-                    // Techniques multi-cases (paires nues, triplets, pointage, etc.)
-                    suggestion.cells.forEach((cellInfo, index) => {
-                        const targetCell = document.querySelector(`[data-row="${cellInfo.row}"][data-col="${cellInfo.col}"]`);
-                        if (targetCell) {
-                            if (index === 0) {
-                                targetCell.classList.add('highlighted'); // Première case en surbrillance principale
-                            } else {
-                                targetCell.classList.add('highlighted-secondary'); // Autres cases en surbrillance secondaire
+        // Vérifier les colonnes
+        for (let c = 0; c < 9; c++) {
+            for (let r1 = 0; r1 < 8; r1++) {
+                if (currentGrid[r1][c] !== 0 || candidates[r1][c].length !== 2) continue;
+                
+                for (let r2 = r1 + 1; r2 < 9; r2++) {
+                    if (currentGrid[r2][c] !== 0 || candidates[r2][c].length !== 2) continue;
+                    
+                    if (JSON.stringify(candidates[r1][c]) === JSON.stringify(candidates[r2][c])) {
+                        const pair = candidates[r1][c];
+                        
+                        // Vérifier s'il y a des candidats à éliminer dans cette colonne
+                        let canEliminateInCol = false;
+                        for (let r = 0; r < 9; r++) {
+                            if (r !== r1 && r !== r2 && currentGrid[r][c] === 0) {
+                                const hasAnyPairCandidate = pair.some(num => candidates[r][c].includes(num));
+                                if (hasAnyPairCandidate) {
+                                    canEliminateInCol = true;
+                                    break;
+                                }
                             }
                         }
-                    });
-                } else if (suggestion.row !== undefined && suggestion.col !== undefined) {
-                    // Techniques mono-case
-                    const targetCell = document.querySelector(`[data-row="${suggestion.row}"][data-col="${suggestion.col}"]`);
-                    if (targetCell) {
-                        targetCell.classList.add('highlighted');
+                        
+                        if (canEliminateInCol) {
+                            return {
+                                type: 'elimination',
+                                cells: [{row: r1, col: c}, {row: r2, col: c}],
+                                values: pair,
+                                explanation: `Paire nue ${pair.join('-')} trouvée en R${r1+1}C${c+1} et R${r2+1}C${c+1}. Ces deux chiffres ne peuvent aller que dans ces deux cases de la colonne ${c+1}.`,
+                                reasoning: `Éliminez ${pair.join(' et ')} des notes des autres cases de la colonne ${c+1}.`
+                            };
+                        }
                     }
                 }
-
-                html += `
-                    <div class="move-suggestion">
-                        <h4>🎯 ${foundTechnique}</h4>
-                        <p>${suggestion.explanation}</p>
-                        ${suggestion.reasoning ? `<p><em>${suggestion.reasoning}</em></p>` : ''}
-                        ${suggestion.value ? `<p><strong>➤ Placez le chiffre ${suggestion.value} en R${suggestion.row + 1}C${suggestion.col + 1}</strong></p>` : ''}
-                        ${suggestion.cells && suggestion.cells.length > 1 ? `<p><strong>📍 Cases concernées : ${suggestion.cells.map(c => `R${c.row+1}C${c.col+1}`).join(', ')}</strong></p>` : ''}
-                        ${suggestion.digit ? `<p><strong>🔢 Chiffre concerné : ${suggestion.digit}</strong></p>` : ''}
-                    </div>
-                `;
-            } else {
-                html += `
-                    <div class="technique">
-                        <h4>🎉 Grille analysée</h4>
-                        <p>Aucune technique simple trouvée. La grille nécessite des techniques plus avancées (chaînes logiques, coloration...) ou est déjà résolue.</p>
-                    </div>
-                `;
             }
-
-            document.getElementById('analysisResult').innerHTML = html;
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 Assistant Sudoku v2.1 started');
-            showLoading('Chargement des données...');
-            
-            setTimeout(() => {
-                if (!loadDataFromURL()) {
-                    showError('Aucune grille trouvée. Ouvrez cette page depuis l\'app Sudoku.');
+        // Vérifier les boîtes 3x3
+        for (let boxR = 0; boxR < 3; boxR++) {
+            for (let boxC = 0; boxC < 3; boxC++) {
+                const boxCells = [];
+                
+                // Collecter toutes les cases vides de la boîte avec leurs coordonnées et candidats
+                for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
+                    for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
+                        if (currentGrid[r][c] === 0 && candidates[r][c].length === 2) {
+                            boxCells.push({row: r, col: c, candidates: candidates[r][c]});
+                        }
+                    }
                 }
-            }, 100);
-        });
-    </script>
+                
+                // Chercher des paires dans cette boîte
+                for (let i = 0; i < boxCells.length - 1; i++) {
+                    for (let j = i + 1; j < boxCells.length; j++) {
+                        if (JSON.stringify(boxCells[i].candidates) === JSON.stringify(boxCells[j].candidates)) {
+                            const pair = boxCells[i].candidates;
+                            
+                            // Vérifier s'il y a des candidats à éliminer dans cette boîte
+                            let canEliminateInBox = false;
+                            for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
+                                for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
+                                    if ((r !== boxCells[i].row || c !== boxCells[i].col) && 
+                                        (r !== boxCells[j].row || c !== boxCells[j].col) && 
+                                        currentGrid[r][c] === 0) {
+                                        const hasAnyPairCandidate = pair.some(num => candidates[r][c].includes(num));
+                                        if (hasAnyPairCandidate) {
+                                            canEliminateInBox = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (canEliminateInBox) break;
+                            }
+                            
+                            if (canEliminateInBox) {
+                                return {
+                                    type: 'elimination',
+                                    cells: [{row: boxCells[i].row, col: boxCells[i].col}, {row: boxCells[j].row, col: boxCells[j].col}],
+                                    values: pair,
+                                    explanation: `Paire nue ${pair.join('-')} trouvée en R${boxCells[i].row+1}C${boxCells[i].col+1} et R${boxCells[j].row+1}C${boxCells[j].col+1} dans la boîte 3x3 (lignes ${boxR*3+1}-${boxR*3+3}, colonnes ${boxC*3+1}-${boxC*3+3}).`,
+                                    reasoning: `Éliminez ${pair.join(' et ')} des notes des autres cases de cette boîte 3x3.`
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    function findPointing(candidates) {
+        for (let boxR = 0; boxR < 3; boxR++) {
+            for (let boxC = 0; boxC < 3; boxC++) {
+                for (let digit = 1; digit <= 9; digit++) {
+                    // Vérifier si ce chiffre est déjà placé dans cette boîte
+                    let digitFound = false;
+                    for (let r = boxR * 3; r < (boxR + 1) * 3 && !digitFound; r++) {
+                        for (let c = boxC * 3; c < (boxC + 1) * 3 && !digitFound; c++) {
+                            if (currentGrid[r][c] === digit) {
+                                digitFound = true;
+                            }
+                        }
+                    }
+                    
+                    if (digitFound) continue;
+                    
+                    // Trouver toutes les cases possibles pour ce chiffre dans cette boîte
+                    const possibleCells = [];
+                    for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
+                        for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
+                            if (currentGrid[r][c] === 0 && candidates[r][c].includes(digit)) {
+                                possibleCells.push({row: r, col: c});
+                            }
+                        }
+                    }
+                    
+                    if (possibleCells.length === 0) continue;
+                    
+                    // Vérifier si toutes les cases sont dans la même ligne
+                    const uniqueRows = [...new Set(possibleCells.map(cell => cell.row))];
+                    if (uniqueRows.length === 1) {
+                        const targetRow = uniqueRows[0];
+                        
+                        // Vérifier s'il y a des notes utilisateur à éliminer dans cette ligne (en dehors de la boîte)
+                        let canEliminateInRow = false;
+                        for (let c = 0; c < 9; c++) {
+                            const isInBox = c >= boxC * 3 && c < (boxC + 1) * 3;
+                            if (!isInBox && currentGrid[targetRow][c] === 0) {
+                                const userNotes = notesGrid[targetRow][c] || [];
+                                if (userNotes.includes(digit)) {
+                                    canEliminateInRow = true;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if (canEliminateInRow) {
+                            return {
+                                type: 'elimination',
+                                digit: digit,
+                                cells: possibleCells,
+                                explanation: `Pointage détecté : le chiffre ${digit} dans la boîte 3x3 (lignes ${boxR*3+1}-${boxR*3+3}, colonnes ${boxC*3+1}-${boxC*3+3}) ne peut aller que dans la ligne ${targetRow+1}.`,
+                                reasoning: `Éliminez le ${digit} de vos notes dans les autres cases de la ligne ${targetRow+1} en dehors de cette boîte.`
+                            };
+                        }
+                    }
+                    
+                    // Vérifier si toutes les cases sont dans la même colonne
+                    const uniqueCols = [...new Set(possibleCells.map(cell => cell.col))];
+                    if (uniqueCols.length === 1) {
+                        const targetCol = uniqueCols[0];
+                        
+                        // Vérifier s'il y a des notes utilisateur à éliminer dans cette colonne (en dehors de la boîte)
+                        let canEliminateInCol = false;
+                        for (let r = 0; r < 9; r++) {
+                            const isInBox = r >= boxR * 3 && r < (boxR + 1) * 3;
+                            if (!isInBox && currentGrid[r][targetCol] === 0) {
+                                const userNotes = notesGrid[r][targetCol] || [];
+                                if (userNotes.includes(digit)) {
+                                    canEliminateInCol = true;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if (canEliminateInCol) {
+                            return {
+                                type: 'elimination',
+                                digit: digit,
+                                cells: possibleCells,
+                                explanation: `Pointage détecté : le chiffre ${digit} dans la boîte 3x3 (lignes ${boxR*3+1}-${boxR*3+3}, colonnes ${boxC*3+1}-${boxC*3+3}) ne peut aller que dans la colonne ${targetCol+1}.`,
+                                reasoning: `Éliminez le ${digit} de vos notes dans les autres cases de la colonne ${targetCol+1} en dehors de cette boîte.`
+                            };
+                        }
+                    }
+                }
+            }
+        }
+        
+        return null;
+    }
+
+    function findHiddenPairs(candidates) {
+        // Vérifier les lignes
+        for (let r = 0; r < 9; r++) {
+            const digitCells = {}; // digit -> [colonnes où il peut aller]
+            
+            // Construire la map des chiffres et leurs positions possibles
+            for (let digit = 1; digit <= 9; digit++) {
+                if (currentGrid[r].includes(digit)) continue; // déjà placé
+                
+                digitCells[digit] = [];
+                for (let c = 0; c < 9; c++) {
+                    if (currentGrid[r][c] === 0 && candidates[r][c].includes(digit)) {
+                        digitCells[digit].push(c);
+                    }
+                }
+            }
+            
+            // Chercher des paires cachées
+            const digits = Object.keys(digitCells).map(d => parseInt(d));
+            for (let i = 0; i < digits.length - 1; i++) {
+                for (let j = i + 1; j < digits.length; j++) {
+                    const digit1 = digits[i];
+                    const digit2 = digits[j];
+                    
+                    if (digitCells[digit1].length === 2 && digitCells[digit2].length === 2 &&
+                        JSON.stringify(digitCells[digit1]) === JSON.stringify(digitCells[digit2])) {
+                        
+                        const [col1, col2] = digitCells[digit1];
+                        
+                        // Vérifier s'il y a des candidats à éliminer
+                        let canEliminate = false;
+                        for (const col of [col1, col2]) {
+                            const userNotes = notesGrid[r][col] || [];
+                            const otherCandidates = userNotes.filter(n => n !== digit1 && n !== digit2);
+                            if (otherCandidates.length > 0) {
+                                canEliminate = true;
+                                break;
+                            }
+                        }
+                        
+                        if (canEliminate) {
+                            return {
+                                type: 'elimination',
+                                cells: [{row: r, col: col1}, {row: r, col: col2}],
+                                values: [digit1, digit2],
+                                explanation: `Paire cachée ${digit1}-${digit2} trouvée en R${r+1}C${col1+1} et R${r+1}C${col2+1}. Ces deux chiffres ne peuvent aller que dans ces deux cases de la ligne ${r+1}.`,
+                                reasoning: `Éliminez tous les autres candidats de vos notes dans ces deux cases, ne gardez que ${digit1} et ${digit2}.`
+                            };
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Vérifier les colonnes
+        for (let c = 0; c < 9; c++) {
+            const digitCells = {};
+            
+            for (let digit = 1; digit <= 9; digit++) {
+                if (currentGrid.some(row => row[c] === digit)) continue;
+                
+                digitCells[digit] = [];
+                for (let r = 0; r < 9; r++) {
+                    if (currentGrid[r][c] === 0 && candidates[r][c].includes(digit)) {
+                        digitCells[digit].push(r);
+                    }
+                }
+            }
+            
+            const digits = Object.keys(digitCells).map(d => parseInt(d));
+            for (let i = 0; i < digits.length - 1; i++) {
+                for (let j = i + 1; j < digits.length; j++) {
+                    const digit1 = digits[i];
+                    const digit2 = digits[j];
+                    
+                    if (digitCells[digit1].length === 2 && digitCells[digit2].length === 2 &&
+                        JSON.stringify(digitCells[digit1]) === JSON.stringify(digitCells[digit2])) {
+                        
+                        const [row1, row2] = digitCells[digit1];
+                        
+                        let canEliminate = false;
+                        for (const row of [row1, row2]) {
+                            const userNotes = notesGrid[row][c] || [];
+                            const otherCandidates = userNotes.filter(n => n !== digit1 && n !== digit2);
+                            if (otherCandidates.length > 0) {
+                                canEliminate = true;
+                                break;
+                            }
+                        }
+                        
+                        if (canEliminate) {
+                            return {
+                                type: 'elimination',
+                                cells: [{row: row1, col: c}, {row: row2, col: c}],
+                                values: [digit1, digit2],
+                                explanation: `Paire cachée ${digit1}-${digit2} trouvée en R${row1+1}C${c+1} et R${row2+1}C${c+1}. Ces deux chiffres ne peuvent aller que dans ces deux cases de la colonne ${c+1}.`,
+                                reasoning: `Éliminez tous les autres candidats de vos notes dans ces deux cases, ne gardez que ${digit1} et ${digit2}.`
+                            };
+                        }
+                    }
+                }
+            }
+        }
+        
+        return null;
+    }
+
+    function findHypotheticalTechniques(candidates) {
+        // Analyser les techniques qui seraient disponibles si les notes étaient complètes
+        
+        // 1. Cases uniques qui seraient révélées
+        for (let r = 0; r < 9; r++) {
+            for (let digit = 1; digit <= 9; digit++) {
+                if (currentGrid[r].includes(digit)) continue;
+                
+                const possibleCols = [];
+                for (let c = 0; c < 9; c++) {
+                    if (currentGrid[r][c] === 0 && candidates[r][c].includes(digit)) {
+                        possibleCols.push(c);
+                    }
+                }
+                
+                if (possibleCols.length === 1) {
+                    const col = possibleCols[0];
+                    const userNotes = notesGrid[r][col] || [];
+                    
+                    // Si ce chiffre manque dans les notes utilisateur
+                    if (!userNotes.includes(digit)) {
+                        return {
+                            type: 'hypothetical',
+                            technique: 'Case unique',
+                            row: r,
+                            col: col,
+                            value: digit,
+                            missingCandidate: digit,
+                            explanation: `Technique "Case unique" disponible : Le chiffre ${digit} ne peut aller qu'en R${r+1}C${col+1} dans la ligne ${r+1}.`,
+                            reasoning: `Si vous ajoutiez le candidat ${digit} à vos notes en R${r+1}C${col+1}, cette technique deviendrait visible. Actuellement vos notes : [${userNotes.join(',')}], candidats réels : [${candidates[r][col].join(',')}].`
+                        };
+                    }
+                }
+            }
+        }
+        
+        // 2. Cases uniques dans les colonnes
+        for (let c = 0; c < 9; c++) {
+            for (let digit = 1; digit <= 9; digit++) {
+                if (currentGrid.some(row => row[c] === digit)) continue;
+                
+                const possibleRows = [];
+                for (let r = 0; r < 9; r++) {
+                    if (currentGrid[r][c] === 0 && candidates[r][c].includes(digit)) {
+                        possibleRows.push(r);
+                    }
+                }
+                
+                if (possibleRows.length === 1) {
+                    const row = possibleRows[0];
+                    const userNotes = notesGrid[row][c] || [];
+                    
+                    if (!userNotes.includes(digit)) {
+                        return {
+                            type: 'hypothetical',
+                            technique: 'Case unique',
+                            row: row,
+                            col: c,
+                            value: digit,
+                            missingCandidate: digit,
+                            explanation: `Technique "Case unique" disponible : Le chiffre ${digit} ne peut aller qu'en R${row+1}C${c+1} dans la colonne ${c+1}.`,
+                            reasoning: `Si vous ajoutiez le candidat ${digit} à vos notes en R${row+1}C${c+1}, cette technique deviendrait visible. Actuellement vos notes : [${userNotes.join(',')}], candidats réels : [${candidates[row][c].join(',')}].`
+                        };
+                    }
+                }
+            }
+        }
+        
+        // 3. Cases uniques dans les boîtes 3x3
+        for (let boxR = 0; boxR < 3; boxR++) {
+            for (let boxC = 0; boxC < 3; boxC++) {
+                for (let digit = 1; digit <= 9; digit++) {
+                    let digitFound = false;
+                    const possibleCells = [];
+                    
+                    for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
+                        for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
+                            if (currentGrid[r][c] === digit) {
+                                digitFound = true;
+                                break;
+                            }
+                            if (currentGrid[r][c] === 0 && candidates[r][c].includes(digit)) {
+                                possibleCells.push({r, c});
+                            }
+                        }
+                        if (digitFound) break;
+                    }
+                    
+                    if (!digitFound && possibleCells.length === 1) {
+                        const cell = possibleCells[0];
+                        const userNotes = notesGrid[cell.r][cell.c] || [];
+                        
+                        if (!userNotes.includes(digit)) {
+                            return {
+                                type: 'hypothetical',
+                                technique: 'Case unique',
+                                row: cell.r,
+                                col: cell.c,
+                                value: digit,
+                                missingCandidate: digit,
+                                explanation: `Technique "Case unique" disponible : Le chiffre ${digit} ne peut aller qu'en R${cell.r+1}C${cell.c+1} dans la boîte 3x3 (lignes ${boxR*3+1}-${boxR*3+3}, colonnes ${boxC*3+1}-${boxC*3+3}).`,
+                                reasoning: `Si vous ajoutiez le candidat ${digit} à vos notes en R${cell.r+1}C${cell.c+1}, cette technique deviendrait visible. Actuellement vos notes : [${userNotes.join(',')}], candidats réels : [${candidates[cell.r][cell.c].join(',')}].`
+                            };
+                        }
+                    }
+                }
+            }
+        }
+        
+        return null;
+    }
+
+    function performAnalysis() {
+        let foundTechnique = null;
+        let suggestion = null;
+        let currentTechniqueIndex = -1;
+
+        // Générer les candidats une seule fois pour toutes les techniques
+        const correctCandidates = generateCandidates();
+
+        // 1. Dernier chiffre possible
+        const lastNumber = findLastPossibleNumber();
+        if (lastNumber) {
+            foundTechnique = "Dernier chiffre possible";
+            suggestion = lastNumber;
+            currentTechniqueIndex = 0;
+        }
+
+        // 2. Case unique
+        if (!foundTechnique) {
+            const uniquePlace = findUniquePlace();
+            if (uniquePlace) {
+                foundTechnique = "Case unique";
+                suggestion = uniquePlace;
+                currentTechniqueIndex = 1;
+            }
+        }
+
+        // 3. Élimination simple
+        if (!foundTechnique) {
+            const simpleElimination = findSimpleElimination(correctCandidates);
+            if (simpleElimination) {
+                foundTechnique = "Élimination simple";
+                suggestion = simpleElimination;
+                currentTechniqueIndex = 2;
+            }
+        }
+
+        // 4. Paires nues (avec vérification d'utilité)
+        if (!foundTechnique) {
+            const nakedPair = findNakedPairs(correctCandidates);
+            if (nakedPair) {
+                foundTechnique = "Paires nues";
+                suggestion = nakedPair;
+                currentTechniqueIndex = 3;
+            }
+        }
+
+        // 5. Paires cachées
+        if (!foundTechnique) {
+            const hiddenPair = findHiddenPairs(correctCandidates);
+            if (hiddenPair) {
+                foundTechnique = "Paires cachées";
+                suggestion = hiddenPair;
+                currentTechniqueIndex = 4;
+            }
+        }
+
+        // 6. Pointage
+        if (!foundTechnique) {
+            const pointing = findPointing(correctCandidates);
+            if (pointing) {
+                foundTechnique = "Pointage";
+                suggestion = pointing;
+                currentTechniqueIndex = 5;
+            }
+        }
+
+        // 7. Si aucune technique trouvée avec les notes actuelles, chercher des techniques hypothétiques
+        if (!foundTechnique) {
+            const hypothetical = findHypotheticalTechniques(correctCandidates);
+            if (hypothetical) {
+                foundTechnique = `${hypothetical.technique} (technique masquée)`;
+                suggestion = hypothetical;
+                currentTechniqueIndex = 6;
+            }
+        }
+
+        displayAnalysis(foundTechnique, suggestion, currentTechniqueIndex);
+    }
+
+    function displayAnalysis(foundTechnique, suggestion, currentTechniqueIndex) {
+        let html = '';
+
+        if (suggestion) {
+            // Nettoyer d'abord toutes les surbrillances
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.classList.remove('highlighted', 'highlighted-secondary');
+            });
+
+            // Surligner selon le type de technique
+            if (suggestion.cells && suggestion.cells.length > 1) {
+                // Techniques multi-cases (paires nues, triplets, pointage, etc.)
+                suggestion.cells.forEach((cellInfo, index) => {
+                    const targetCell = document.querySelector(`[data-row="${cellInfo.row}"][data-col="${cellInfo.col}"]`);
+                    if (targetCell) {
+                        if (index === 0) {
+                            targetCell.classList.add('highlighted'); // Première case en surbrillance principale
+                        } else {
+                            targetCell.classList.add('highlighted-secondary'); // Autres cases en surbrillance secondaire
+                        }
+                    }
+                });
+            } else if (suggestion.row !== undefined && suggestion.col !== undefined) {
+                // Techniques mono-case
+                const targetCell = document.querySelector(`[data-row="${suggestion.row}"][data-col="${suggestion.col}"]`);
+                if (targetCell) {
+                    targetCell.classList.add('highlighted');
+                }
+            }
+
+            html += `
+                <div class="move-suggestion">
+                    <h4>🎯 ${foundTechnique}</h4>
+                    <p>${suggestion.explanation}</p>
+                    ${suggestion.reasoning ? `<p><em>${suggestion.reasoning}</em></p>` : ''}
+                    ${suggestion.value ? `<p><strong>➤ Placez le chiffre ${suggestion.value} en R${suggestion.row + 1}C${suggestion.col + 1}</strong></p>` : ''}
+                    ${suggestion.cells && suggestion.cells.length > 1 ? `<p><strong>📍 Cases concernées : ${suggestion.cells.map(c => `R${c.row+1}C${c.col+1}`).join(', ')}</strong></p>` : ''}
+                    ${suggestion.digit ? `<p><strong>🔢 Chiffre concerné : ${suggestion.digit}</strong></p>` : ''}
+                </div>
+            `;
+        } else {
+            html += `
+                <div class="technique">
+                    <h4>🎉 Grille analysée</h4>
+                    <p>Aucune technique simple trouvée. La grille nécessite des techniques plus avancées (chaînes logiques, coloration...) ou est déjà résolue.</p>
+                </div>
+            `;
+        }
+
+        document.getElementById('analysisResult').innerHTML = html;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('🚀 Assistant Sudoku v2.1 started');
+        showLoading('Chargement des données...');
+        
+        setTimeout(() => {
+            if (!loadDataFromURL()) {
+                showError('Aucune grille trouvée. Ouvrez cette page depuis l\'app Sudoku.');
+            }
+        }, 100);
+    });
+</script>
+```
+
 </body>
 </html>
