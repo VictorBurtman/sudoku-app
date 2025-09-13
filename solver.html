@@ -834,6 +834,113 @@
             return null;
         }
 
+        function findHiddenPairs(candidates) {
+            // Vérifier les lignes
+            for (let r = 0; r < 9; r++) {
+                const digitCells = {}; // digit -> [colonnes où il peut aller]
+                
+                // Construire la map des chiffres et leurs positions possibles
+                for (let digit = 1; digit <= 9; digit++) {
+                    if (currentGrid[r].includes(digit)) continue; // déjà placé
+                    
+                    digitCells[digit] = [];
+                    for (let c = 0; c < 9; c++) {
+                        if (currentGrid[r][c] === 0 && candidates[r][c].includes(digit)) {
+                            digitCells[digit].push(c);
+                        }
+                    }
+                }
+                
+                // Chercher des paires cachées
+                const digits = Object.keys(digitCells).map(d => parseInt(d));
+                for (let i = 0; i < digits.length - 1; i++) {
+                    for (let j = i + 1; j < digits.length; j++) {
+                        const digit1 = digits[i];
+                        const digit2 = digits[j];
+                        
+                        if (digitCells[digit1].length === 2 && digitCells[digit2].length === 2 &&
+                            JSON.stringify(digitCells[digit1]) === JSON.stringify(digitCells[digit2])) {
+                            
+                            const [col1, col2] = digitCells[digit1];
+                            
+                            // Vérifier s'il y a des candidats à éliminer
+                            let canEliminate = false;
+                            for (const col of [col1, col2]) {
+                                const userNotes = notesGrid[r][col] || [];
+                                const otherCandidates = userNotes.filter(n => n !== digit1 && n !== digit2);
+                                if (otherCandidates.length > 0) {
+                                    canEliminate = true;
+                                    break;
+                                }
+                            }
+                            
+                            if (canEliminate) {
+                                return {
+                                    type: 'elimination',
+                                    cells: [{row: r, col: col1}, {row: r, col: col2}],
+                                    values: [digit1, digit2],
+                                    explanation: `Paire cachée ${digit1}-${digit2} trouvée en R${r+1}C${col1+1} et R${r+1}C${col2+1}. Ces deux chiffres ne peuvent aller que dans ces deux cases de la ligne ${r+1}.`,
+                                    reasoning: `Éliminez tous les autres candidats de vos notes dans ces deux cases, ne gardez que ${digit1} et ${digit2}.`
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Vérifier les colonnes
+            for (let c = 0; c < 9; c++) {
+                const digitCells = {};
+                
+                for (let digit = 1; digit <= 9; digit++) {
+                    if (currentGrid.some(row => row[c] === digit)) continue;
+                    
+                    digitCells[digit] = [];
+                    for (let r = 0; r < 9; r++) {
+                        if (currentGrid[r][c] === 0 && candidates[r][c].includes(digit)) {
+                            digitCells[digit].push(r);
+                        }
+                    }
+                }
+                
+                const digits = Object.keys(digitCells).map(d => parseInt(d));
+                for (let i = 0; i < digits.length - 1; i++) {
+                    for (let j = i + 1; j < digits.length; j++) {
+                        const digit1 = digits[i];
+                        const digit2 = digits[j];
+                        
+                        if (digitCells[digit1].length === 2 && digitCells[digit2].length === 2 &&
+                            JSON.stringify(digitCells[digit1]) === JSON.stringify(digitCells[digit2])) {
+                            
+                            const [row1, row2] = digitCells[digit1];
+                            
+                            let canEliminate = false;
+                            for (const row of [row1, row2]) {
+                                const userNotes = notesGrid[row][c] || [];
+                                const otherCandidates = userNotes.filter(n => n !== digit1 && n !== digit2);
+                                if (otherCandidates.length > 0) {
+                                    canEliminate = true;
+                                    break;
+                                }
+                            }
+                            
+                            if (canEliminate) {
+                                return {
+                                    type: 'elimination',
+                                    cells: [{row: row1, col: c}, {row: row2, col: c}],
+                                    values: [digit1, digit2],
+                                    explanation: `Paire cachée ${digit1}-${digit2} trouvée en R${row1+1}C${c+1} et R${row2+1}C${c+1}. Ces deux chiffres ne peuvent aller que dans ces deux cases de la colonne ${c+1}.`,
+                                    reasoning: `Éliminez tous les autres candidats de vos notes dans ces deux cases, ne gardez que ${digit1} et ${digit2}.`
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return null;
+        }
+
         function performAnalysis() {
             let foundTechnique = null;
             let suggestion = null;
@@ -880,13 +987,23 @@
                 }
             }
 
-            // 5. Pointage
+            // 5. Paires cachées
+            if (!foundTechnique) {
+                const hiddenPair = findHiddenPairs(correctCandidates);
+                if (hiddenPair) {
+                    foundTechnique = "Paires cachées";
+                    suggestion = hiddenPair;
+                    currentTechniqueIndex = 4;
+                }
+            }
+
+            // 6. Pointage
             if (!foundTechnique) {
                 const pointing = findPointing(correctCandidates);
                 if (pointing) {
                     foundTechnique = "Pointage";
                     suggestion = pointing;
-                    currentTechniqueIndex = 4;
+                    currentTechniqueIndex = 5;
                 }
             }
 
