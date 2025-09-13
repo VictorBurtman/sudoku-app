@@ -297,7 +297,7 @@
             background: #2d2d2d;
             color: #ffffff;
             overflow: hidden;
-            transition: background-color: 0.3s ease;
+            transition: background-color 0.3s ease;
         }
 
         .sudoku-cell.thick-right { border-right: 2px solid #ffffff; }
@@ -2456,42 +2456,97 @@
 
         // --- Raccourcis Clavier ---
         function handleKeyboardShortcuts(event) {
-            // On ignore les raccourcis si l'écran de jeu n'est pas visible ou si une modale est ouverte.
-            if (document.getElementById('gameScreen').classList.contains('hidden') || document.querySelector('.modal.show')) {
+            const isGameScreenActive = !document.getElementById('gameScreen').classList.contains('hidden');
+            const isModalOpen = !!document.querySelector('.modal.show');
+
+            // F2 to toggle options modal
+            if (isGameScreenActive && event.key === 'F2') {
+                event.preventDefault();
+                if (document.getElementById('optionsModal').classList.contains('show')) {
+                    closeOptionsModal();
+                } else if (!isModalOpen) { // Only open if no other modal is open
+                    showOptionsModal();
+                }
+                return; // Stop further processing for F2
+            }
+            
+            // Ignore other shortcuts if the game screen isn't active or a modal is open
+            if (!isGameScreenActive || isModalOpen) {
                 return;
             }
 
-            // 'N' ou '/' pour le mode notes
-            if (event.key.toLowerCase() === 'n' || event.key === '/') {
+            // --- Navigation with ZQSD / Arrow keys ---
+            const navigationKeys = ['arrowup', 'arrowdown', 'arrowleft', 'arrowright', 'z', 'q', 's', 'd'];
+            if (navigationKeys.includes(event.key.toLowerCase()) && !event.ctrlKey) { // ensure ctrl+z is not caught by 'z'
                 event.preventDefault();
-                toggleNotesMode();
-            }
+                let { selectedRow: row, selectedCol: col } = gameState;
 
-            // 'Ctrl + Z' pour annuler
-            if (event.key.toLowerCase() === 'z' && event.ctrlKey) {
-                event.preventDefault();
-                undoLastAction();
-            }
-
-            // 'Suppr' ou 'Retour arrière' pour effacer
-            if (event.key === 'Delete' || event.key === 'Backspace') {
-                event.preventDefault();
-                if (gameState.selectedRow !== null && gameState.selectedCol !== null) {
-                    placeNumber(0);
+                if (row === null || col === null) {
+                    // Start at the center if no cell is selected
+                    row = 4;
+                    col = 4;
+                } else {
+                    switch (event.key.toLowerCase()) {
+                        case 'arrowup':
+                        case 'z':
+                            row = (row - 1 + 9) % 9;
+                            break;
+                        case 'arrowdown':
+                        case 's':
+                            row = (row + 1) % 9;
+                            break;
+                        case 'arrowleft':
+                        case 'q':
+                            col = (col - 1 + 9) % 9;
+                            break;
+                        case 'arrowright':
+                        case 'd':
+                            col = (col + 1) % 9;
+                            break;
+                    }
                 }
-            }
-            
-            // 'Echap' pour retourner au menu
-            if (event.key === 'Escape') {
-                event.preventDefault();
-                goBackToMenu();
+                selectCell(row, col);
+                return; // Navigation action is complete
             }
 
-            // Touches numériques (1-9) pour placer les chiffres
-            const number = parseInt(event.key, 10);
-            if (!isNaN(number) && number >= 1 && number <= 9) {
-                event.preventDefault();
-                placeNumber(number);
+            // Handle other actions with a switch statement for clarity
+            switch (event.key.toLowerCase()) {
+                case 'n':
+                case '/':
+                    event.preventDefault();
+                    toggleNotesMode();
+                    break;
+
+                case 'z':
+                    if (event.ctrlKey) {
+                        event.preventDefault();
+                        undoLastAction();
+                    }
+                    break;
+
+                case 'delete':
+                case 'backspace':
+                    event.preventDefault();
+                    if (gameState.selectedRow !== null && gameState.selectedCol !== null) {
+                        placeNumber(0);
+                    }
+                    break;
+                
+                case 'escape':
+                    event.preventDefault();
+                    goBackToMenu();
+                    break;
+                
+                default:
+                    // Touches numériques (1-9) pour placer les chiffres
+                    if (!event.ctrlKey && !event.altKey && !event.metaKey) {
+                        const number = parseInt(event.key, 10);
+                        if (!isNaN(number) && number >= 1 && number <= 9) {
+                            event.preventDefault();
+                            placeNumber(number);
+                        }
+                    }
+                    break;
             }
         }
 
