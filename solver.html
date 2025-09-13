@@ -775,13 +775,16 @@
                         if (uniqueRows.length === 1) {
                             const targetRow = uniqueRows[0];
                             
-                            // Vérifier s'il y a des candidats à éliminer dans cette ligne (en dehors de la boîte)
+                            // Vérifier s'il y a des notes utilisateur à éliminer dans cette ligne (en dehors de la boîte)
                             let canEliminateInRow = false;
                             for (let c = 0; c < 9; c++) {
                                 const isInBox = c >= boxC * 3 && c < (boxC + 1) * 3;
-                                if (!isInBox && currentGrid[targetRow][c] === 0 && candidates[targetRow][c].includes(digit)) {
-                                    canEliminateInRow = true;
-                                    break;
+                                if (!isInBox && currentGrid[targetRow][c] === 0) {
+                                    const userNotes = notesGrid[targetRow][c] || [];
+                                    if (userNotes.includes(digit)) {
+                                        canEliminateInRow = true;
+                                        break;
+                                    }
                                 }
                             }
                             
@@ -791,7 +794,7 @@
                                     digit: digit,
                                     cells: possibleCells,
                                     explanation: `Pointage détecté : le chiffre ${digit} dans la boîte 3x3 (lignes ${boxR*3+1}-${boxR*3+3}, colonnes ${boxC*3+1}-${boxC*3+3}) ne peut aller que dans la ligne ${targetRow+1}.`,
-                                    reasoning: `Éliminez le ${digit} des autres cases de la ligne ${targetRow+1} en dehors de cette boîte.`
+                                    reasoning: `Éliminez le ${digit} de vos notes dans les autres cases de la ligne ${targetRow+1} en dehors de cette boîte.`
                                 };
                             }
                         }
@@ -801,13 +804,16 @@
                         if (uniqueCols.length === 1) {
                             const targetCol = uniqueCols[0];
                             
-                            // Vérifier s'il y a des candidats à éliminer dans cette colonne (en dehors de la boîte)
+                            // Vérifier s'il y a des notes utilisateur à éliminer dans cette colonne (en dehors de la boîte)
                             let canEliminateInCol = false;
                             for (let r = 0; r < 9; r++) {
                                 const isInBox = r >= boxR * 3 && r < (boxR + 1) * 3;
-                                if (!isInBox && currentGrid[r][targetCol] === 0 && candidates[r][targetCol].includes(digit)) {
-                                    canEliminateInCol = true;
-                                    break;
+                                if (!isInBox && currentGrid[r][targetCol] === 0) {
+                                    const userNotes = notesGrid[r][targetCol] || [];
+                                    if (userNotes.includes(digit)) {
+                                        canEliminateInCol = true;
+                                        break;
+                                    }
                                 }
                             }
                             
@@ -817,7 +823,7 @@
                                     digit: digit,
                                     cells: possibleCells,
                                     explanation: `Pointage détecté : le chiffre ${digit} dans la boîte 3x3 (lignes ${boxR*3+1}-${boxR*3+3}, colonnes ${boxC*3+1}-${boxC*3+3}) ne peut aller que dans la colonne ${targetCol+1}.`,
-                                    reasoning: `Éliminez le ${digit} des autres cases de la colonne ${targetCol+1} en dehors de cette boîte.`
+                                    reasoning: `Éliminez le ${digit} de vos notes dans les autres cases de la colonne ${targetCol+1} en dehors de cette boîte.`
                                 };
                             }
                         }
