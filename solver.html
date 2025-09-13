@@ -261,7 +261,7 @@
     <div class="app-container">
         <div class="app-bar">
             <button class="back-button" onclick="window.close()">←</button>
-            <h1>Assistant Sudoku v2.0</h1>
+            <h1>Assistant Sudoku v2.1</h1>
             <div></div>
         </div>
         
@@ -464,6 +464,9 @@
             let suggestion = null;
             let currentTechniqueIndex = -1;
 
+            // Générer les candidats une seule fois pour toutes les techniques
+            const correctCandidates = generateCandidates();
+
             // 1. Dernier chiffre possible
             const lastNumber = findLastPossibleNumber();
             if (lastNumber) {
@@ -484,7 +487,6 @@
 
             // 3. Élimination simple
             if (!foundTechnique) {
-                const correctCandidates = generateCandidates();
                 const simpleElimination = findSimpleElimination(correctCandidates);
                 if (simpleElimination) {
                     foundTechnique = "Élimination simple";
@@ -495,7 +497,6 @@
 
             // 4. Paires nues (avec vérification d'utilité)
             if (!foundTechnique) {
-                const correctCandidates = generateCandidates();
                 const nakedPair = findNakedPairs(correctCandidates);
                 if (nakedPair) {
                     foundTechnique = "Paires nues";
@@ -506,7 +507,6 @@
 
             // 5. Pointage
             if (!foundTechnique) {
-                const correctCandidates = generateCandidates();
                 const pointing = findPointing(correctCandidates);
                 if (pointing) {
                     foundTechnique = "Pointage";
@@ -517,7 +517,6 @@
 
             // 6. Triplets nus (avec vérification d'utilité)
             if (!foundTechnique) {
-                const correctCandidates = generateCandidates();
                 const nakedTriple = findNakedTriples(correctCandidates);
                 if (nakedTriple) {
                     foundTechnique = "Triplets nus";
