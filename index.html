@@ -1518,13 +1518,6 @@
             modal.classList.add('show');
         }
         
-
-
-
-
-
-        
-
         window.closeOptionsModal = function() {
             document.getElementById('optionsModal').classList.remove('show');
         }
@@ -2461,9 +2454,47 @@
             return null;
         }
 
+        // --- Raccourcis Clavier ---
+        function handleKeyboardShortcuts(event) {
+            // On ignore les raccourcis si l'écran de jeu n'est pas visible ou si une modale est ouverte.
+            if (document.getElementById('gameScreen').classList.contains('hidden') || document.querySelector('.modal.show')) {
+                return;
+            }
+
+            // 'N' pour le mode notes
+            if (event.key.toLowerCase() === 'n') {
+                event.preventDefault();
+                toggleNotesMode();
+            }
+
+            // 'Ctrl + Z' pour annuler
+            if (event.key.toLowerCase() === 'z' && event.ctrlKey) {
+                event.preventDefault();
+                undoLastAction();
+            }
+
+            // 'Suppr' ou 'Retour arrière' pour effacer
+            if (event.key === 'Delete' || event.key === 'Backspace') {
+                event.preventDefault();
+                if (gameState.selectedRow !== null && gameState.selectedCol !== null) {
+                    placeNumber(0);
+                }
+            }
+
+            // Touches numériques (1-9) pour placer les chiffres
+            const number = parseInt(event.key, 10);
+            if (!isNaN(number) && number >= 1 && number <= 9) {
+                event.preventDefault();
+                placeNumber(number);
+            }
+        }
+
         // --- App Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('versionText').textContent = `By Victor Burtman - v${appVersion}`;
+
+            // Ajout de l'écouteur d'événements pour les raccourcis clavier
+            document.addEventListener('keydown', handleKeyboardShortcuts);
 
             const initInteractions = () => {
                 animationManager.init();
