@@ -1060,6 +1060,252 @@
         return null;
     }
 
+    function findXWing(candidates) {
+        // X-Wing sur les lignes
+        for (let digit = 1; digit <= 9; digit++) {
+            const rowsWithTwoCandidates = [];
+            
+            for (let r = 0; r < 9; r++) {
+                if (currentGrid[r].includes(digit)) continue;
+                
+                const colsWithCandidate = [];
+                for (let c = 0; c < 9; c++) {
+                    if (currentGrid[r][c] === 0) {
+                        const userNotes = notesGrid[r][c] || [];
+                        if (userNotes.includes(digit)) {
+                            colsWithCandidate.push(c);
+                        }
+                    }
+                }
+                
+                if (colsWithCandidate.length === 2) {
+                    rowsWithTwoCandidates.push({row: r, cols: colsWithCandidate});
+                }
+            }
+            
+            // Chercher des X-Wings
+            for (let i = 0; i < rowsWithTwoCandidates.length - 1; i++) {
+                for (let j = i + 1; j < rowsWithTwoCandidates.length; j++) {
+                    if (JSON.stringify(rowsWithTwoCandidates[i].cols) === JSON.stringify(rowsWithTwoCandidates[j].cols)) {
+                        const row1 = rowsWithTwoCandidates[i].row;
+                        const row2 = rowsWithTwoCandidates[j].row;
+                        const [col1, col2] = rowsWithTwoCandidates[i].cols;
+                        
+                        // Vérifier s'il y a des éliminations possibles
+                        let canEliminate = false;
+                        const eliminationCells = [];
+                        
+                        for (let r = 0; r < 9; r++) {
+                            if (r !== row1 && r !== row2) {
+                                for (const col of [col1, col2]) {
+                                    if (currentGrid[r][col] === 0) {
+                                        const userNotes = notesGrid[r][col] || [];
+                                        if (userNotes.includes(digit)) {
+                                            canEliminate = true;
+                                            eliminationCells.push({row: r, col: col});
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if (canEliminate) {
+                            return {
+                                type: 'elimination',
+                                digit: digit,
+                                cells: [
+                                    {row: row1, col: col1}, {row: row1, col: col2},
+                                    {row: row2, col: col1}, {row: row2, col: col2}
+                                ],
+                                eliminationCells: eliminationCells,
+                                explanation: `X-Wing détecté pour le chiffre ${digit} : lignes R${row1+1} et R${row2+1}, colonnes C${col1+1} et C${col2+1}. Ces 4 cases forment un rectangle.`,
+                                reasoning: `Éliminez le ${digit} de vos notes dans les colonnes C${col1+1} et C${col2+1}, sauf dans les lignes R${row1+1} et R${row2+1}. Cases concernées : ${eliminationCells.map(cell => `R${cell.row+1}C${cell.col+1}`).join(', ')}.`
+                            };
+                        }
+                    }
+                }
+            }
+        }
+        
+        // X-Wing sur les colonnes
+        for (let digit = 1; digit <= 9; digit++) {
+            const colsWithTwoCandidates = [];
+            
+            for (let c = 0; c < 9; c++) {
+                if (currentGrid.some(row => row[c] === digit)) continue;
+                
+                const rowsWithCandidate = [];
+                for (let r = 0; r < 9; r++) {
+                    if (currentGrid[r][c] === 0) {
+                        const userNotes = notesGrid[r][c] || [];
+                        if (userNotes.includes(digit)) {
+                            rowsWithCandidate.push(r);
+                        }
+                    }
+                }
+                
+                if (rowsWithCandidate.length === 2) {
+                    colsWithTwoCandidates.push({col: c, rows: rowsWithCandidate});
+                }
+            }
+            
+            for (let i = 0; i < colsWithTwoCandidates.length - 1; i++) {
+                for (let j = i + 1; j < colsWithTwoCandidates.length; j++) {
+                    if (JSON.stringify(colsWithTwoCandidates[i].rows) === JSON.stringify(colsWithTwoCandidates[j].rows)) {
+                        const col1 = colsWithTwoCandidates[i].col;
+                        const col2 = colsWithTwoCandidates[j].col;
+                        const [row1, row2] = colsWithTwoCandidates[i].rows;
+                        
+                        let canEliminate = false;
+                        const eliminationCells = [];
+                        
+                        for (let c = 0; c < 9; c++) {
+                            if (c !== col1 && c !== col2) {
+                                for (const row of [row1, row2]) {
+                                    if (currentGrid[row][c] === 0) {
+                                        const userNotes = notesGrid[row][c] || [];
+                                        if (userNotes.includes(digit)) {
+                                            canEliminate = true;
+                                            eliminationCells.push({row: row, col: c});
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if (canEliminate) {
+                            return {
+                                type: 'elimination',
+                                digit: digit,
+                                cells: [
+                                    {row: row1, col: col1}, {row: row1, col: col2},
+                                    {row: row2, col: col1}, {row: row2, col: col2}
+                                ],
+                                eliminationCells: eliminationCells,
+                                explanation: `X-Wing détecté pour le chiffre ${digit} : colonnes C${col1+1} et C${col2+1}, lignes R${row1+1} et R${row2+1}. Ces 4 cases forment un rectangle.`,
+                                reasoning: `Éliminez le ${digit} de vos notes dans les lignes R${row1+1} et R${row2+1}, sauf dans les colonnes C${col1+1} et C${col2+1}. Cases concernées : ${eliminationCells.map(cell => `R${cell.row+1}C${cell.col+1}`).join(', ')}.`
+                            };
+                        }
+                    }
+                }
+            }
+        }
+        
+        return null;
+    }
+
+    function findClaiming(candidates) {
+        // Technique de claiming : inverse du pointage
+        // Si dans une ligne/colonne, un chiffre ne peut aller que dans une seule boîte,
+        // alors on peut l'éliminer du reste de cette boîte
+        
+        // Claiming dans les lignes
+        for (let r = 0; r < 9; r++) {
+            for (let digit = 1; digit <= 9; digit++) {
+                if (currentGrid[r].includes(digit)) continue;
+                
+                const possibleCols = [];
+                for (let c = 0; c < 9; c++) {
+                    if (currentGrid[r][c] === 0) {
+                        const userNotes = notesGrid[r][c] || [];
+                        if (userNotes.includes(digit)) {
+                            possibleCols.push(c);
+                        }
+                    }
+                }
+                
+                if (possibleCols.length >= 2) {
+                    // Vérifier si toutes les colonnes sont dans la même boîte
+                    const boxes = [...new Set(possibleCols.map(c => Math.floor(c / 3)))];
+                    if (boxes.length === 1) {
+                        const boxCol = boxes[0];
+                        const boxRow = Math.floor(r / 3);
+                        
+                        // Vérifier s'il y a des éliminations possibles dans cette boîte
+                        let canEliminate = false;
+                        const eliminationCells = [];
+                        
+                        for (let br = boxRow * 3; br < (boxRow + 1) * 3; br++) {
+                            for (let bc = boxCol * 3; bc < (boxCol + 1) * 3; bc++) {
+                                if (br !== r && currentGrid[br][bc] === 0) {
+                                    const userNotes = notesGrid[br][bc] || [];
+                                    if (userNotes.includes(digit)) {
+                                        canEliminate = true;
+                                        eliminationCells.push({row: br, col: bc});
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if (canEliminate) {
+                            return {
+                                type: 'elimination',
+                                digit: digit,
+                                cells: possibleCols.map(c => ({row: r, col: c})),
+                                eliminationCells: eliminationCells,
+                                explanation: `Claiming détecté : le chiffre ${digit} dans la ligne R${r+1} ne peut aller que dans la boîte 3x3 (lignes ${boxRow*3+1}-${boxRow*3+3}, colonnes ${boxCol*3+1}-${boxCol*3+3}).`,
+                                reasoning: `Éliminez le ${digit} de vos notes dans les autres cases de cette boîte. Cases concernées : ${eliminationCells.map(cell => `R${cell.row+1}C${cell.col+1}`).join(', ')}.`
+                            };
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Claiming dans les colonnes
+        for (let c = 0; c < 9; c++) {
+            for (let digit = 1; digit <= 9; digit++) {
+                if (currentGrid.some(row => row[c] === digit)) continue;
+                
+                const possibleRows = [];
+                for (let r = 0; r < 9; r++) {
+                    if (currentGrid[r][c] === 0) {
+                        const userNotes = notesGrid[r][c] || [];
+                        if (userNotes.includes(digit)) {
+                            possibleRows.push(r);
+                        }
+                    }
+                }
+                
+                if (possibleRows.length >= 2) {
+                    const boxes = [...new Set(possibleRows.map(r => Math.floor(r / 3)))];
+                    if (boxes.length === 1) {
+                        const boxRow = boxes[0];
+                        const boxCol = Math.floor(c / 3);
+                        
+                        let canEliminate = false;
+                        const eliminationCells = [];
+                        
+                        for (let br = boxRow * 3; br < (boxRow + 1) * 3; br++) {
+                            for (let bc = boxCol * 3; bc < (boxCol + 1) * 3; bc++) {
+                                if (bc !== c && currentGrid[br][bc] === 0) {
+                                    const userNotes = notesGrid[br][bc] || [];
+                                    if (userNotes.includes(digit)) {
+                                        canEliminate = true;
+                                        eliminationCells.push({row: br, col: bc});
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if (canEliminate) {
+                            return {
+                                type: 'elimination',
+                                digit: digit,
+                                cells: possibleRows.map(r => ({row: r, col: c})),
+                                eliminationCells: eliminationCells,
+                                explanation: `Claiming détecté : le chiffre ${digit} dans la colonne C${c+1} ne peut aller que dans la boîte 3x3 (lignes ${boxRow*3+1}-${boxRow*3+3}, colonnes ${boxCol*3+1}-${boxCol*3+3}).`,
+                                reasoning: `Éliminez le ${digit} de vos notes dans les autres cases de cette boîte. Cases concernées : ${eliminationCells.map(cell => `R${cell.row+1}C${cell.col+1}`).join(', ')}.`
+                            };
+                        }
+                    }
+                }
+            }
+        }
+        
+        return null;
+    }
+
     function performAnalysis() {
         let foundTechnique = null;
         let suggestion = null;
@@ -1126,13 +1372,33 @@
             }
         }
 
-        // 7. Si aucune technique trouvée avec les notes actuelles, chercher des techniques hypothétiques
+        // 7. Claiming
+        if (!foundTechnique) {
+            const claiming = findClaiming(correctCandidates);
+            if (claiming) {
+                foundTechnique = "Claiming";
+                suggestion = claiming;
+                currentTechniqueIndex = 6;
+            }
+        }
+
+        // 8. X-Wing
+        if (!foundTechnique) {
+            const xwing = findXWing(correctCandidates);
+            if (xwing) {
+                foundTechnique = "X-Wing";
+                suggestion = xwing;
+                currentTechniqueIndex = 7;
+            }
+        }
+
+        // 9. Si aucune technique trouvée avec les notes actuelles, chercher des techniques hypothétiques
         if (!foundTechnique) {
             const hypothetical = findHypotheticalTechniques(correctCandidates);
             if (hypothetical) {
                 foundTechnique = `${hypothetical.technique} (technique masquée)`;
                 suggestion = hypothetical;
-                currentTechniqueIndex = 6;
+                currentTechniqueIndex = 8;
             }
         }
 
