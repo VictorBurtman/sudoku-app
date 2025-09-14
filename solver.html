@@ -712,14 +712,16 @@
                         if (JSON.stringify(boxCells[i].candidates) === JSON.stringify(boxCells[j].candidates)) {
                             const pair = boxCells[i].candidates;
                             
-                            // Vérifier s'il y a des candidats à éliminer dans cette boîte
+                            // Vérifier s'il y a des candidats à éliminer dans cette boîte (basé sur les NOTES utilisateur)
                             let canEliminateInBox = false;
                             for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
                                 for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
                                     if ((r !== boxCells[i].row || c !== boxCells[i].col) && 
                                         (r !== boxCells[j].row || c !== boxCells[j].col) && 
                                         currentGrid[r][c] === 0) {
-                                        const hasAnyPairCandidate = pair.some(num => candidates[r][c].includes(num));
+                                        // Vérifier les NOTES utilisateur, pas les candidats calculés
+                                        const userNotes = notesGrid[r][c] || [];
+                                        const hasAnyPairCandidate = pair.some(num => userNotes.includes(num));
                                         if (hasAnyPairCandidate) {
                                             canEliminateInBox = true;
                                             break;
@@ -735,7 +737,7 @@
                                     cells: [{row: boxCells[i].row, col: boxCells[i].col}, {row: boxCells[j].row, col: boxCells[j].col}],
                                     values: pair,
                                     explanation: `Paire nue ${pair.join('-')} trouvée en R${boxCells[i].row+1}C${boxCells[i].col+1} et R${boxCells[j].row+1}C${boxCells[j].col+1} dans la boîte 3x3 (lignes ${boxR*3+1}-${boxR*3+3}, colonnes ${boxC*3+1}-${boxC*3+3}).`,
-                                    reasoning: `Éliminez ${pair.join(' et ')} des notes des autres cases de cette boîte 3x3.`
+                                    reasoning: `Éliminez ${pair.join(' et ')} de vos notes dans les autres cases de cette boîte 3x3.`
                                 };
                             }
                         }
