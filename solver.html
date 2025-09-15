@@ -726,10 +726,11 @@
                         <p>${suggestion.explanation}</p>
                         ${suggestion.reasoning ? `<p><em>${suggestion.reasoning}</em></p>` : ''}
                         ${suggestion.value ? `<p><strong>➤ Placez le chiffre ${suggestion.value} en R${suggestion.row + 1}C${suggestion.col + 1}</strong></p>` : ''}
-                        ${suggestion.cells && suggestion.cells.length > 1 ? `<p><strong>📍 Cases : ${suggestion.cells.map(c => `R${c.row+1}C${c.col+1}`).join(', ')}</strong></p>` : ''}
-                        ${suggestion.chain && suggestion.chain.length > 1 ? `<p><strong>🔗 Chaîne : ${suggestion.chain.map(c => `R${c.row+1}C${c.col+1}`).join(' → ')}</strong></p>` : ''}
-                        ${suggestion.eliminations ? `<p><strong>❌ Éliminations : ${suggestion.eliminations.map(e => `R${e.row+1}C${e.col+1}`).join(', ')}</strong></p>` : ''}
+                        ${suggestion.cells && suggestion.cells.length > 1 ? `<p><strong>📍 Cases : ${suggestion.cells.map(c => `Ligne ${c.row+1} Col ${c.col+1}`).join(', ')}</strong></p>` : ''}
+                        ${suggestion.chain && suggestion.chain.length > 1 ? `<p><strong>🔗 Chaîne : ${suggestion.chain.map(c => `Ligne ${c.row+1} Col ${c.col+1}`).join(' → ')}</strong></p>` : ''}
+                        ${suggestion.eliminations ? `<p><strong>❌ Éliminations : ${suggestion.eliminations.map(e => `Ligne ${e.row+1} Col ${e.col+1}`).join(', ')}</strong></p>` : ''}
                         ${suggestion.candidate ? `<p><strong>🔢 Candidat : ${suggestion.candidate}</strong></p>` : ''}
+                        ${suggestion.detailedExplanation ? `<div style="margin-top: 12px; padding: 10px; background: rgba(33, 150, 243, 0.1); border-radius: 6px; border-left: 3px solid #2196f3;"><p style="font-size: 12px; color: #e0e0e0;"><strong>💡 Explication détaillée :</strong><br>${suggestion.detailedExplanation}</p></div>` : ''}
                     </div>
                 `;
             } else {
