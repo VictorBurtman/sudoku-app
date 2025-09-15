@@ -731,7 +731,8 @@
                                         if ((r !== boxCells[i].row || c !== boxCells[i].col) && 
                                             (r !== boxCells[j].row || c !== boxCells[j].col) && 
                                             currentGrid[r][c] === 0) {
-                                            const hasAnyPairCandidate = pair.some(num => candidates[r][c].includes(num));
+                                            const userNotes = notesGrid[r][c] || [];
+                                            const hasAnyPairCandidate = pair.some(num => userNotes.includes(num));
                                             if (hasAnyPairCandidate) {
                                                 canEliminateInBox = true;
                                                 break;
