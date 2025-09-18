@@ -251,7 +251,7 @@
     <div class="app-container">
         <div class="app-bar">
             <button class="back-button" onclick="window.close()">←</button>
-            <h1>Sudoku Assistant v2.3</h1>
+            <h1>Sudoku Assistant v2.4</h1>
             <button class="sudoku-wiki-button" onclick="copyToClipboardAndOpenSudokuWiki()" title="Copy grid and open SudokuWiki">
                 🧩
             </button>
@@ -279,18 +279,12 @@
         let notesGrid = null;
 
         function showError(message) {
-            const analysisResult = document.getElementById('analysisResult');
-            if (analysisResult) {
-                analysisResult.innerHTML = `<div class="error-state">${message}</div>`;
-            }
+            document.getElementById('analysisResult').innerHTML = `<div class="error-state">${message}</div>`;
             console.error('Error:', message);
         }
 
         function showLoading(message) {
-            const analysisResult = document.getElementById('analysisResult');
-            if (analysisResult) {
-                analysisResult.innerHTML = `<div class="loading-state">${message}</div>`;
-            }
+            document.getElementById('analysisResult').innerHTML = `<div class="loading-state">${message}</div>`;
         }
 
         function formatGridForSudokuWiki() {
@@ -299,25 +293,77 @@
             for (let r = 0; r < 9; r++) {
                 for (let c = 0; c < 9; c++) {
                     if (currentGrid[r][c] !== 0) {
-                        // Case avec un chiffre placé
+                        // Cell with placed digit
                         formattedCells.push(currentGrid[r][c].toString());
                     } else {
                         const userNotes = notesGrid[r][c] || [];
                         if (userNotes.length > 0) {
-                            // Case avec des candidats - format 10 chiffres minimum
+                            // Cell with candidates - 10-digit format
                             let candidateString = '';
                             for (let digit = 1; digit <= 9; digit++) {
                                 candidateString += userNotes.includes(digit) ? digit.toString() : '0';
                             }
-                            // Ajouter un 0 final pour dépasser 9 (format SudokuWiki)
-                            candidateString += '0';
+                            candidateString += '0'; // Add final 0 to exceed 9 (SudokuWiki format)
                             formattedCells.push(candidateString);
                         } else {
-                            // Case vide sans candidats
+                            // Empty cell without candidates
                             formattedCells.push('0');
                         }
                     }
                 }
+
+                html += `
+                    <div class="move-suggestion">
+                        <h4>🎯 ${foundTechnique}</h4>
+                        <p>${suggestion.explanation}</p>
+                        ${suggestion.reasoning ? `<p><em>${suggestion.reasoning}</em></p>` : ''}
+                        ${suggestion.value ? `<p><strong>➤ Place digit ${suggestion.value} at R${suggestion.row + 1}C${suggestion.col + 1}</strong></p>` : ''}
+                        ${suggestion.cells && suggestion.cells.length > 1 ? `<p><strong>📍 Cells: ${suggestion.cells.map(c => `R${c.row+1}C${c.col+1}`).join(', ')}</strong></p>` : ''}
+                        ${suggestion.eliminations ? `<p><strong>❌ Eliminations: ${suggestion.eliminations.map(e => `R${e.row+1}C${e.col+1}`).join(', ')}</strong></p>` : ''}
+                        ${suggestion.digit ? `<p><strong>🔢 Digit: ${suggestion.digit}</strong></p>` : ''}
+                        ${suggestion.detailedExplanation ? `<div style="margin-top: 12px; padding: 10px; background: rgba(33, 150, 243, 0.1); border-radius: 6px; border-left: 3px solid #2196f3;"><p style="font-size: 12px; color: #e0e0e0;"><strong>💡 Detailed Explanation:</strong><br>${suggestion.detailedExplanation}</p></div>` : ''}
+                    </div>
+                `;
+            } else {
+                const gridForWiki = formatGridForSudokuWiki();
+                
+                html += `
+                    <div class="technique">
+                        <h4>🧩 Advanced Techniques Required</h4>
+                        <p>No simple techniques detected. This grid requires expert techniques.</p>
+                        
+                        <div style="margin-top: 16px; padding: 12px; background: #2d2d2d; border-radius: 8px; border: 1px solid #4caf50;">
+                            <h5 style="color: #4caf50; margin-bottom: 8px;">💡 Use SudokuWiki</h5>
+                            <p style="margin-bottom: 12px;">Click 🧩 at the top right to open SudokuWiki with your grid.</p>
+                            
+                            <div style="margin-top: 12px;">
+                                <p style="font-size: 12px; color: #b0b0b0; margin-bottom: 8px;">
+                                    <strong>Grid format:</strong>
+                                </p>
+                                <div style="background: #1e1e1e; padding: 8px; border-radius: 4px; font-family: monospace; font-size: 11px; word-break: break-all; border: 1px solid #404040;">
+                                    ${gridForWiki}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            document.getElementById('analysisResult').innerHTML = html;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            showLoading('Loading data...');
+            
+            setTimeout(() => {
+                if (!loadDataFromURL()) {
+                    showError('No grid found. Open this page from the Sudoku app.');
+                }
+            }, 100);
+        });
+    </script>
+</body>
+</html>
             }
             
             return formattedCells.join(' ');
@@ -489,14 +535,17 @@
         }
 
         function isValidPlacement(row, col, num) {
+            // Check row
             for (let c = 0; c < 9; c++) {
                 if (currentGrid[row][c] === num) return false;
             }
             
+            // Check column
             for (let r = 0; r < 9; r++) {
                 if (currentGrid[r][col] === num) return false;
             }
             
+            // Check 3x3 box
             const boxRow = Math.floor(row / 3) * 3;
             const boxCol = Math.floor(col / 3) * 3;
             for (let r = boxRow; r < boxRow + 3; r++) {
@@ -546,8 +595,8 @@
                                 row: r,
                                 col: c,
                                 value: possibleNumbers[0],
-                                explanation: `Cell R${r+1}C${c+1} can only contain the digit ${possibleNumbers[0]}.`,
-                                reasoning: `All other digits (1-9) already appear in its row, column, or 3x3 box.`
+                                explanation: `Cell R${r+1}C${c+1} can only contain digit ${possibleNumbers[0]}.`,
+                                reasoning: `All other digits already appear in its row, column, or 3x3 box.`
                             };
                         }
                     }
@@ -556,7 +605,93 @@
             return null;
         }
 
+        function findHiddenSingle() {
+            // Check rows for digits that have only one possible position
+            for (let r = 0; r < 9; r++) {
+                for (let digit = 1; digit <= 9; digit++) {
+                    if (currentGrid[r].includes(digit)) continue; // already placed
+                    
+                    const possibleCols = [];
+                    for (let c = 0; c < 9; c++) {
+                        if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
+                            possibleCols.push(c);
+                        }
+                    }
+                    
+                    if (possibleCols.length === 1) {
+                        return {
+                            row: r,
+                            col: possibleCols[0],
+                            value: digit,
+                            explanation: `Digit ${digit} can only go in R${r+1}C${possibleCols[0]+1} within row ${r+1}. All other cells in this row already contain this digit or cannot accommodate it.`,
+                            reasoning: `Hidden Single in row ${r+1}`
+                        };
+                    }
+                }
+            }
+
+            // Check columns
+            for (let c = 0; c < 9; c++) {
+                for (let digit = 1; digit <= 9; digit++) {
+                    if (currentGrid.some(row => row[c] === digit)) continue; // already placed
+                    
+                    const possibleRows = [];
+                    for (let r = 0; r < 9; r++) {
+                        if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
+                            possibleRows.push(r);
+                        }
+                    }
+                    
+                    if (possibleRows.length === 1) {
+                        return {
+                            row: possibleRows[0],
+                            col: c,
+                            value: digit,
+                            explanation: `Digit ${digit} can only go in R${possibleRows[0]+1}C${c+1} within column ${c+1}. All other cells in this column already contain this digit or cannot accommodate it.`,
+                            reasoning: `Hidden Single in column ${c+1}`
+                        };
+                    }
+                }
+            }
+
+            // Check 3x3 boxes
+            for (let boxR = 0; boxR < 3; boxR++) {
+                for (let boxC = 0; boxC < 3; boxC++) {
+                    for (let digit = 1; digit <= 9; digit++) {
+                        let digitFound = false;
+                        const possibleCells = [];
+                        
+                        for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
+                            for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
+                                if (currentGrid[r][c] === digit) {
+                                    digitFound = true;
+                                    break;
+                                }
+                                if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
+                                    possibleCells.push({r, c});
+                                }
+                            }
+                            if (digitFound) break;
+                        }
+                        
+                        if (!digitFound && possibleCells.length === 1) {
+                            return {
+                                row: possibleCells[0].r,
+                                col: possibleCells[0].c,
+                                value: digit,
+                                explanation: `Digit ${digit} can only go in R${possibleCells[0].r+1}C${possibleCells[0].c+1} within the 3x3 box (rows ${boxR*3+1}-${boxR*3+3}, columns ${boxC*3+1}-${boxC*3+3}).`,
+                                reasoning: `Hidden Single in 3x3 box`
+                            };
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+
         function findNakedPairs(candidates) {
+            // Check rows
             for (let r = 0; r < 9; r++) {
                 for (let c1 = 0; c1 < 8; c1++) {
                     if (currentGrid[r][c1] !== 0 || candidates[r][c1].length !== 2) continue;
@@ -596,6 +731,7 @@
         }
 
         function findXWing(candidates) {
+            // X-Wing on rows
             for (let digit = 1; digit <= 9; digit++) {
                 const rowsWithTwoCandidates = [];
                 
@@ -665,22 +801,35 @@
         function performAnalysis() {
             const correctCandidates = generateCandidates();
 
+            // 1. Last Possible Digit (Naked Single) - cell with only one possible candidate
             const lastNumber = findLastPossibleNumber();
             if (lastNumber) {
                 displayAnalysis("Last Possible Digit", lastNumber);
                 return;
             }
 
-            const nakedPair = findNakedPairs(correctCandidates);
-            if (nakedPair) {
-                displayAnalysis("Naked Pairs", nakedPair);
+            // 2. Hidden Single - digit that can only go in one cell within a unit
+            const hiddenSingle = findHiddenSingle();
+            if (hiddenSingle) {
+                displayAnalysis("Hidden Single", hiddenSingle);
                 return;
             }
 
-            const xWing = findXWing(correctCandidates);
-            if (xWing) {
-                displayAnalysis("X-Wing", xWing);
-                return;
+            // 3. Advanced techniques only if we have user notes
+            const hasUserNotes = notesGrid.some(row => row.some(cell => cell && cell.length > 0));
+            
+            if (hasUserNotes) {
+                const nakedPair = findNakedPairs(correctCandidates);
+                if (nakedPair) {
+                    displayAnalysis("Naked Pairs", nakedPair);
+                    return;
+                }
+
+                const xWing = findXWing(correctCandidates);
+                if (xWing) {
+                    displayAnalysis("X-Wing", xWing);
+                    return;
+                }
             }
 
             displayAnalysis(null, null);
@@ -690,10 +839,12 @@
             let html = '';
 
             if (suggestion) {
+                // Clear highlights
                 document.querySelectorAll('.cell').forEach(cell => {
                     cell.classList.remove('highlighted', 'highlighted-secondary', 'xwing-corner');
                 });
 
+                // Highlight based on technique type
                 if (suggestion.cells && suggestion.cells.length > 1) {
                     suggestion.cells.forEach((cellInfo, index) => {
                         const targetCell = document.querySelector(`[data-row="${cellInfo.row}"][data-col="${cellInfo.col}"]`);
@@ -711,58 +862,3 @@
                     const targetCell = document.querySelector(`[data-row="${suggestion.row}"][data-col="${suggestion.col}"]`);
                     if (targetCell) {
                         targetCell.classList.add('highlighted');
-                    }
-                }
-
-                html += `
-                    <div class="move-suggestion">
-                        <h4>🎯 ${foundTechnique}</h4>
-                        <p>${suggestion.explanation}</p>
-                        ${suggestion.reasoning ? `<p><em>${suggestion.reasoning}</em></p>` : ''}
-                        ${suggestion.value ? `<p><strong>➤ Place digit ${suggestion.value} at R${suggestion.row + 1}C${suggestion.col + 1}</strong></p>` : ''}
-                        ${suggestion.cells && suggestion.cells.length > 1 ? `<p><strong>📍 Cells: ${suggestion.cells.map(c => `R${c.row+1}C${c.col+1}`).join(', ')}</strong></p>` : ''}
-                        ${suggestion.eliminations ? `<p><strong>❌ Eliminations: ${suggestion.eliminations.map(e => `R${e.row+1}C${e.col+1}`).join(', ')}</strong></p>` : ''}
-                        ${suggestion.digit ? `<p><strong>🔢 Digit: ${suggestion.digit}</strong></p>` : ''}
-                        ${suggestion.detailedExplanation ? `<div style="margin-top: 12px; padding: 10px; background: rgba(33, 150, 243, 0.1); border-radius: 6px; border-left: 3px solid #2196f3;"><p style="font-size: 12px; color: #e0e0e0;"><strong>💡 Detailed Explanation:</strong><br>${suggestion.detailedExplanation}</p></div>` : ''}
-                    </div>
-                `;
-            } else {
-                const gridForWiki = formatGridForSudokuWiki();
-                
-                html += `
-                    <div class="technique">
-                        <h4>🧩 Advanced Techniques Required</h4>
-                        <p>No simple techniques detected. This grid requires expert techniques.</p>
-                        
-                        <div style="margin-top: 16px; padding: 12px; background: #2d2d2d; border-radius: 8px; border: 1px solid #4caf50;">
-                            <h5 style="color: #4caf50; margin-bottom: 8px;">💡 Use SudokuWiki</h5>
-                            <p style="margin-bottom: 12px;">Click 🧩 at the top right to open SudokuWiki with your grid.</p>
-                            
-                            <div style="margin-top: 12px;">
-                                <p style="font-size: 12px; color: #b0b0b0; margin-bottom: 8px;">
-                                    <strong>Grid format:</strong>
-                                </p>
-                                <div style="background: #1e1e1e; padding: 8px; border-radius: 4px; font-family: monospace; font-size: 11px; word-break: break-all; border: 1px solid #404040;">
-                                    ${gridForWiki}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-
-            document.getElementById('analysisResult').innerHTML = html;
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            showLoading('Loading data...');
-            
-            setTimeout(() => {
-                if (!loadDataFromURL()) {
-                    showError('No grid found. Open this page from the Sudoku app.');
-                }
-            }, 100);
-        });
-    </script>
-</body>
-</html>
