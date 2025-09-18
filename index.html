@@ -297,7 +297,7 @@
             background: #2d2d2d;
             color: #ffffff;
             overflow: hidden;
-            transition: background-color 0.3s ease;
+            transition: background-color: 0.3s ease;
         }
 
         .sudoku-cell.thick-right { border-right: 2px solid #ffffff; }
@@ -1636,7 +1636,6 @@
                             if (hasConflict) break;
                         }
                     }
-                    
                     if (hasConflict) {
                         flashConflictingCells(row, col, number);
                         return;
@@ -1651,7 +1650,14 @@
                 } else {
                     gameState.notesGrid[row][col].add(number);
                 }
+                
+                if (options.indicativeMode) {
+                    updateErrors();
+                    cleanObsoleteNotes();
+                }
+
             } else {
+                // Ce bloc gère la pose d'un chiffre (pas une note)
                 const oldValue = gameState.currentGrid[row][col];
                 if (oldValue === number && number !== 0) return;
 
@@ -1663,47 +1669,37 @@
                 if (number !== 0) {
                     gameState.notesGrid[row][col].clear();
                 }
-            }
 
-            // --- GESTION DES ERREURS ET GAME OVER REGROUPÉE ET CORRIGÉE ---
-            if (options.indicativeMode) {
-                const oldValue = gameState.currentGrid[row][col]; // Re-check oldValue for logic
-                // On ne compte une erreur que si on remplit une case vide avec un mauvais chiffre
-                if (number !== 0 && !isCorrectMove(row, col, number) && oldValue === 0) {
-                    gameState.errorCount++;
+                if (options.indicativeMode) {
+                    if (number !== 0 && !isCorrectMove(row, col, number) && oldValue === 0) {
+                        gameState.errorCount++;
+                    }
+                    
+                    updateErrors();
+                    cleanObsoleteNotes();
+
+                    if (gameState.errorCount >= 3) {
+                        gameState.gameLost = true;
+                        gameState.elapsedTime = Date.now() - gameState.startTime;
+                        renderGame();
+                        clearSavedGame();
+                        animationManager.playDefeatAnimation(() => {
+                            showGameOverModal(false);
+                        });
+                        return;
+                    }
                 }
-
-                updateErrors(); // Toujours mettre à jour la grille des erreurs après un coup
-
-                if (gameState.errorCount >= 3) {
-                    gameState.gameLost = true;
-                    gameState.elapsedTime = Date.now() - gameState.startTime;
-                    renderGame(); // Rendu final avec la 3ème erreur visible
-                    clearSavedGame();
-                    animationManager.playDefeatAnimation(() => {
-                        showGameOverModal(false);
-                    });
-                    return; // Fin de la fonction car la partie est perdue
-                }
-                
-                cleanObsoleteNotes();
             }
-            // --- FIN DE LA SECTION CORRIGÉE ---
-
 
             const isNowComplete = isSudokuComplete();
             const unitsToAnimate = options.indicativeMode ? getCompletedUnits(row, col) : [];
             
-            if (unitsToAnimate.length > 0) {
-                //soundManager.playCompletionSound();
-            }
-            
-            if (options.useAnimations && unitsToAnimate.length > 0 && !isNowComplete) {
+            if (unitsToAnimate.length > 0 && !isNowComplete) {
                 animationManager.playSuccessAnimation(row, col);
             }
 
             if (isNowComplete) {
-                if (options.useAnimations && unitsToAnimate.length > 0) {
+                if (unitsToAnimate.length > 0) {
                     animationManager.playSuccessAnimation(row, col);
                 }
                 
@@ -1721,12 +1717,11 @@
                 }
                 
                 setTimeout(triggerWinAnimation, completionAnimTime + 300);
-                
                 return;
-            } else {
-                 if (options.useAnimations) {
-                    animateUnitsSequentially(unitsToAnimate);
-                 }
+            }
+
+            if (options.useAnimations && unitsToAnimate.length > 0) {
+                animateUnitsSequentially(unitsToAnimate);
             }
 
             renderGame();
