@@ -294,13 +294,33 @@
         }
 
         function formatGridForSudokuWiki() {
-            let gridString = '';
+            const formattedCells = [];
+            
             for (let r = 0; r < 9; r++) {
                 for (let c = 0; c < 9; c++) {
-                    gridString += currentGrid[r][c] === 0 ? '0' : currentGrid[r][c].toString();
+                    if (currentGrid[r][c] !== 0) {
+                        // Case avec un chiffre placé
+                        formattedCells.push(currentGrid[r][c].toString());
+                    } else {
+                        const userNotes = notesGrid[r][c] || [];
+                        if (userNotes.length > 0) {
+                            // Case avec des candidats - format 10 chiffres minimum
+                            let candidateString = '';
+                            for (let digit = 1; digit <= 9; digit++) {
+                                candidateString += userNotes.includes(digit) ? digit.toString() : '0';
+                            }
+                            // Ajouter un 0 final pour dépasser 9 (format SudokuWiki)
+                            candidateString += '0';
+                            formattedCells.push(candidateString);
+                        } else {
+                            // Case vide sans candidats
+                            formattedCells.push('0');
+                        }
+                    }
                 }
             }
-            return gridString;
+            
+            return formattedCells.join(' ');
         }
 
         function copyToClipboardAndOpenSudokuWiki() {
