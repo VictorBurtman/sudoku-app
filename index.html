@@ -1664,15 +1664,18 @@
                     gameState.notesGrid[row][col].clear();
                 }
 
+                // --- MODIFICATION APPLIQUÉE ICI ---
                 if (options.indicativeMode && number !== 0) {
                     if (!isCorrectMove(row, col, number)) {
                         if (oldValue === 0) { 
                             gameState.errorCount++;
+                            updateErrors(); // On met à jour l'état des erreurs ICI
+
                             if (gameState.errorCount >= 3) {
                                 gameState.gameLost = true;
                                 gameState.elapsedTime = Date.now() - gameState.startTime;
-                                renderGame(); 
-                                saveGameState();
+                                renderGame(); // Maintenant, le rendu affichera bien la 3ème case rouge
+                                clearSavedGame(); // On supprime la sauvegarde de la partie perdue
                                 animationManager.playDefeatAnimation(() => {
                                     showGameOverModal(false);
                                 });
@@ -1681,6 +1684,7 @@
                         }
                     }
                 }
+                // --- FIN DE LA MODIFICATION ---
             }
 
             if (options.indicativeMode) {
@@ -1709,7 +1713,7 @@
                 clearInterval(gameState.gameTimer);
 
                 renderGame();
-                clearSavedGame(); // <-- MODIFICATION APPLIQUÉE ICI
+                clearSavedGame();
                 
                 let completionAnimTime = 0;
                 if (options.useAnimations && unitsToAnimate.length > 0) {
