@@ -1595,6 +1595,7 @@
             saveGameState();
         }
 
+        // --- NOUVELLE FONCTION placeNumber ENTIÈREMENT CORRIGÉE ---
         window.placeNumber = function(number) {
             if (gameState.selectedRow === null || gameState.selectedCol === null) {
                 if (number !== 0) {
@@ -1650,8 +1651,7 @@
                 } else {
                     gameState.notesGrid[row][col].add(number);
                 }
-            } 
-            else {
+            } else {
                 const oldValue = gameState.currentGrid[row][col];
                 if (oldValue === number && number !== 0) return;
 
@@ -1663,34 +1663,33 @@
                 if (number !== 0) {
                     gameState.notesGrid[row][col].clear();
                 }
-
-                // --- MODIFICATION APPLIQUÉE ICI ---
-                if (options.indicativeMode && number !== 0) {
-                    if (!isCorrectMove(row, col, number)) {
-                        if (oldValue === 0) { 
-                            gameState.errorCount++;
-                            updateErrors(); // On met à jour l'état des erreurs ICI
-
-                            if (gameState.errorCount >= 3) {
-                                gameState.gameLost = true;
-                                gameState.elapsedTime = Date.now() - gameState.startTime;
-                                renderGame(); // Maintenant, le rendu affichera bien la 3ème case rouge
-                                clearSavedGame(); // On supprime la sauvegarde de la partie perdue
-                                animationManager.playDefeatAnimation(() => {
-                                    showGameOverModal(false);
-                                });
-                                return;
-                            }
-                        }
-                    }
-                }
-                // --- FIN DE LA MODIFICATION ---
             }
 
+            // --- GESTION DES ERREURS ET GAME OVER REGROUPÉE ET CORRIGÉE ---
             if (options.indicativeMode) {
-                updateErrors();
+                const oldValue = gameState.currentGrid[row][col]; // Re-check oldValue for logic
+                // On ne compte une erreur que si on remplit une case vide avec un mauvais chiffre
+                if (number !== 0 && !isCorrectMove(row, col, number) && oldValue === 0) {
+                    gameState.errorCount++;
+                }
+
+                updateErrors(); // Toujours mettre à jour la grille des erreurs après un coup
+
+                if (gameState.errorCount >= 3) {
+                    gameState.gameLost = true;
+                    gameState.elapsedTime = Date.now() - gameState.startTime;
+                    renderGame(); // Rendu final avec la 3ème erreur visible
+                    clearSavedGame();
+                    animationManager.playDefeatAnimation(() => {
+                        showGameOverModal(false);
+                    });
+                    return; // Fin de la fonction car la partie est perdue
+                }
+                
                 cleanObsoleteNotes();
             }
+            // --- FIN DE LA SECTION CORRIGÉE ---
+
 
             const isNowComplete = isSudokuComplete();
             const unitsToAnimate = options.indicativeMode ? getCompletedUnits(row, col) : [];
