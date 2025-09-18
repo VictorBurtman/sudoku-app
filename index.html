@@ -1709,7 +1709,7 @@
                 clearInterval(gameState.gameTimer);
 
                 renderGame();
-                saveGameState();
+                clearSavedGame(); // <-- MODIFICATION APPLIQUÉE ICI
                 
                 let completionAnimTime = 0;
                 if (options.useAnimations && unitsToAnimate.length > 0) {
@@ -2627,4 +2627,3 @@
     </script>
 </body>
 </html>
-
