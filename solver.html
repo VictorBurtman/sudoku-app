@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -7,155 +8,164 @@
     <meta name="theme-color" content="#121212">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        html, body {
-            font-family: 'Courier New', monospace;
-            background: #121212;
-            color: #ffffff;
-            min-height: 100vh;
-        }
 
-        .app-container {
-            max-width: 480px;
-            margin: 0 auto;
-            background: #1e1e1e;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
+```
+    html, body {
+        font-family: 'Courier New', monospace;
+        background: #121212;
+        color: #ffffff;
+        min-height: 100vh;
+    }
 
-        .app-bar {
-            background: #2d2d2d;
-            padding: 12px 16px;
-            border-bottom: 1px solid #404040;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+    .app-container {
+        max-width: 480px;
+        margin: 0 auto;
+        background: #1e1e1e;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
 
-        .app-bar h1 { font-size: 18px; color: #ffffff; }
+    .app-bar {
+        background: #2d2d2d;
+        padding: 12px 16px;
+        border-bottom: 1px solid #404040;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
 
-        .back-button, .sudoku-wiki-button {
-            background: none;
-            border: none;
-            color: #ffffff;
-            font-size: 18px;
-            cursor: pointer;
-            padding: 8px;
-            opacity: 0.8;
-            border-radius: 4px;
-        }
+    .app-bar h1 { font-size: 18px; color: #ffffff; }
 
-        .back-button:hover, .sudoku-wiki-button:hover {
-            opacity: 1;
-            background: rgba(255,255,255,0.1);
-        }
+    .back-button, .sudoku-wiki-button {
+        background: none;
+        border: none;
+        color: #ffffff;
+        font-size: 18px;
+        cursor: pointer;
+        padding: 8px;
+        opacity: 0.8;
+        border-radius: 4px;
+    }
 
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-        }
+    .back-button:hover, .sudoku-wiki-button:hover {
+        opacity: 1;
+        background: rgba(255,255,255,0.1);
+    }
 
-        .grid-section {
-            padding: 16px;
-            border-bottom: 1px solid #404040;
-        }
+    .main-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+    }
 
-        .sudoku-grid {
-            width: 100%;
-            max-width: 320px;
-            aspect-ratio: 1;
-            border: 2px solid #ffffff;
-            display: grid;
-            grid-template-columns: repeat(9, 1fr);
-            grid-template-rows: repeat(9, 1fr);
-            margin: 0 auto;
-            background: #2d2d2d;
-        }
+    .grid-section {
+        padding: 16px;
+        border-bottom: 1px solid #404040;
+    }
 
-        .cell {
-            border: 0.5px solid #666666;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            font-weight: bold;
-            position: relative;
-            background: #2d2d2d;
-            color: #ffffff;
-        }
+    .sudoku-grid {
+        width: 100%;
+        max-width: 320px;
+        aspect-ratio: 1;
+        border: 2px solid #ffffff;
+        display: grid;
+        grid-template-columns: repeat(9, 1fr);
+        grid-template-rows: repeat(9, 1fr);
+        margin: 0 auto;
+        background: #2d2d2d;
+    }
 
-        .cell:nth-child(3n):not(:nth-child(9n)) { border-right: 1px solid #ffffff; }
-        .cell:nth-child(n+19):nth-child(-n+27), .cell:nth-child(n+46):nth-child(-n+54) { border-bottom: 1px solid #ffffff; }
+    .cell {
+        border: 0.5px solid #666666;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: bold;
+        position: relative;
+        background: #2d2d2d;
+        color: #ffffff;
+    }
 
-        .cell.given { color: #ffffff; background: #2d2d2d; }
-        .cell.filled { color: #90caf9; background: #2d2d2d; }
-        .cell.highlighted { 
-            background: #ffb74d !important; 
-            color: #ffffff;
-            animation: pulse 2s infinite;
-        }
+    .cell:nth-child(3n):not(:nth-child(9n)) { border-right: 1px solid #ffffff; }
+    .cell:nth-child(n+19):nth-child(-n+27), .cell:nth-child(n+46):nth-child(-n+54) { border-bottom: 1px solid #ffffff; }
 
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
+    .cell.given { color: #ffffff; background: #2d2d2d; }
+    .cell.filled { color: #90caf9; background: #2d2d2d; }
+    .cell.highlighted { 
+        background: #ffb74d !important; 
+        color: #ffffff;
+        animation: pulse 2s infinite;
+    }
 
-        .notes {
-            position: absolute;
-            top: 1px;
-            left: 1px;
-            font-size: 6px;
-            color: #ffffff;
-            line-height: 1;
-        }
+    .cell.highlighted-secondary {
+        background: #ff9800 !important;
+        color: #ffffff;
+        opacity: 0.8;
+    }
 
-        .analysis-section {
-            flex: 1;
-            padding: 16px;
-            overflow-y: auto;
-        }
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
 
-        .analysis-section h3 {
-            color: #ffffff;
-            margin-bottom: 16px;
-            font-size: 16px;
-        }
+    .notes {
+        position: absolute;
+        top: 1px;
+        left: 1px;
+        font-size: 6px;
+        color: #ffffff;
+        line-height: 1;
+    }
 
-        .move-suggestion {
-            background: #4caf50;
-            color: white;
-            padding: 16px;
-            border-radius: 8px;
-            margin-top: 16px;
-            text-align: center;
-        }
+    .analysis-section {
+        flex: 1;
+        padding: 16px;
+        overflow-y: auto;
+    }
 
-        .move-suggestion h4 { font-size: 16px; margin-bottom: 8px; }
-        .move-suggestion p { font-size: 13px; margin-bottom: 4px; }
+    .analysis-section h3 {
+        color: #ffffff;
+        margin-bottom: 16px;
+        font-size: 16px;
+    }
 
-        .loading-state, .error-state {
-            text-align: center;
-            padding: 40px 20px;
-        }
+    .move-suggestion {
+        background: #4caf50;
+        color: white;
+        padding: 16px;
+        border-radius: 8px;
+        margin-top: 16px;
+        text-align: center;
+    }
 
-        .loading-state { color: #b0b0b0; }
-        .error-state { color: #f44336; }
+    .move-suggestion h4 { font-size: 16px; margin-bottom: 8px; }
+    .move-suggestion p { font-size: 13px; margin-bottom: 4px; }
 
-        .technique {
-            background: #2d2d2d;
-            border-left: 4px solid #2196f3;
-            padding: 12px;
-            margin-bottom: 12px;
-            border-radius: 5px;
-            border: 1px solid #404040;
-        }
+    .loading-state, .error-state {
+        text-align: center;
+        padding: 40px 20px;
+    }
 
-        .technique h4 { color: #2196f3; margin-bottom: 8px; font-size: 14px; }
-        .technique p { font-size: 12px; line-height: 1.4; color: #b0b0b0; }
-    </style>
+    .loading-state { color: #b0b0b0; }
+    .error-state { color: #f44336; }
+
+    .technique {
+        background: #2d2d2d;
+        border-left: 4px solid #2196f3;
+        padding: 12px;
+        margin-bottom: 12px;
+        border-radius: 5px;
+        border: 1px solid #404040;
+    }
+
+    .technique h4 { color: #2196f3; margin-bottom: 8px; font-size: 14px; }
+    .technique p { font-size: 12px; line-height: 1.4; color: #b0b0b0; }
+</style>
+```
+
 </head>
 <body>
     <div class="app-container">
@@ -164,101 +174,128 @@
             <h1>Sudoku Assistant v2.5</h1>
             <button class="sudoku-wiki-button" onclick="copyToClipboardAndOpenSudokuWiki()" title="Copy grid and open SudokuWiki">🧩</button>
         </div>
+
+```
+    <div class="main-content">
+        <div class="grid-section" id="gridSection">
+            <div id="gridDisplay"></div>
+        </div>
         
-        <div class="main-content">
-            <div class="grid-section" id="gridSection">
-                <div id="gridDisplay"></div>
-            </div>
-            
-            <div class="analysis-section">
-                <h3>Technique Analysis</h3>
-                <div id="analysisResult">
-                    <div class="loading-state">Loading grid...</div>
-                </div>
+        <div class="analysis-section">
+            <h3>Technique Analysis</h3>
+            <div id="analysisResult">
+                <div class="loading-state">Loading grid...</div>
             </div>
         </div>
     </div>
+</div>
 
-    <script>
-        let currentGrid = null;
-        let originalGrid = null;
-        let notesGrid = null;
+<script>
+    let currentGrid = null;
+    let originalGrid = null;
+    let notesGrid = null;
 
-        function showError(message) {
-            document.getElementById('analysisResult').innerHTML = `<div class="error-state">${message}</div>`;
-            console.error('Error:', message);
-        }
+    function showError(message) {
+        document.getElementById('analysisResult').innerHTML = `<div class="error-state">${message}</div>`;
+        console.error('Error:', message);
+    }
 
-        function showLoading(message) {
-            document.getElementById('analysisResult').innerHTML = `<div class="loading-state">${message}</div>`;
-        }
+    function showLoading(message) {
+        document.getElementById('analysisResult').innerHTML = `<div class="loading-state">${message}</div>`;
+    }
 
-        function showTemporaryMessage(message) {
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed; top: 20px; right: 20px; background: #4caf50; color: white;
-                padding: 12px 20px; border-radius: 6px; z-index: 1000; font-size: 14px;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.3); max-width: 300px;
-            `;
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 4000);
-        }
+    function showTemporaryMessage(message) {
+        const notification = document.createElement('div');
+        notification.style.cssText = `
+            position: fixed; top: 20px; right: 20px; background: #4caf50; color: white;
+            padding: 12px 20px; border-radius: 6px; z-index: 1000; font-size: 14px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3); max-width: 300px;
+        `;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 4000);
+    }
 
-        function formatGridForSudokuWiki() {
-            const formattedCells = [];
-            
-            for (let r = 0; r < 9; r++) {
-                for (let c = 0; c < 9; c++) {
-                    if (currentGrid[r][c] !== 0) {
-                        formattedCells.push(currentGrid[r][c].toString());
-                    } else {
-                        const userNotes = notesGrid[r][c] || [];
-                        if (userNotes.length > 0) {
-                            let candidateString = '';
-                            for (let digit = 1; digit <= 9; digit++) {
-                                candidateString += userNotes.includes(digit) ? digit.toString() : '0';
-                            }
-                            candidateString += '0';
-                            formattedCells.push(candidateString);
-                        } else {
-                            formattedCells.push('0');
+    function formatGridForSudokuWiki() {
+        const formattedCells = [];
+        
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                if (currentGrid[r][c] !== 0) {
+                    formattedCells.push(currentGrid[r][c].toString());
+                } else {
+                    const userNotes = notesGrid[r][c] || [];
+                    if (userNotes.length > 0) {
+                        let candidateString = '';
+                        for (let digit = 1; digit <= 9; digit++) {
+                            candidateString += userNotes.includes(digit) ? digit.toString() : '0';
                         }
+                        candidateString += '0';
+                        formattedCells.push(candidateString);
+                    } else {
+                        formattedCells.push('0');
                     }
                 }
             }
-            
-            return formattedCells.join(' ');
         }
+        
+        return formattedCells.join(' ');
+    }
 
-        function copyToClipboardAndOpenSudokuWiki() {
-            const gridString = formatGridForSudokuWiki();
-            
-            navigator.clipboard.writeText(gridString).then(() => {
-                showTemporaryMessage('Grid copied! Paste in SudokuWiki');
-                setTimeout(() => {
-                    window.open('https://www.sudokuwiki.org/sudoku.htm', '_blank');
-                }, 1000);
-            }).catch(err => {
-                showTemporaryMessage('Manual copy: ' + gridString);
+    function copyToClipboardAndOpenSudokuWiki() {
+        const gridString = formatGridForSudokuWiki();
+        
+        navigator.clipboard.writeText(gridString).then(() => {
+            showTemporaryMessage('Grid copied! Paste in SudokuWiki');
+            setTimeout(() => {
                 window.open('https://www.sudokuwiki.org/sudoku.htm', '_blank');
-            });
-        }
+            }, 1000);
+        }).catch(err => {
+            showTemporaryMessage('Manual copy: ' + gridString);
+            window.open('https://www.sudokuwiki.org/sudoku.htm', '_blank');
+        });
+    }
 
-        function loadDataFromURL() {
-            const urlParams = new URLSearchParams(window.location.search);
-            console.log('Checking URL params...');
-            
-            const encodedData = urlParams.get('data');
-            if (encodedData) {
-                try {
-                    const decodedData = decodeURIComponent(encodedData);
-                    const data = JSON.parse(decodedData);
+    function loadDataFromURL() {
+        const urlParams = new URLSearchParams(window.location.search);
+        console.log('Checking URL params...');
+        
+        const encodedData = urlParams.get('data');
+        if (encodedData) {
+            try {
+                const decodedData = decodeURIComponent(encodedData);
+                const data = JSON.parse(decodedData);
+                
+                if (!data.currentGrid || !data.notesGrid) {
+                    throw new Error("Missing grid data");
+                }
+                
+                currentGrid = data.currentGrid;
+                originalGrid = data.originalGrid;
+                notesGrid = data.notesGrid;
+                
+                console.log('Data loaded successfully');
+                analyzeGrid();
+                return true;
+            } catch (error) {
+                console.error('URL parsing error:', error);
+                showError('URL Error: ' + error.message);
+                return false;
+            }
+        }
+        
+        const dataId = urlParams.get('id');
+        if (dataId) {
+            try {
+                const storedData = localStorage.getItem(dataId);
+                if (storedData) {
+                    localStorage.removeItem(dataId);
+                    const data = JSON.parse(storedData);
                     
                     if (!data.currentGrid || !data.notesGrid) {
                         throw new Error("Missing grid data");
@@ -268,303 +305,434 @@
                     originalGrid = data.originalGrid;
                     notesGrid = data.notesGrid;
                     
-                    console.log('Data loaded successfully');
+                    console.log('Data loaded from localStorage');
                     analyzeGrid();
                     return true;
-                } catch (error) {
-                    console.error('URL parsing error:', error);
-                    showError('URL Error: ' + error.message);
+                } else {
+                    showError('Data expired (ID: ' + dataId + ')');
                     return false;
                 }
-            }
-            
-            const dataId = urlParams.get('id');
-            if (dataId) {
-                try {
-                    const storedData = localStorage.getItem(dataId);
-                    if (storedData) {
-                        localStorage.removeItem(dataId);
-                        const data = JSON.parse(storedData);
-                        
-                        if (!data.currentGrid || !data.notesGrid) {
-                            throw new Error("Missing grid data");
-                        }
-                        
-                        currentGrid = data.currentGrid;
-                        originalGrid = data.originalGrid;
-                        notesGrid = data.notesGrid;
-                        
-                        console.log('Data loaded from localStorage');
-                        analyzeGrid();
-                        return true;
-                    } else {
-                        showError('Data expired (ID: ' + dataId + ')');
-                        return false;
-                    }
-                } catch (error) {
-                    console.error('localStorage error:', error);
-                    showError('Storage Error: ' + error.message);
-                    return false;
-                }
-            }
-            
-            showError('No grid data found in URL');
-            return false;
-        }
-
-        function analyzeGrid() {
-            console.log('Starting grid analysis...');
-            
-            if (!currentGrid || !notesGrid) {
-                showError('Missing grid data');
-                return;
-            }
-            
-            try {
-                displayGrid();
-                performAnalysis();
-                console.log('Analysis completed');
             } catch (error) {
-                console.error('Analysis error:', error);
-                showError('Analysis error: ' + error.message);
+                console.error('localStorage error:', error);
+                showError('Storage Error: ' + error.message);
+                return false;
             }
         }
+        
+        showError('No grid data found in URL');
+        return false;
+    }
 
-        function displayGrid() {
-            let gridHtml = '<div class="sudoku-grid">';
-            
-            for (let r = 0; r < 9; r++) {
-                for (let c = 0; c < 9; c++) {
-                    const cell = currentGrid[r][c];
-                    const isGiven = originalGrid && originalGrid[r][c] !== 0;
-                    const isFilled = cell !== 0;
-                    const notes = notesGrid[r][c] || [];
-                    const notesText = notes.length > 0 ? notes.join('') : '';
-                    
-                    let cellClass = 'cell';
-                    if (isGiven) cellClass += ' given';
-                    else if (isFilled) cellClass += ' filled';
-                    
-                    gridHtml += `<div class="${cellClass}" data-row="${r}" data-col="${c}">
-                        ${cell !== 0 ? cell : ''}
-                        ${cell === 0 && notes.length > 0 ? `<div class="notes">${notesText}</div>` : ''}
-                    </div>`;
-                }
-            }
-            
-            gridHtml += '</div>';
-            document.getElementById('gridDisplay').innerHTML = gridHtml;
+    function analyzeGrid() {
+        console.log('Starting grid analysis...');
+        
+        if (!currentGrid || !notesGrid) {
+            showError('Missing grid data');
+            return;
         }
+        
+        try {
+            displayGrid();
+            performAnalysis();
+            console.log('Analysis completed');
+        } catch (error) {
+            console.error('Analysis error:', error);
+            showError('Analysis error: ' + error.message);
+        }
+    }
 
-        function isValidPlacement(row, col, num) {
-            // Check row
+    function displayGrid() {
+        let gridHtml = '<div class="sudoku-grid">';
+        
+        for (let r = 0; r < 9; r++) {
             for (let c = 0; c < 9; c++) {
-                if (currentGrid[row][c] === num) return false;
+                const cell = currentGrid[r][c];
+                const isGiven = originalGrid && originalGrid[r][c] !== 0;
+                const isFilled = cell !== 0;
+                const notes = notesGrid[r][c] || [];
+                const notesText = notes.length > 0 ? notes.join('') : '';
+                
+                let cellClass = 'cell';
+                if (isGiven) cellClass += ' given';
+                else if (isFilled) cellClass += ' filled';
+                
+                gridHtml += `<div class="${cellClass}" data-row="${r}" data-col="${c}">
+                    ${cell !== 0 ? cell : ''}
+                    ${cell === 0 && notes.length > 0 ? `<div class="notes">${notesText}</div>` : ''}
+                </div>`;
             }
-            
-            // Check column
-            for (let r = 0; r < 9; r++) {
-                if (currentGrid[r][col] === num) return false;
-            }
-            
-            // Check 3x3 box
-            const boxRow = Math.floor(row / 3) * 3;
-            const boxCol = Math.floor(col / 3) * 3;
-            for (let r = boxRow; r < boxRow + 3; r++) {
-                for (let c = boxCol; c < boxCol + 3; c++) {
-                    if (currentGrid[r][c] === num) return false;
-                }
-            }
-            
-            return true;
         }
+        
+        gridHtml += '</div>';
+        document.getElementById('gridDisplay').innerHTML = gridHtml;
+    }
 
-        function findLastPossibleNumber() {
-            for (let r = 0; r < 9; r++) {
-                for (let c = 0; c < 9; c++) {
-                    if (currentGrid[r][c] === 0) {
-                        const possibleNumbers = [];
-                        for (let num = 1; num <= 9; num++) {
-                            if (isValidPlacement(r, c, num)) {
-                                possibleNumbers.push(num);
-                            }
-                        }
-                        
-                        if (possibleNumbers.length === 1) {
-                            return {
-                                row: r,
-                                col: c,
-                                value: possibleNumbers[0],
-                                explanation: `Cell R${r+1}C${c+1} can only contain digit ${possibleNumbers[0]}.`,
-                                reasoning: `All other digits already appear in its row, column, or 3x3 box.`
-                            };
+    function generateCandidates() {
+        const candidates = [];
+        
+        for (let r = 0; r < 9; r++) {
+            candidates[r] = [];
+            for (let c = 0; c < 9; c++) {
+                if (currentGrid[r][c] !== 0) {
+                    candidates[r][c] = [];
+                } else {
+                    candidates[r][c] = [];
+                    for (let num = 1; num <= 9; num++) {
+                        if (isValidPlacement(r, c, num)) {
+                            candidates[r][c].push(num);
                         }
                     }
                 }
             }
-            return null;
         }
+        
+        return candidates;
+    }
 
-        function findHiddenSingle() {
-            // Check 3x3 boxes first
-            for (let boxR = 0; boxR < 3; boxR++) {
-                for (let boxC = 0; boxC < 3; boxC++) {
-                    for (let digit = 1; digit <= 9; digit++) {
-                        let digitFound = false;
-                        const possibleCells = [];
+    function findNakedPairs(candidates) {
+        // Check columns
+        for (let c = 0; c < 9; c++) {
+            for (let r1 = 0; r1 < 8; r1++) {
+                if (currentGrid[r1][c] !== 0 || candidates[r1][c].length !== 2) continue;
+                
+                for (let r2 = r1 + 1; r2 < 9; r2++) {
+                    if (currentGrid[r2][c] !== 0 || candidates[r2][c].length !== 2) continue;
+                    
+                    if (JSON.stringify(candidates[r1][c]) === JSON.stringify(candidates[r2][c])) {
+                        const pair = candidates[r1][c];
                         
-                        for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
-                            for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
-                                if (currentGrid[r][c] === digit) {
-                                    digitFound = true;
+                        // Check if we can eliminate from user notes in this column
+                        let canEliminateInCol = false;
+                        for (let r = 0; r < 9; r++) {
+                            if (r !== r1 && r !== r2 && currentGrid[r][c] === 0) {
+                                const userNotes = notesGrid[r][c] || [];
+                                const hasAnyPairCandidate = pair.some(num => userNotes.includes(num));
+                                if (hasAnyPairCandidate) {
+                                    canEliminateInCol = true;
                                     break;
                                 }
-                                if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
-                                    possibleCells.push({r, c});
-                                }
                             }
-                            if (digitFound) break;
                         }
                         
-                        if (!digitFound && possibleCells.length === 1) {
+                        if (canEliminateInCol) {
                             return {
-                                row: possibleCells[0].r,
-                                col: possibleCells[0].c,
-                                value: digit,
-                                explanation: `Digit ${digit} can only go in R${possibleCells[0].r+1}C${possibleCells[0].c+1} within the 3x3 box (rows ${boxR*3+1}-${boxR*3+3}, columns ${boxC*3+1}-${boxC*3+3}).`,
-                                reasoning: `Hidden Single in 3x3 box`
+                                type: 'elimination',
+                                cells: [{row: r1, col: c}, {row: r2, col: c}],
+                                values: pair,
+                                explanation: `Naked pair ${pair.join('/')} found at R${r1+1}C${c+1} and R${r2+1}C${c+1}.`,
+                                reasoning: `These two cells can only contain ${pair.join(' or ')}, so eliminate ${pair.join(' and ')} from other cells in column ${c+1}.`
                             };
                         }
                     }
                 }
             }
+        }
 
-            // Check rows
-            for (let r = 0; r < 9; r++) {
-                for (let digit = 1; digit <= 9; digit++) {
-                    if (currentGrid[r].includes(digit)) continue;
+        // Check rows  
+        for (let r = 0; r < 9; r++) {
+            for (let c1 = 0; c1 < 8; c1++) {
+                if (currentGrid[r][c1] !== 0 || candidates[r][c1].length !== 2) continue;
+                
+                for (let c2 = c1 + 1; c2 < 9; c2++) {
+                    if (currentGrid[r][c2] !== 0 || candidates[r][c2].length !== 2) continue;
                     
-                    const possibleCols = [];
-                    for (let c = 0; c < 9; c++) {
-                        if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
-                            possibleCols.push(c);
+                    if (JSON.stringify(candidates[r][c1]) === JSON.stringify(candidates[r][c2])) {
+                        const pair = candidates[r][c1];
+                        
+                        let canEliminateInRow = false;
+                        for (let c = 0; c < 9; c++) {
+                            if (c !== c1 && c !== c2 && currentGrid[r][c] === 0) {
+                                const userNotes = notesGrid[r][c] || [];
+                                const hasAnyPairCandidate = pair.some(num => userNotes.includes(num));
+                                if (hasAnyPairCandidate) {
+                                    canEliminateInRow = true;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if (canEliminateInRow) {
+                            return {
+                                type: 'elimination',
+                                cells: [{row: r, col: c1}, {row: r, col: c2}],
+                                values: pair,
+                                explanation: `Naked pair ${pair.join('/')} found at R${r+1}C${c1+1} and R${r+1}C${c2+1}.`,
+                                reasoning: `These two cells can only contain ${pair.join(' or ')}, so eliminate ${pair.join(' and ')} from other cells in row ${r+1}.`
+                            };
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check 3x3 boxes
+        for (let boxR = 0; boxR < 3; boxR++) {
+            for (let boxC = 0; boxC < 3; boxC++) {
+                const boxCells = [];
+                
+                for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
+                    for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
+                        if (currentGrid[r][c] === 0 && candidates[r][c].length === 2) {
+                            boxCells.push({row: r, col: c, candidates: candidates[r][c]});
+                        }
+                    }
+                }
+                
+                for (let i = 0; i < boxCells.length - 1; i++) {
+                    for (let j = i + 1; j < boxCells.length; j++) {
+                        if (JSON.stringify(boxCells[i].candidates) === JSON.stringify(boxCells[j].candidates)) {
+                            const pair = boxCells[i].candidates;
+                            
+                            let canEliminateInBox = false;
+                            for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
+                                for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
+                                    if ((r !== boxCells[i].row || c !== boxCells[i].col) && 
+                                        (r !== boxCells[j].row || c !== boxCells[j].col) && 
+                                        currentGrid[r][c] === 0) {
+                                        const userNotes = notesGrid[r][c] || [];
+                                        const hasAnyPairCandidate = pair.some(num => userNotes.includes(num));
+                                        if (hasAnyPairCandidate) {
+                                            canEliminateInBox = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (canEliminateInBox) break;
+                            }
+                            
+                            if (canEliminateInBox) {
+                                return {
+                                    type: 'elimination',
+                                    cells: [{row: boxCells[i].row, col: boxCells[i].col}, {row: boxCells[j].row, col: boxCells[j].col}],
+                                    values: pair,
+                                    explanation: `Naked pair ${pair.join('/')} found at R${boxCells[i].row+1}C${boxCells[i].col+1} and R${boxCells[j].row+1}C${boxCells[j].col+1} in the 3x3 box.`,
+                                    reasoning: `These two cells can only contain ${pair.join(' or ')}, so eliminate ${pair.join(' and ')} from other cells in this box.`
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    function findLastPossibleNumber() {
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                if (currentGrid[r][c] === 0) {
+                    const possibleNumbers = [];
+                    for (let num = 1; num <= 9; num++) {
+                        if (isValidPlacement(r, c, num)) {
+                            possibleNumbers.push(num);
                         }
                     }
                     
-                    if (possibleCols.length === 1) {
+                    if (possibleNumbers.length === 1) {
                         return {
                             row: r,
-                            col: possibleCols[0],
-                            value: digit,
-                            explanation: `Digit ${digit} can only go in R${r+1}C${possibleCols[0]+1} within row ${r+1}.`,
-                            reasoning: `Hidden Single in row ${r+1}`
+                            col: c,
+                            value: possibleNumbers[0],
+                            explanation: `Cell R${r+1}C${c+1} can only contain digit ${possibleNumbers[0]}.`,
+                            reasoning: `All other digits already appear in its row, column, or 3x3 box.`
                         };
                     }
                 }
             }
+        }
+        return null;
+    }
 
-            // Check columns
-            for (let c = 0; c < 9; c++) {
+    function findHiddenSingle() {
+        // Check 3x3 boxes first
+        for (let boxR = 0; boxR < 3; boxR++) {
+            for (let boxC = 0; boxC < 3; boxC++) {
                 for (let digit = 1; digit <= 9; digit++) {
-                    if (currentGrid.some(row => row[c] === digit)) continue;
+                    let digitFound = false;
+                    const possibleCells = [];
                     
-                    const possibleRows = [];
-                    for (let r = 0; r < 9; r++) {
-                        if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
-                            possibleRows.push(r);
+                    for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
+                        for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
+                            if (currentGrid[r][c] === digit) {
+                                digitFound = true;
+                                break;
+                            }
+                            if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
+                                possibleCells.push({r, c});
+                            }
+                        }
+                        if (digitFound) break;
+                    }
+                    
+                    if (!digitFound && possibleCells.length === 1) {
+                        return {
+                            row: possibleCells[0].r,
+                            col: possibleCells[0].c,
+                            value: digit,
+                            explanation: `Digit ${digit} can only go in R${possibleCells[0].r+1}C${possibleCells[0].c+1} within the 3x3 box (rows ${boxR*3+1}-${boxR*3+3}, columns ${boxC*3+1}-${boxC*3+3}).`,
+                            reasoning: `Hidden Single in 3x3 box`
+                        };
+                    }
+                }
+            }
+        }
+
+        // Check rows
+        for (let r = 0; r < 9; r++) {
+            for (let digit = 1; digit <= 9; digit++) {
+                if (currentGrid[r].includes(digit)) continue;
+                
+                const possibleCols = [];
+                for (let c = 0; c < 9; c++) {
+                    if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
+                        possibleCols.push(c);
+                    }
+                }
+                
+                if (possibleCols.length === 1) {
+                    return {
+                        row: r,
+                        col: possibleCols[0],
+                        value: digit,
+                        explanation: `Digit ${digit} can only go in R${r+1}C${possibleCols[0]+1} within row ${r+1}.`,
+                        reasoning: `Hidden Single in row ${r+1}`
+                    };
+                }
+            }
+        }
+
+        // Check columns
+        for (let c = 0; c < 9; c++) {
+            for (let digit = 1; digit <= 9; digit++) {
+                if (currentGrid.some(row => row[c] === digit)) continue;
+                
+                const possibleRows = [];
+                for (let r = 0; r < 9; r++) {
+                    if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
+                        possibleRows.push(r);
+                    }
+                }
+                
+                if (possibleRows.length === 1) {
+                    return {
+                        row: possibleRows[0],
+                        col: c,
+                        value: digit,
+                        explanation: `Digit ${digit} can only go in R${possibleRows[0]+1}C${c+1} within column ${c+1}.`,
+                        reasoning: `Hidden Single in column ${c+1}`
+                    };
+                }
+            }
+        }
+
+        return null;
+    }
+
+    function performAnalysis() {
+        console.log('Performing analysis...');
+
+        // 1. Last Possible Digit (Naked Single)
+        const lastNumber = findLastPossibleNumber();
+        if (lastNumber) {
+            displayAnalysis("Last Possible Digit", lastNumber);
+            return;
+        }
+
+        // 2. Hidden Single
+        const hiddenSingle = findHiddenSingle();
+        if (hiddenSingle) {
+            displayAnalysis("Hidden Single", hiddenSingle);
+            return;
+        }
+
+        // 3. Naked Pairs - only if we have user notes
+        const hasUserNotes = notesGrid.some(row => row.some(cell => cell && cell.length > 0));
+        
+        if (hasUserNotes) {
+            const correctCandidates = generateCandidates();
+            const nakedPair = findNakedPairs(correctCandidates);
+            if (nakedPair) {
+                displayAnalysis("Naked Pairs", nakedPair);
+                return;
+            }
+        }
+
+        displayAnalysis(null, null);
+    }
+
+    function displayAnalysis(foundTechnique, suggestion) {
+        let html = '';
+
+        if (suggestion) {
+            // Clear highlights
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.classList.remove('highlighted', 'highlighted-secondary');
+            });
+
+            // Highlight cells based on technique type
+            if (suggestion.cells && suggestion.cells.length > 1) {
+                // Naked Pairs - highlight both cells
+                suggestion.cells.forEach((cellInfo, index) => {
+                    const targetCell = document.querySelector(`[data-row="${cellInfo.row}"][data-col="${cellInfo.col}"]`);
+                    if (targetCell) {
+                        if (index === 0) {
+                            targetCell.classList.add('highlighted');
+                        } else {
+                            targetCell.classList.add('highlighted-secondary');
                         }
                     }
-                    
-                    if (possibleRows.length === 1) {
-                        return {
-                            row: possibleRows[0],
-                            col: c,
-                            value: digit,
-                            explanation: `Digit ${digit} can only go in R${possibleRows[0]+1}C${c+1} within column ${c+1}.`,
-                            reasoning: `Hidden Single in column ${c+1}`
-                        };
-                    }
-                }
-            }
-
-            return null;
-        }
-
-        function performAnalysis() {
-            console.log('Performing analysis...');
-
-            // 1. Last Possible Digit (Naked Single)
-            const lastNumber = findLastPossibleNumber();
-            if (lastNumber) {
-                displayAnalysis("Last Possible Digit", lastNumber);
-                return;
-            }
-
-            // 2. Hidden Single
-            const hiddenSingle = findHiddenSingle();
-            if (hiddenSingle) {
-                displayAnalysis("Hidden Single", hiddenSingle);
-                return;
-            }
-
-            displayAnalysis(null, null);
-        }
-
-        function displayAnalysis(foundTechnique, suggestion) {
-            let html = '';
-
-            if (suggestion) {
-                // Clear highlights
-                document.querySelectorAll('.cell').forEach(cell => {
-                    cell.classList.remove('highlighted');
                 });
-
-                // Highlight target cell
-                if (suggestion.row !== undefined && suggestion.col !== undefined) {
-                    const targetCell = document.querySelector(`[data-row="${suggestion.row}"][data-col="${suggestion.col}"]`);
-                    if (targetCell) {
-                        targetCell.classList.add('highlighted');
-                    }
+            } else if (suggestion.row !== undefined && suggestion.col !== undefined) {
+                // Single cell techniques
+                const targetCell = document.querySelector(`[data-row="${suggestion.row}"][data-col="${suggestion.col}"]`);
+                if (targetCell) {
+                    targetCell.classList.add('highlighted');
                 }
-
-                html = `
-                    <div class="move-suggestion">
-                        <h4>🎯 ${foundTechnique}</h4>
-                        <p>${suggestion.explanation}</p>
-                        <p><em>${suggestion.reasoning}</em></p>
-                        <p><strong>➤ Place digit ${suggestion.value} at R${suggestion.row + 1}C${suggestion.col + 1}</strong></p>
-                    </div>
-                `;
-            } else {
-                const gridForWiki = formatGridForSudokuWiki();
-                
-                html = `
-                    <div class="technique">
-                        <h4>🧩 Advanced Techniques Required</h4>
-                        <p>No simple techniques detected. This grid requires expert techniques.</p>
-                        
-                        <div style="margin-top: 16px; padding: 12px; background: #2d2d2d; border-radius: 8px; border: 1px solid #4caf50;">
-                            <h5 style="color: #4caf50; margin-bottom: 8px;">💡 Use SudokuWiki</h5>
-                            <p style="margin-bottom: 12px;">Click 🧩 at the top right to open SudokuWiki with your grid.</p>
-                        </div>
-                    </div>
-                `;
             }
 
-            document.getElementById('analysisResult').innerHTML = html;
+            html = `
+                <div class="move-suggestion">
+                    <h4>🎯 ${foundTechnique}</h4>
+                    <p>${suggestion.explanation}</p>
+                    <p><em>${suggestion.reasoning}</em></p>
+                    ${suggestion.value ? `<p><strong>➤ Place digit ${suggestion.value} at R${suggestion.row + 1}C${suggestion.col + 1}</strong></p>` : ''}
+                    ${suggestion.cells && suggestion.cells.length > 1 ? `<p><strong>📍 Cells: ${suggestion.cells.map(c => `R${c.row+1}C${c.col+1}`).join(', ')}</strong></p>` : ''}
+                    ${suggestion.values ? `<p><strong>🔢 Values: ${suggestion.values.join('/')}</strong></p>` : ''}
+                </div>
+            `;
+        } else {
+            const gridForWiki = formatGridForSudokuWiki();
+            
+            html = `
+                <div class="technique">
+                    <h4>🧩 Advanced Techniques Required</h4>
+                    <p>No simple techniques detected. This grid requires expert techniques.</p>
+                    
+                    <div style="margin-top: 16px; padding: 12px; background: #2d2d2d; border-radius: 8px; border: 1px solid #4caf50;">
+                        <h5 style="color: #4caf50; margin-bottom: 8px;">💡 Use SudokuWiki</h5>
+                        <p style="margin-bottom: 12px;">Click 🧩 at the top right to open SudokuWiki with your grid.</p>
+                    </div>
+                </div>
+            `;
         }
 
-        // Initialize on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Sudoku Assistant v2.5 started');
-            showLoading('Loading data...');
-            
-            setTimeout(() => {
-                if (!loadDataFromURL()) {
-                    showError('No grid found. Open this page from the Sudoku app.');
-                }
-            }, 100);
-        });
-    </script>
+        document.getElementById('analysisResult').innerHTML = html;
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('Sudoku Assistant v2.5 started');
+        showLoading('Loading data...');
+        
+        setTimeout(() => {
+            if (!loadDataFromURL()) {
+                showError('No grid found. Open this page from the Sudoku app.');
+            }
+        }, 100);
+    });
+</script>
+```
+
 </body>
 </html>
