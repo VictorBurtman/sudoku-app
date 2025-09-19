@@ -9,160 +9,163 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        html, body {
-            font-family: 'Courier New', monospace;
-            background: #121212;
-            color: #ffffff;
-            min-height: 100vh;
-        }
+```
+    html, body {
+        font-family: 'Courier New', monospace;
+        background: #121212;
+        color: #ffffff;
+        min-height: 100vh;
+    }
 
-        .app-container {
-            max-width: 480px;
-            margin: 0 auto;
-            background: #1e1e1e;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
+    .app-container {
+        max-width: 480px;
+        margin: 0 auto;
+        background: #1e1e1e;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
 
-        .app-bar {
-            background: #2d2d2d;
-            padding: 12px 16px;
-            border-bottom: 1px solid #404040;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
+    .app-bar {
+        background: #2d2d2d;
+        padding: 12px 16px;
+        border-bottom: 1px solid #404040;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
 
-        .app-bar h1 { font-size: 18px; color: #ffffff; }
+    .app-bar h1 { font-size: 18px; color: #ffffff; }
 
-        .back-button, .sudoku-wiki-button {
-            background: none;
-            border: none;
-            color: #ffffff;
-            font-size: 18px;
-            cursor: pointer;
-            padding: 8px;
-            opacity: 0.8;
-            border-radius: 4px;
-        }
+    .back-button, .sudoku-wiki-button {
+        background: none;
+        border: none;
+        color: #ffffff;
+        font-size: 18px;
+        cursor: pointer;
+        padding: 8px;
+        opacity: 0.8;
+        border-radius: 4px;
+    }
 
-        .back-button:hover, .sudoku-wiki-button:hover {
-            opacity: 1;
-            background: rgba(255,255,255,0.1);
-        }
+    .back-button:hover, .sudoku-wiki-button:hover {
+        opacity: 1;
+        background: rgba(255,255,255,0.1);
+    }
 
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow-y: auto;
-        }
+    .main-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow-y: auto;
+    }
 
-        .grid-section {
-            padding: 16px;
-            border-bottom: 1px solid #404040;
-        }
+    .grid-section {
+        padding: 16px;
+        border-bottom: 1px solid #404040;
+    }
 
-        .sudoku-grid {
-            width: 100%;
-            max-width: 320px;
-            aspect-ratio: 1;
-            border: 2px solid #ffffff;
-            display: grid;
-            grid-template-columns: repeat(9, 1fr);
-            grid-template-rows: repeat(9, 1fr);
-            margin: 0 auto;
-            background: #2d2d2d;
-        }
+    .sudoku-grid {
+        width: 100%;
+        max-width: 320px;
+        aspect-ratio: 1;
+        border: 2px solid #ffffff;
+        display: grid;
+        grid-template-columns: repeat(9, 1fr);
+        grid-template-rows: repeat(9, 1fr);
+        margin: 0 auto;
+        background: #2d2d2d;
+    }
 
-        .cell {
-            border: 0.5px solid #666666;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 16px;
-            font-weight: bold;
-            position: relative;
-            background: #2d2d2d;
-            color: #ffffff;
-        }
+    .cell {
+        border: 0.5px solid #666666;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: bold;
+        position: relative;
+        background: #2d2d2d;
+        color: #ffffff;
+    }
 
-        .cell:nth-child(3n):not(:nth-child(9n)) { border-right: 1px solid #ffffff; }
-        .cell:nth-child(n+19):nth-child(-n+27), .cell:nth-child(n+46):nth-child(-n+54) { border-bottom: 1px solid #ffffff; }
+    .cell:nth-child(3n):not(:nth-child(9n)) { border-right: 1px solid #ffffff; }
+    .cell:nth-child(n+19):nth-child(-n+27), .cell:nth-child(n+46):nth-child(-n+54) { border-bottom: 1px solid #ffffff; }
 
-        .cell.given { color: #ffffff; background: #2d2d2d; }
-        .cell.filled { color: #90caf9; background: #2d2d2d; }
-        .cell.highlighted { 
-            background: #ffb74d !important; 
-            color: #ffffff;
-            animation: pulse 2s infinite;
-        }
+    .cell.given { color: #ffffff; background: #2d2d2d; }
+    .cell.filled { color: #90caf9; background: #2d2d2d; }
+    .cell.highlighted { 
+        background: #ffb74d !important; 
+        color: #ffffff;
+        animation: pulse 2s infinite;
+    }
 
-        .cell.highlighted-secondary {
-            background: #ff9800 !important;
-            color: #ffffff;
-            opacity: 0.8;
-        }
+    .cell.highlighted-secondary {
+        background: #ff9800 !important;
+        color: #ffffff;
+        opacity: 0.8;
+    }
 
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+    }
 
-        .notes {
-            position: absolute;
-            top: 1px;
-            left: 1px;
-            font-size: 6px;
-            color: #ffffff;
-            line-height: 1;
-        }
+    .notes {
+        position: absolute;
+        top: 1px;
+        left: 1px;
+        font-size: 6px;
+        color: #ffffff;
+        line-height: 1;
+    }
 
-        .analysis-section {
-            flex: 1;
-            padding: 16px;
-            overflow-y: auto;
-        }
+    .analysis-section {
+        flex: 1;
+        padding: 16px;
+        overflow-y: auto;
+    }
 
-        .analysis-section h3 {
-            color: #ffffff;
-            margin-bottom: 16px;
-            font-size: 16px;
-        }
+    .analysis-section h3 {
+        color: #ffffff;
+        margin-bottom: 16px;
+        font-size: 16px;
+    }
 
-        .move-suggestion {
-            background: #4caf50;
-            color: white;
-            padding: 16px;
-            border-radius: 8px;
-            margin-top: 16px;
-            text-align: center;
-        }
+    .move-suggestion {
+        background: #4caf50;
+        color: white;
+        padding: 16px;
+        border-radius: 8px;
+        margin-top: 16px;
+        text-align: center;
+    }
 
-        .move-suggestion h4 { font-size: 16px; margin-bottom: 8px; }
-        .move-suggestion p { font-size: 13px; margin-bottom: 4px; }
+    .move-suggestion h4 { font-size: 16px; margin-bottom: 8px; }
+    .move-suggestion p { font-size: 13px; margin-bottom: 4px; }
 
-        .loading-state, .error-state {
-            text-align: center;
-            padding: 40px 20px;
-        }
+    .loading-state, .error-state {
+        text-align: center;
+        padding: 40px 20px;
+    }
 
-        .loading-state { color: #b0b0b0; }
-        .error-state { color: #f44336; }
+    .loading-state { color: #b0b0b0; }
+    .error-state { color: #f44336; }
 
-        .technique {
-            background: #2d2d2d;
-            border-left: 4px solid #2196f3;
-            padding: 12px;
-            margin-bottom: 12px;
-            border-radius: 5px;
-            border: 1px solid #404040;
-        }
+    .technique {
+        background: #2d2d2d;
+        border-left: 4px solid #2196f3;
+        padding: 12px;
+        margin-bottom: 12px;
+        border-radius: 5px;
+        border: 1px solid #404040;
+    }
 
-        .technique h4 { color: #2196f3; margin-bottom: 8px; font-size: 14px; }
-        .technique p { font-size: 12px; line-height: 1.4; color: #b0b0b0; }
-    </style>
+    .technique h4 { color: #2196f3; margin-bottom: 8px; font-size: 14px; }
+    .technique p { font-size: 12px; line-height: 1.4; color: #b0b0b0; }
+</style>
+```
+
 </head>
 <body>
     <div class="app-container">
@@ -172,19 +175,21 @@
             <button class="sudoku-wiki-button" onclick="copyToClipboardAndOpenSudokuWiki()" title="Copy grid and open SudokuWiki">🧩</button>
         </div>
 
-        <div class="main-content">
-            <div class="grid-section" id="gridSection">
-                <div id="gridDisplay"></div>
-            </div>
-            
-            <div class="analysis-section">
-                <h3>Technique Analysis</h3>
-                <div id="analysisResult">
-                    <div class="loading-state">Loading grid...</div>
-                </div>
+```
+    <div class="main-content">
+        <div class="grid-section" id="gridSection">
+            <div id="gridDisplay"></div>
+        </div>
+        
+        <div class="analysis-section">
+            <h3>Technique Analysis</h3>
+            <div id="analysisResult">
+                <div class="loading-state">Loading grid...</div>
             </div>
         </div>
     </div>
+</div>
+```
 
 <script>
     let currentGrid = null;
@@ -548,6 +553,178 @@
                                     explanation: `Naked pair ${pair.join('/')} found at R${boxCells[i].row+1}C${boxCells[i].col+1} and R${boxCells[j].row+1}C${boxCells[j].col+1} in the 3x3 box.`,
                                     reasoning: `These two cells can only contain ${pair.join(' or ')}, so eliminate ${pair.join(' and ')} from other cells in this box.`
                                 };
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    function findNakedTriples(candidates) {
+        // Helper function to check if three cells form a naked triple
+        function isNakedTriple(cells) {
+            // Get all unique candidates from the three cells
+            const allCandidates = new Set();
+            for (const cell of cells) {
+                for (const candidate of cell.candidates) {
+                    allCandidates.add(candidate);
+                }
+            }
+            
+            // For a naked triple, we need exactly 3 unique candidates across the 3 cells
+            // and each cell must have 2 or 3 candidates (all subsets of the 3 main candidates)
+            if (allCandidates.size !== 3) return false;
+            
+            const tripleValues = Array.from(allCandidates);
+            
+            // Check that each cell's candidates are a subset of the triple
+            for (const cell of cells) {
+                if (cell.candidates.length < 2 || cell.candidates.length > 3) return false;
+                if (!cell.candidates.every(c => tripleValues.includes(c))) return false;
+            }
+            
+            return tripleValues;
+        }
+
+        // Check rows
+        for (let r = 0; r < 9; r++) {
+            const rowCells = [];
+            for (let c = 0; c < 9; c++) {
+                if (currentGrid[r][c] === 0 && candidates[r][c].length >= 2 && candidates[r][c].length <= 3) {
+                    rowCells.push({row: r, col: c, candidates: candidates[r][c]});
+                }
+            }
+            
+            // Check all combinations of 3 cells
+            for (let i = 0; i < rowCells.length - 2; i++) {
+                for (let j = i + 1; j < rowCells.length - 1; j++) {
+                    for (let k = j + 1; k < rowCells.length; k++) {
+                        const threeCells = [rowCells[i], rowCells[j], rowCells[k]];
+                        const tripleValues = isNakedTriple(threeCells);
+                        
+                        if (tripleValues) {
+                            // Check if we can eliminate from user notes in this row
+                            let canEliminate = false;
+                            for (let c = 0; c < 9; c++) {
+                                if (c !== threeCells[0].col && c !== threeCells[1].col && c !== threeCells[2].col && currentGrid[r][c] === 0) {
+                                    const userNotes = notesGrid[r][c] || [];
+                                    const hasAnyTripleCandidate = tripleValues.some(num => userNotes.includes(num));
+                                    if (hasAnyTripleCandidate) {
+                                        canEliminate = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            if (canEliminate) {
+                                return {
+                                    type: 'elimination',
+                                    cells: threeCells.map(cell => ({row: cell.row, col: cell.col})),
+                                    values: tripleValues,
+                                    explanation: `Naked triple ${tripleValues.join('/')} found at ${threeCells.map(c => `R${c.row+1}C${c.col+1}`).join(', ')} in row ${r+1}.`,
+                                    reasoning: `These three cells can only contain ${tripleValues.join(', ')}, so eliminate these digits from other cells in row ${r+1}.`
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check columns
+        for (let c = 0; c < 9; c++) {
+            const colCells = [];
+            for (let r = 0; r < 9; r++) {
+                if (currentGrid[r][c] === 0 && candidates[r][c].length >= 2 && candidates[r][c].length <= 3) {
+                    colCells.push({row: r, col: c, candidates: candidates[r][c]});
+                }
+            }
+            
+            // Check all combinations of 3 cells
+            for (let i = 0; i < colCells.length - 2; i++) {
+                for (let j = i + 1; j < colCells.length - 1; j++) {
+                    for (let k = j + 1; k < colCells.length; k++) {
+                        const threeCells = [colCells[i], colCells[j], colCells[k]];
+                        const tripleValues = isNakedTriple(threeCells);
+                        
+                        if (tripleValues) {
+                            // Check if we can eliminate from user notes in this column
+                            let canEliminate = false;
+                            for (let r = 0; r < 9; r++) {
+                                if (r !== threeCells[0].row && r !== threeCells[1].row && r !== threeCells[2].row && currentGrid[r][c] === 0) {
+                                    const userNotes = notesGrid[r][c] || [];
+                                    const hasAnyTripleCandidate = tripleValues.some(num => userNotes.includes(num));
+                                    if (hasAnyTripleCandidate) {
+                                        canEliminate = true;
+                                        break;
+                                    }
+                                }
+                            }
+                            
+                            if (canEliminate) {
+                                return {
+                                    type: 'elimination',
+                                    cells: threeCells.map(cell => ({row: cell.row, col: cell.col})),
+                                    values: tripleValues,
+                                    explanation: `Naked triple ${tripleValues.join('/')} found at ${threeCells.map(c => `R${c.row+1}C${c.col+1}`).join(', ')} in column ${c+1}.`,
+                                    reasoning: `These three cells can only contain ${tripleValues.join(', ')}, so eliminate these digits from other cells in column ${c+1}.`
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check 3x3 boxes
+        for (let boxR = 0; boxR < 3; boxR++) {
+            for (let boxC = 0; boxC < 3; boxC++) {
+                const boxCells = [];
+                
+                for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
+                    for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
+                        if (currentGrid[r][c] === 0 && candidates[r][c].length >= 2 && candidates[r][c].length <= 3) {
+                            boxCells.push({row: r, col: c, candidates: candidates[r][c]});
+                        }
+                    }
+                }
+                
+                // Check all combinations of 3 cells
+                for (let i = 0; i < boxCells.length - 2; i++) {
+                    for (let j = i + 1; j < boxCells.length - 1; j++) {
+                        for (let k = j + 1; k < boxCells.length; k++) {
+                            const threeCells = [boxCells[i], boxCells[j], boxCells[k]];
+                            const tripleValues = isNakedTriple(threeCells);
+                            
+                            if (tripleValues) {
+                                // Check if we can eliminate from user notes in this box
+                                let canEliminate = false;
+                                for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
+                                    for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
+                                        if (!threeCells.some(cell => cell.row === r && cell.col === c) && currentGrid[r][c] === 0) {
+                                            const userNotes = notesGrid[r][c] || [];
+                                            const hasAnyTripleCandidate = tripleValues.some(num => userNotes.includes(num));
+                                            if (hasAnyTripleCandidate) {
+                                                canEliminate = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if (canEliminate) break;
+                                }
+                                
+                                if (canEliminate) {
+                                    return {
+                                        type: 'elimination',
+                                        cells: threeCells.map(cell => ({row: cell.row, col: cell.col})),
+                                        values: tripleValues,
+                                        explanation: `Naked triple ${tripleValues.join('/')} found at ${threeCells.map(c => `R${c.row+1}C${c.col+1}`).join(', ')} in box ${boxR*3 + boxC + 1}.`,
+                                        reasoning: `These three cells can only contain ${tripleValues.join(', ')}, so eliminate these digits from other cells in this box.`
+                                    };
+                                }
                             }
                         }
                     }
