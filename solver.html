@@ -9,163 +9,160 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
-```
-    html, body {
-        font-family: 'Courier New', monospace;
-        background: #121212;
-        color: #ffffff;
-        min-height: 100vh;
-    }
+        html, body {
+            font-family: 'Courier New', monospace;
+            background: #121212;
+            color: #ffffff;
+            min-height: 100vh;
+        }
 
-    .app-container {
-        max-width: 480px;
-        margin: 0 auto;
-        background: #1e1e1e;
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-    }
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            background: #1e1e1e;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
 
-    .app-bar {
-        background: #2d2d2d;
-        padding: 12px 16px;
-        border-bottom: 1px solid #404040;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
+        .app-bar {
+            background: #2d2d2d;
+            padding: 12px 16px;
+            border-bottom: 1px solid #404040;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-    .app-bar h1 { font-size: 18px; color: #ffffff; }
+        .app-bar h1 { font-size: 18px; color: #ffffff; }
 
-    .back-button, .sudoku-wiki-button {
-        background: none;
-        border: none;
-        color: #ffffff;
-        font-size: 18px;
-        cursor: pointer;
-        padding: 8px;
-        opacity: 0.8;
-        border-radius: 4px;
-    }
+        .back-button, .sudoku-wiki-button {
+            background: none;
+            border: none;
+            color: #ffffff;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 8px;
+            opacity: 0.8;
+            border-radius: 4px;
+        }
 
-    .back-button:hover, .sudoku-wiki-button:hover {
-        opacity: 1;
-        background: rgba(255,255,255,0.1);
-    }
+        .back-button:hover, .sudoku-wiki-button:hover {
+            opacity: 1;
+            background: rgba(255,255,255,0.1);
+        }
 
-    .main-content {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        overflow-y: auto;
-    }
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
 
-    .grid-section {
-        padding: 16px;
-        border-bottom: 1px solid #404040;
-    }
+        .grid-section {
+            padding: 16px;
+            border-bottom: 1px solid #404040;
+        }
 
-    .sudoku-grid {
-        width: 100%;
-        max-width: 320px;
-        aspect-ratio: 1;
-        border: 2px solid #ffffff;
-        display: grid;
-        grid-template-columns: repeat(9, 1fr);
-        grid-template-rows: repeat(9, 1fr);
-        margin: 0 auto;
-        background: #2d2d2d;
-    }
+        .sudoku-grid {
+            width: 100%;
+            max-width: 320px;
+            aspect-ratio: 1;
+            border: 2px solid #ffffff;
+            display: grid;
+            grid-template-columns: repeat(9, 1fr);
+            grid-template-rows: repeat(9, 1fr);
+            margin: 0 auto;
+            background: #2d2d2d;
+        }
 
-    .cell {
-        border: 0.5px solid #666666;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 16px;
-        font-weight: bold;
-        position: relative;
-        background: #2d2d2d;
-        color: #ffffff;
-    }
+        .cell {
+            border: 0.5px solid #666666;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            position: relative;
+            background: #2d2d2d;
+            color: #ffffff;
+        }
 
-    .cell:nth-child(3n):not(:nth-child(9n)) { border-right: 1px solid #ffffff; }
-    .cell:nth-child(n+19):nth-child(-n+27), .cell:nth-child(n+46):nth-child(-n+54) { border-bottom: 1px solid #ffffff; }
+        .cell:nth-child(3n):not(:nth-child(9n)) { border-right: 1px solid #ffffff; }
+        .cell:nth-child(n+19):nth-child(-n+27), .cell:nth-child(n+46):nth-child(-n+54) { border-bottom: 1px solid #ffffff; }
 
-    .cell.given { color: #ffffff; background: #2d2d2d; }
-    .cell.filled { color: #90caf9; background: #2d2d2d; }
-    .cell.highlighted { 
-        background: #ffb74d !important; 
-        color: #ffffff;
-        animation: pulse 2s infinite;
-    }
+        .cell.given { color: #ffffff; background: #2d2d2d; }
+        .cell.filled { color: #90caf9; background: #2d2d2d; }
+        .cell.highlighted { 
+            background: #ffb74d !important; 
+            color: #ffffff;
+            animation: pulse 2s infinite;
+        }
 
-    .cell.highlighted-secondary {
-        background: #ff9800 !important;
-        color: #ffffff;
-        opacity: 0.8;
-    }
+        .cell.highlighted-secondary {
+            background: #ff9800 !important;
+            color: #ffffff;
+            opacity: 0.8;
+        }
 
-    @keyframes pulse {
-        0%, 100% { transform: scale(1); }
-        50% { transform: scale(1.05); }
-    }
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
 
-    .notes {
-        position: absolute;
-        top: 1px;
-        left: 1px;
-        font-size: 6px;
-        color: #ffffff;
-        line-height: 1;
-    }
+        .notes {
+            position: absolute;
+            top: 1px;
+            left: 1px;
+            font-size: 6px;
+            color: #ffffff;
+            line-height: 1;
+        }
 
-    .analysis-section {
-        flex: 1;
-        padding: 16px;
-        overflow-y: auto;
-    }
+        .analysis-section {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+        }
 
-    .analysis-section h3 {
-        color: #ffffff;
-        margin-bottom: 16px;
-        font-size: 16px;
-    }
+        .analysis-section h3 {
+            color: #ffffff;
+            margin-bottom: 16px;
+            font-size: 16px;
+        }
 
-    .move-suggestion {
-        background: #4caf50;
-        color: white;
-        padding: 16px;
-        border-radius: 8px;
-        margin-top: 16px;
-        text-align: center;
-    }
+        .move-suggestion {
+            background: #4caf50;
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            margin-top: 16px;
+            text-align: center;
+        }
 
-    .move-suggestion h4 { font-size: 16px; margin-bottom: 8px; }
-    .move-suggestion p { font-size: 13px; margin-bottom: 4px; }
+        .move-suggestion h4 { font-size: 16px; margin-bottom: 8px; }
+        .move-suggestion p { font-size: 13px; margin-bottom: 4px; }
 
-    .loading-state, .error-state {
-        text-align: center;
-        padding: 40px 20px;
-    }
+        .loading-state, .error-state {
+            text-align: center;
+            padding: 40px 20px;
+        }
 
-    .loading-state { color: #b0b0b0; }
-    .error-state { color: #f44336; }
+        .loading-state { color: #b0b0b0; }
+        .error-state { color: #f44336; }
 
-    .technique {
-        background: #2d2d2d;
-        border-left: 4px solid #2196f3;
-        padding: 12px;
-        margin-bottom: 12px;
-        border-radius: 5px;
-        border: 1px solid #404040;
-    }
+        .technique {
+            background: #2d2d2d;
+            border-left: 4px solid #2196f3;
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 5px;
+            border: 1px solid #404040;
+        }
 
-    .technique h4 { color: #2196f3; margin-bottom: 8px; font-size: 14px; }
-    .technique p { font-size: 12px; line-height: 1.4; color: #b0b0b0; }
-</style>
-```
-
+        .technique h4 { color: #2196f3; margin-bottom: 8px; font-size: 14px; }
+        .technique p { font-size: 12px; line-height: 1.4; color: #b0b0b0; }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -175,20 +172,19 @@
             <button class="sudoku-wiki-button" onclick="copyToClipboardAndOpenSudokuWiki()" title="Copy grid and open SudokuWiki">🧩</button>
         </div>
 
-```
-    <div class="main-content">
-        <div class="grid-section" id="gridSection">
-            <div id="gridDisplay"></div>
-        </div>
-        
-        <div class="analysis-section">
-            <h3>Technique Analysis</h3>
-            <div id="analysisResult">
-                <div class="loading-state">Loading grid...</div>
+        <div class="main-content">
+            <div class="grid-section" id="gridSection">
+                <div id="gridDisplay"></div>
+            </div>
+            
+            <div class="analysis-section">
+                <h3>Technique Analysis</h3>
+                <div id="analysisResult">
+                    <div class="loading-state">Loading grid...</div>
+                </div>
             </div>
         </div>
     </div>
-</div>
 
 <script>
     let currentGrid = null;
@@ -222,36 +218,57 @@
     }
 
     function formatGridForSudokuWiki() {
-        const formattedCells = [];
+        // Use Sudoku String Definitions 2.0 format
+        let result = 'S9B'; // Header: Sudoku 9x9 version B
         
         for (let r = 0; r < 9; r++) {
             for (let c = 0; c < 9; c++) {
+                let cellValue = 0;
+                
                 if (currentGrid[r][c] !== 0) {
-                    formattedCells.push(currentGrid[r][c].toString());
+                    // Check if this is a given (clue) or a solved cell
+                    const isGiven = originalGrid && originalGrid[r][c] !== 0;
+                    if (isGiven) {
+                        // Clue: store as 1-9
+                        cellValue = currentGrid[r][c];
+                    } else {
+                        // Solved cell: store as 10-18 (value + 9)
+                        cellValue = currentGrid[r][c] + 9;
+                    }
                 } else {
+                    // Empty cell with candidates
                     const userNotes = notesGrid[r][c] || [];
                     if (userNotes.length > 0) {
-                        let candidateString = '';
-                        for (let digit = 1; digit <= 9; digit++) {
-                            candidateString += userNotes.includes(digit) ? digit.toString() : '0';
+                        // Convert candidates to bit pattern
+                        let candidateBits = 0;
+                        for (const digit of userNotes) {
+                            candidateBits |= (1 << (digit - 1)); // bit position for digit 1-9
                         }
-                        candidateString += '0';
-                        formattedCells.push(candidateString);
+                        // Candidates: store as bit pattern + 18
+                        cellValue = candidateBits + 18;
                     } else {
-                        formattedCells.push('0');
+                        // Empty cell with no candidates: store as 0
+                        cellValue = 0;
                     }
                 }
+                
+                // Convert to base 36 and pad to 2 characters
+                let cellStr = cellValue.toString(36);
+                if (cellStr.length < 2) {
+                    cellStr = '0' + cellStr;
+                }
+                result += cellStr;
             }
         }
         
-        return formattedCells.join(' ');
+        return result;
     }
 
     function copyToClipboardAndOpenSudokuWiki() {
         const gridString = formatGridForSudokuWiki();
         
         navigator.clipboard.writeText(gridString).then(() => {
-            showTemporaryMessage('Grid copied! Paste in SudokuWiki');
+            showTemporaryMessage('Grid copied in SudokuWiki 2.0 format! Paste in SudokuWiki');
             setTimeout(() => {
                 window.open('https://www.sudokuwiki.org/sudoku.htm', '_blank');
             }, 1000);
@@ -734,7 +751,11 @@
                     
                     <div style="margin-top: 16px; padding: 12px; background: #2d2d2d; border-radius: 8px; border: 1px solid #4caf50;">
                         <h5 style="color: #4caf50; margin-bottom: 8px;">💡 Use SudokuWiki</h5>
-                        <p style="margin-bottom: 12px;">Click 🧩 at the top right to open SudokuWiki with your grid.</p>
+                        <p style="margin-bottom: 12px;">Click 🧩 at the top right to copy your grid in the new SudokuWiki 2.0 format and open SudokuWiki.</p>
+                        <div style="font-family: monospace; font-size: 10px; background: #1e1e1e; padding: 8px; border-radius: 4px; word-break: break-all; color: #90caf9;">
+                            ${gridForWiki}
+                        </div>
+                        <p style="margin-top: 8px; font-size: 11px; color: #b0b0b0;">This format preserves your progress including solved cells and notes.</p>
                     </div>
                 </div>
             `;
@@ -755,7 +776,6 @@
         }, 100);
     });
 </script>
-```
 
 </body>
 </html>
