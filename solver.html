@@ -444,21 +444,36 @@
         for (let r = 0; r < 9; r++) {
             for (let c = 0; c < 9; c++) {
                 if (currentGrid[r][c] === 0) {
-                    const possibleNumbers = [];
-                    for (let num = 1; num <= 9; num++) {
-                        if (isValidPlacement(r, c, num)) {
-                            possibleNumbers.push(num);
-                        }
-                    }
-                    
-                    if (possibleNumbers.length === 1) {
+                    // First check user notes
+                    const userNotes = notesGrid[r][c] || [];
+                    if (userNotes.length === 1) {
                         return {
                             row: r,
                             col: c,
-                            value: possibleNumbers[0],
-                            explanation: `Cell R${r+1}C${c+1} can only contain digit ${possibleNumbers[0]}.`,
-                            reasoning: `All other digits already appear in its row, column, or 3x3 box.`
+                            value: userNotes[0],
+                            explanation: `Cell R${r+1}C${c+1} has only one candidate: ${userNotes[0]}.`,
+                            reasoning: `Based on your notes, this cell can only contain ${userNotes[0]}.`
                         };
+                    }
+                    
+                    // Fallback to automatic calculation if no user notes or multiple notes
+                    if (userNotes.length === 0) {
+                        const possibleNumbers = [];
+                        for (let num = 1; num <= 9; num++) {
+                            if (isValidPlacement(r, c, num)) {
+                                possibleNumbers.push(num);
+                            }
+                        }
+                        
+                        if (possibleNumbers.length === 1) {
+                            return {
+                                row: r,
+                                col: c,
+                                value: possibleNumbers[0],
+                                explanation: `Cell R${r+1}C${c+1} can only contain digit ${possibleNumbers[0]}.`,
+                                reasoning: `All other digits already appear in its row, column, or 3x3 box.`
+                            };
+                        }
                     }
                 }
             }
@@ -467,6 +482,25 @@
     }
 
     function findHiddenSingle() {
+        // Function to get candidates for a cell (user notes first, then automatic calculation)
+        function getCandidates(row, col) {
+            if (currentGrid[row][col] !== 0) return [];
+            
+            const userNotes = notesGrid[row][col] || [];
+            if (userNotes.length > 0) {
+                return userNotes;
+            }
+            
+            // Fallback to automatic calculation
+            const candidates = [];
+            for (let num = 1; num <= 9; num++) {
+                if (isValidPlacement(row, col, num)) {
+                    candidates.push(num);
+                }
+            }
+            return candidates;
+        }
+
         // Check 3x3 boxes first
         for (let boxR = 0; boxR < 3; boxR++) {
             for (let boxC = 0; boxC < 3; boxC++) {
@@ -480,7 +514,8 @@
                                 digitFound = true;
                                 break;
                             }
-                            if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
+                            const candidates = getCandidates(r, c);
+                            if (candidates.includes(digit)) {
                                 possibleCells.push({r, c});
                             }
                         }
@@ -507,7 +542,8 @@
                 
                 const possibleCols = [];
                 for (let c = 0; c < 9; c++) {
-                    if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
+                    const candidates = getCandidates(r, c);
+                    if (candidates.includes(digit)) {
                         possibleCols.push(c);
                     }
                 }
@@ -531,7 +567,8 @@
                 
                 const possibleRows = [];
                 for (let r = 0; r < 9; r++) {
-                    if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
+                    const candidates = getCandidates(r, c);
+                    if (candidates.includes(digit)) {
                         possibleRows.push(r);
                     }
                 }
