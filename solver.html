@@ -63,16 +63,14 @@
         border-bottom: 1px solid #404040;
     }
 
-    /* --- MODIFICATIONS CSS POUR L'ALIGNEMENT --- */
-    .grid-container-with-coords {
+    /* --- MODIFICATIONS CSS POUR PLACER LES COORDONNÉES À L'EXTÉRIEUR --- */
+    .grid-wrapper {
         display: grid;
-        /* Grille 2x2: coin vide / labels haut, labels gauche / grille sudoku */
-        grid-template-columns: 24px 1fr; /* Largeur fixe pour labels R#, flexible pour la grille */
-        grid-template-rows: 24px 1fr;    /* Hauteur fixe pour labels C#, flexible pour la grille */
-        border: 2px solid #ffffff; /* La bordure principale est maintenant sur le conteneur */
-        max-width: 320px;
+        grid-template-columns: 24px 1fr; /* Colonne pour labels R#, colonne pour la grille */
+        grid-template-rows: 24px 1fr;    /* Ligne pour labels C#, ligne pour la grille */
+        gap: 5px; /* Espace entre les labels et la grille */
+        max-width: 350px; /* Légèrement plus grand pour accommoder l'espace */
         margin: 0 auto;
-        background-color: #2d2d2d; /* Couleur de fond pour les espaces */
     }
 
     .coord-labels-row {
@@ -106,7 +104,8 @@
         display: grid;
         grid-template-columns: repeat(9, 1fr);
         grid-template-rows: repeat(9, 1fr);
-        /* La bordure extérieure a été retirée pour un alignement parfait */
+        border: 2px solid #ffffff; /* La bordure est de retour sur la grille elle-même */
+        background: #2d2d2d;
     }
     /* --- FIN DES MODIFICATIONS CSS --- */
 
@@ -394,7 +393,7 @@
     }
 
     function displayGrid() {
-        // --- NOUVELLE LOGIQUE DE GÉNÉRATION (ALIGNEMENT CORRIGÉ) ---
+        // --- MODIFICATION DE LA LOGIQUE D'AFFICHAGE ---
 
         // Génère les labels pour les colonnes (C1-C9)
         let topLabelsHtml = '<div class="coord-labels-row">';
@@ -410,7 +409,7 @@
         }
         leftLabelsHtml += '</div>';
 
-        // --- LOGIQUE ORIGINALE POUR LA GRILLE ---
+        // Génère la grille de Sudoku
         let gridHtml = '<div class="sudoku-grid">';
         
         for (let r = 0; r < 9; r++) {
@@ -433,18 +432,16 @@
         }
         gridHtml += '</div>';
 
-        // --- ASSEMBLAGE FINAL DANS LE NOUVEAU CONTENEUR ---
+        // --- ASSEMBLAGE FINAL DANS LE NOUVEAU CONTENEUR 'grid-wrapper' ---
         const finalHtml = `
-            <div class="grid-container-with-coords">
-                <div style="grid-area: 1 / 1 / 2 / 2;"></div> ${topLabelsHtml}
+            <div class="grid-wrapper">
+                ${topLabelsHtml}
                 ${leftLabelsHtml}
                 ${gridHtml}
             </div>
         `;
 
         document.getElementById('gridSection').innerHTML = finalHtml;
-        // Le padding est géré par le conteneur parent, on réinitialise celui-ci
-        document.getElementById('gridSection').style.padding = '16px';
     }
 
     function isValidPlacement(row, col, num) {
