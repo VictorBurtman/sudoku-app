@@ -447,33 +447,36 @@
                     // First check user notes
                     const userNotes = notesGrid[r][c] || [];
                     if (userNotes.length === 1) {
-                        return {
-                            row: r,
-                            col: c,
-                            value: userNotes[0],
-                            explanation: `Cell R${r+1}C${c+1} has only one candidate: ${userNotes[0]}.`,
-                            reasoning: `Based on your notes, this cell can only contain ${userNotes[0]}.`
-                        };
-                    }
-                    
-                    // Fallback to automatic calculation if no user notes or multiple notes
-                    if (userNotes.length === 0) {
-                        const possibleNumbers = [];
-                        for (let num = 1; num <= 9; num++) {
-                            if (isValidPlacement(r, c, num)) {
-                                possibleNumbers.push(num);
-                            }
-                        }
-                        
-                        if (possibleNumbers.length === 1) {
+                        const candidate = userNotes[0];
+                        // VALIDATE: Ensure the user's candidate is actually valid
+                        if (isValidPlacement(r, c, candidate)) {
                             return {
                                 row: r,
                                 col: c,
-                                value: possibleNumbers[0],
-                                explanation: `Cell R${r+1}C${c+1} can only contain digit ${possibleNumbers[0]}.`,
-                                reasoning: `All other digits already appear in its row, column, or 3x3 box.`
+                                value: candidate,
+                                explanation: `Cell R${r+1}C${c+1} has only one candidate: ${candidate}.`,
+                                reasoning: `Based on your notes, this cell can only contain ${candidate}.`
                             };
                         }
+                        // If user's note is invalid, skip to automatic calculation
+                    }
+                    
+                    // Automatic calculation (either no user notes, multiple notes, or invalid single note)
+                    const possibleNumbers = [];
+                    for (let num = 1; num <= 9; num++) {
+                        if (isValidPlacement(r, c, num)) {
+                            possibleNumbers.push(num);
+                        }
+                    }
+                    
+                    if (possibleNumbers.length === 1) {
+                        return {
+                            row: r,
+                            col: c,
+                            value: possibleNumbers[0],
+                            explanation: `Cell R${r+1}C${c+1} can only contain digit ${possibleNumbers[0]}.`,
+                            reasoning: `All other digits already appear in its row, column, or 3x3 box.`
+                        };
                     }
                 }
             }
