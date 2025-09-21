@@ -87,14 +87,6 @@
         }
         return false;
     }
-    
-    function loadDemoData() {
-        console.log("Loading demo data.");
-        const testData = {"currentGrid":[[0,0,2,8,0,0,0,0,0],[0,0,0,0,0,0,0,7,0],[4,0,0,0,9,0,0,0,0],[0,0,0,0,0,0,0,0,1],[0,0,0,6,0,5,0,0,0],[7,0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,6],[0,4,0,0,0,0,0,0,0],[0,0,0,0,0,2,5,0,0]],"notesGrid":[[[1,5],[1,6],[],[],[1,3,4,5],[1,3,4],[1,3,4,9],[1,3,9],[3,4,5,9]],[[1,5,6],[1,3,5,6],[1,5,6],[1,3,4],[2,3,4,5],[1,3,4],[1,2,3,8,9],[],[2,3,5,8,9]],[[],[1,3,5,6],[1,5,6],[1,3,4],[],[1,3,4],[1,2,3,8,9],[2,3,5,8,9],[2,3,5,8,9]],[[3,5,6,8,9],[3,5,6],[3,5,6,8],[2,3,4,7],[2,3,4,7],[4,7],[2,3,4,7,8,9],[2,3,5,8,9],[]],[[1,2,3,8,9],[1,2,3],[1,3,8],[],[2,4,7],[],[2,3,4,7,8,9],[2,3,5,8,9],[2,3,4,5,7,8,9]],[[],[2,3],[3,8],[1,2,4,7,9],[2,4,7],[1,4,7,9],[2,3,4,7,8,9],[2,3,5,8,9],[2,3,4,5,7,8,9]],[[2,3,8,9],[2,3,7,8,9],[3,7,8,9],[2,3,4,7,9],[],[3,4,7,8,9],[2,3,4,7,8],[1,2,3,4,8,9],[]],[[],[],[1,3,7,8],[1,3,7,9],[3,6,7,8],[1,3,6,7,8,9],[1,2,3],[1,3,4,8,9],[2,3,4,7,8]],[[1,3,8,9],[1,3,6,7,8,9],[1,3,6,7,8,9],[1,3,4,7,9],[3,4,6,7,8],[],[],[1,3,4,8,9],[2,3,4,7,8]]]};
-        currentGrid = testData.currentGrid;
-        originalGrid = testData.originalGrid || JSON.parse(JSON.stringify(testData.currentGrid));
-        notesGrid = testData.notesGrid;
-    }
 
     function analyzeGrid() {
         if (!currentGrid || !notesGrid) { showError('Analysis called without grid data.'); return; }
@@ -131,50 +123,30 @@
         document.getElementById('gridSection').innerHTML = finalHtml;
     }
     
-    // --- SECTION DES TECHNIQUES DE DÉTECTION (COMPLÈTE) ---
-    function isValidPlacement(row, col, num) {
-        for (let i = 0; i < 9; i++) if (currentGrid[row][i] === num || currentGrid[i][col] === num) return false;
-        const boxRow = Math.floor(row / 3) * 3, boxCol = Math.floor(col / 3) * 3;
-        for (let r = boxRow; r < boxRow + 3; r++) for (let c = boxCol; c < boxCol + 3; c++) if (currentGrid[r][c] === num) return false;
-        return true;
-    }
-
-    function findLastPossibleNumber() {
-        for (let r = 0; r < 9; r++) {
-            for (let c = 0; c < 9; c++) {
-                if (currentGrid[r][c] === 0) {
-                    const possible = [];
-                    for (let n = 1; n <= 9; n++) if (isValidPlacement(r, c, n)) possible.push(n);
-                    if (possible.length === 1) return { row: r, col: c, value: possible[0], explanation: `R${r+1}C${c+1} is the only cell that can be ${possible[0]}.` };
-                }
-            }
-        }
-        return null;
-    }
-
     function findXWing() {
         for (let digit = 1; digit <= 9; digit++) {
-            const colsWithTwo = [];
-            for (let c = 0; c < 9; c++) {
-                const rows = [];
-                for (let r = 0; r < 9; r++) if (currentGrid[r][c] === 0 && (notesGrid[r][c] || []).includes(digit)) rows.push(r);
-                if (rows.length === 2) colsWithTwo.push({ col: c, rows: rows });
+            // Row-based X-Wing
+            const rowsWithTwo = [];
+            for (let r = 0; r < 9; r++) {
+                const cols = [];
+                for (let c = 0; c < 9; c++) if (currentGrid[r][c] === 0 && (notesGrid[r][c] || []).includes(digit)) cols.push(c);
+                if (cols.length === 2) rowsWithTwo.push({ row: r, cols: cols });
             }
-            if (colsWithTwo.length >= 2) {
-                for (let i = 0; i < colsWithTwo.length; i++) {
-                    for (let j = i + 1; j < colsWithTwo.length; j++) {
-                        const col1 = colsWithTwo[i], col2 = colsWithTwo[j];
-                        if (col1.rows.toString() === col2.rows.toString()) {
-                            const [r1, r2] = col1.rows, [c1, c2] = [col1.col, col2.col];
+            if (rowsWithTwo.length >= 2) {
+                for (let i = 0; i < rowsWithTwo.length; i++) {
+                    for (let j = i + 1; j < rowsWithTwo.length; j++) {
+                        const row1 = rowsWithTwo[i], row2 = rowsWithTwo[j];
+                        if (row1.cols.toString() === row2.cols.toString()) {
+                            const [c1, c2] = row1.cols, [r1, r2] = [row1.row, row2.row];
                             let elims = [];
-                            for (const r of [r1, r2]) {
-                                for (let c = 0; c < 9; c++) {
-                                    if (c !== c1 && c !== c2 && currentGrid[r][c] === 0 && (notesGrid[r][c] || []).includes(digit)) {
+                            for (const c of [c1, c2]) {
+                                for (let r = 0; r < 9; r++) {
+                                    if (r !== r1 && r !== r2 && currentGrid[r][c] === 0 && (notesGrid[r][c] || []).includes(digit)) {
                                         elims.push({ r, c, val: digit });
                                     }
                                 }
                             }
-                            if (elims.length > 0) return { cells: [{r: r1, c: c1}, {r: r1, c: c2}, {r: r2, c: c1}, {r: r2, c: c2}], eliminations: elims, explanation: `X-Wing on digit ${digit} in columns ${c1 + 1} & ${c2 + 1}.`, reasoning: `This removes ${digit} from other cells in rows ${r1 + 1} & ${r2 + 1}.` };
+                            if (elims.length > 0) return { cells: [{r: r1, c: c1}, {r: r1, c: c2}, {r: r2, c: c1}, {r: r2, c: c2}], eliminations: elims, explanation: `Row-based X-Wing on digit ${digit} in rows ${r1 + 1} & ${r2 + 1}.`, reasoning: `This removes ${digit} from other cells in columns ${c1 + 1} & ${c2 + 1}.` };
                         }
                     }
                 }
@@ -184,12 +156,8 @@
     }
 
     function performAnalysis() {
-        const lastNumber = findLastPossibleNumber();
-        if (lastNumber) return displayAnalysis("Last Possible Digit", lastNumber);
-
         const xWing = findXWing();
         if (xWing) return displayAnalysis("X-Wing", xWing);
-        
         displayAnalysis(null, null);
     }
 
@@ -202,11 +170,7 @@
                     const targetCell = document.querySelector(`[data-row="${cellInfo.r}"][data-col="${cellInfo.c}"]`);
                     if (targetCell) targetCell.classList.add('highlighted');
                 });
-            } else if (suggestion.row !== undefined) {
-                 const targetCell = document.querySelector(`[data-row="${suggestion.row}"][data-col="${suggestion.col}"]`);
-                 if (targetCell) targetCell.classList.add('highlighted');
             }
-
             let eliminationsText = [];
             if (suggestion.eliminations && suggestion.eliminations.length > 0) {
                 suggestion.eliminations.forEach(elim => {
@@ -223,7 +187,6 @@
                     <h4>🎯 ${foundTechnique}</h4>
                     <p>${suggestion.explanation || ''}</p>
                     <p><em>${suggestion.reasoning || ''}</em></p>
-                    ${suggestion.value ? `<p><strong>➤ Place digit ${suggestion.value} at R${suggestion.row + 1}C${suggestion.col + 1}</strong></p>` : ''}
                     ${eliminationsText.length > 0 ? `<p><strong>❌ Remove:${eliminationsText.join(',')}</strong></p>` : ''}
                 </div>
             `;
@@ -232,13 +195,19 @@
         }
         document.getElementById('analysisResult').innerHTML = html;
     }
-
+    
+    // --- LOGIQUE DE DÉMARRAGE FINALE ET PROPRE ---
     document.addEventListener('DOMContentLoaded', function() {
-        showLoading('Loading grid...');
+        showLoading('Checking for grid data...');
         setTimeout(() => {
             const loaded = loadDataFromURL();
-            if (!loaded) loadDemoData();
-            analyzeGrid();
+            if (loaded) {
+                // Si les données sont chargées depuis l'URL, on analyse
+                analyzeGrid();
+            } else {
+                // Sinon, on affiche un message d'attente
+                showError('No grid found. Please open this page from your Sudoku application.');
+            }
         }, 100);
     });
 </script>
