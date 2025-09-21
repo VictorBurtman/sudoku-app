@@ -61,7 +61,6 @@
     .grid-section {
         padding: 16px;
         border-bottom: 1px solid #404040;
-        /* --- MODIFICATION CSS POUR LE CENTRAGE --- */
         display: flex;
         justify-content: center;
     }
@@ -71,7 +70,6 @@
         grid-template-columns: 24px 1fr;
         grid-template-rows: 24px 1fr;
         gap: 5px;
-        /* Le margin: auto n'est plus nécessaire grâce au flex du parent */
     }
 
     .coord-labels-row {
@@ -101,7 +99,7 @@
     
     .sudoku-grid {
         grid-area: 2 / 2 / 3 / 3;
-        width: 300px; /* Taille fixe pour la prévisibilité */
+        width: 300px;
         height: 300px;
         aspect-ratio: 1;
         display: grid;
@@ -253,31 +251,91 @@
     }
 
     function formatGridForSudokuWiki() {
-        // Implementation...
-        return "";
+        let result = 'S9B';
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                let cellValue = 0;
+                if (currentGrid[r][c] !== 0) {
+                    const isGiven = originalGrid && originalGrid[r][c] !== 0;
+                    cellValue = isGiven ? currentGrid[r][c] : currentGrid[r][c] + 9;
+                } else {
+                    const userNotes = notesGrid[r][c] || [];
+                    if (userNotes.length > 0) {
+                        let candidateBits = 0;
+                        for (const digit of userNotes) {
+                            candidateBits |= (1 << (digit - 1));
+                        }
+                        cellValue = candidateBits + 18;
+                    }
+                }
+                let cellStr = cellValue.toString(36);
+                if (cellStr.length < 2) cellStr = '0' + cellStr;
+                result += cellStr;
+            }
+        }
+        return result;
     }
 
     function copyToClipboardAndOpenSudokuWiki() {
-        // Implementation...
+        const gridString = formatGridForSudokuWiki();
+        navigator.clipboard.writeText(gridString).then(() => {
+            showTemporaryMessage('Grid copied in SudokuWiki 2.0 format! Paste in SudokuWiki');
+            setTimeout(() => {
+                window.open('https://www.sudokuwiki.org/sudoku.htm', '_blank');
+            }, 1000);
+        }).catch(err => {
+            showTemporaryMessage('Manual copy: ' + gridString);
+            window.open('https://www.sudokuwiki.org/sudoku.htm', '_blank');
+        });
     }
 
     function loadDataFromURL() {
-        // Implementation...
-        return true; // Assume success for brevity
+        const urlParams = new URLSearchParams(window.location.search);
+        const encodedData = urlParams.get('data');
+        if (encodedData) {
+            try {
+                const data = JSON.parse(decodeURIComponent(encodedData));
+                if (!data.currentGrid || !data.notesGrid) throw new Error("Missing grid data");
+                currentGrid = data.currentGrid;
+                originalGrid = data.originalGrid;
+                notesGrid = data.notesGrid;
+                analyzeGrid();
+                return true;
+            } catch (error) {
+                showError('URL Error: ' + error.message);
+                return false;
+            }
+        }
+        const dataId = urlParams.get('id');
+        if (dataId) {
+            try {
+                const storedData = localStorage.getItem(dataId);
+                if (storedData) {
+                    localStorage.removeItem(dataId);
+                    const data = JSON.parse(storedData);
+                    if (!data.currentGrid || !data.notesGrid) throw new Error("Missing grid data");
+                    currentGrid = data.currentGrid;
+                    originalGrid = data.originalGrid;
+                    notesGrid = data.notesGrid;
+                    analyzeGrid();
+                    return true;
+                } else {
+                    showError('Data expired (ID: ' + dataId + ')');
+                    return false;
+                }
+            } catch (error) {
+                showError('Storage Error: ' + error.message);
+                return false;
+            }
+        }
+        return false;
     }
 
     function analyzeGrid() {
         if (!currentGrid || !notesGrid) {
-            // Test data for demonstration
-            const testData = {"originalGrid":[[0,0,0,0,0,6,0,0,0],[0,0,0,0,0,0,0,0,4],[3,0,9,0,0,0,0,0,0],[0,0,0,0,0,0,0,2,0],[0,0,0,8,0,3,0,0,0],[0,4,0,0,0,0,0,0,0],[0,0,0,0,0,0,7,0,9],[5,0,0,0,0,0,0,0,0],[0,0,0,5,0,0,0,0,0]],"currentGrid":[[0,0,0,0,0,6,0,0,0],[0,0,0,0,0,0,0,0,4],[3,0,9,0,0,0,0,0,0],[0,0,0,0,0,0,0,2,0],[0,0,0,8,0,3,0,0,0],[0,4,0,0,0,0,0,0,0],[0,0,0,0,0,0,7,0,9],[5,0,0,0,0,0,0,0,0],[0,0,0,5,0,0,0,0,0]], "notesGrid": [[{"1":true,"2":true,"4":true,"7":true,"8":true},{"1":true,"2":true,"5":true,"7":true,"8":true},{"1":true,"2":true,"4":true,"5":true,"7":true,"8":true},{"1":true,"2":true,"3":true,"4":true,"7":true,"9":true},{"1":true,"2":true,"4":true,"5":true,"7":true,"9":true},{},{"1":true,"3":true,"5":true,"8":true,"9":true},{"1":true,"3":true,"5":true},{"1":true,"2":true,"3":true,"5":true,"8":true}],[{"1":true,"2":true,"6":true,"7":true,"8":true},{"1":true,"2":true,"5":true,"6":true,"7":true,"8":true},{"1":true,"2":true,"5":true,"6":true,"7":true,"8":true},{"1":true,"2":true,"3":true,"7":true,"9":true},{"1":true,"2":true,"5":true,"7":true,"9":true},{"1":true,"2":true,"5":true,"7":true,"8":true,"9":true},{"1":true,"3":true,"5":true,"6":true,"8":true,"9":true},{"1":true,"3":true,"5":true,"6":true},{}],[{},{"1":true,"2":true,"5":true,"6":true,"7":true,"8":true},{},{"1":true,"2":true,"4":true,"7":true,"9":true},{"1":true,"2":true,"4":true,"5":true,"7":true,"9":true},{"1":true,"2":true,"4":true,"5":true,"7":true,"8":true,"9":true},{"1":true,"5":true,"6":true,"8":true,"9":true},{"1":true,"5":true,"6":true},{"1":true,"2":true,"5":true,"6":true,"8":true}],[{"1":true,"6":true,"8":true},{"1":true,"3":true,"5":true,"6":true,"7":true,"8":true},{"1":true,"3":true,"5":true,"6":true,"7":true,"8":true},{"1":true,"4":true,"6":true,"7":true,"9":true},{"1":true,"4":true,"5":true,"7":true,"9":true},{"1":true,"4":true,"5":true,"7":true,"9":true},{"1":true,"3":true,"5":true,"6":true,"9":true},{},{"1":true,"3":true,"5":true,"6":true}],[{"1":true,"2":true,"6":true,"7":true},{"1":true,"5":true,"6":true,"7":true},{"1":true,"2":true,"5":true,"6":true,"7":true},{},{"1":true,"2":true,"4":true,"5":true,"7":true,"9":true},{},{"1":true,"5":true,"6":true,"9":true},{"1":true,"6":true},{"1":true,"5":true,"6":true}],[{"1":true,"2":true,"6":true,"8":true,"9":true},{},{"1":true,"2":true,"3":true,"6":true,"8":true},{"1":true,"2":true,"6":true,"7":true,"9":true},{"1":true,"2":true,"7":true,"9":true},{"1":true,"2":true,"7":true,"9":true},{"1":true,"3":true,"5":true,"6":true,"9":true},{"1":true,"3":true,"5":true,"6":true},{"1":true,"3":true,"5":true,"6":true,"8":true}],[{"1":true,"2":true,"4":true,"6":true,"8":true},{"1":true,"2":true,"3":true,"6":true,"8":true},{"1":true,"2":true,"3":true,"4":true,"6":true,"8":true},{"1":true,"2":true,"3":true,"4":true,"6":true},{"1":true,"2":true,"4":true,"8":true},{"1":true,"2":true,"4":true,"8":true},{},{"1":true,"3":true,"5":true,"6":true,"8":true},{}],[{},{"1":true,"2":true,"3":true,"6":true,"7":true,"8":true},{"1":true,"2":true,"3":true,"4":true,"6":true,"7":true,"8":true},{"1":true,"2":true,"3":true,"4":true,"6":true,"7":true,"9":true},{"1":true,"2":true,"3":true,"4":true,"7":true,"9":true},{"1":true,"2":true,"4":true,"7":true,"8":true,"9":true},{"1":true,"3":true,"4":true,"8":true,"9":true},{"1":true,"3":true,"6":true,"8":true},{"2":true,"3":true,"6":true,"8":true}],[{"1":true,"2":true,"4":true,"6":true,"7":true,"8":true,"9":true},{"1":true,"2":true,"3":true,"6":true,"7":true,"8":true,"9":true},{"1":true,"2":true,"3":true,"4":true,"6":true,"7":true,"8":true},{"{},{"1":true,"2":true,"3":true,"7":true,"9":true},{"1":true,"2":true,"7":true,"8":true,"9":true},{"1":true,"2":true,"3":true,"8":true,"9":true},{"1":true,"3":true,"6":true,"8":true},{"2":true,"3":true,"6":true,"8":true}]]};
-            // The user's provided grid seems to be solved, this is a better test case for X-Wing from a known source.
-            // Converting notes to the app's format (array of numbers)
-            testData.notesGrid = testData.notesGrid.map(row => row.map(cell => cell ? Object.keys(cell).map(Number) : []));
-            currentGrid = testData.currentGrid;
-            originalGrid = testData.originalGrid;
-            notesGrid = testData.notesGrid;
+            showError('Missing grid data for analysis.');
+            return;
         }
-
         try {
             displayGrid();
             performAnalysis();
@@ -287,81 +345,116 @@
     }
 
     function displayGrid() {
-        // Implementation...
-        let finalHtml = `<div class="grid-wrapper">...</div>`;
+        let topLabelsHtml = '<div class="coord-labels-row">';
+        for (let i = 1; i <= 9; i++) topLabelsHtml += `<div class="coord-label">C${i}</div>`;
+        topLabelsHtml += '</div>';
+
+        let leftLabelsHtml = '<div class="coord-labels-col">';
+        for (let i = 1; i <= 9; i++) leftLabelsHtml += `<div class="coord-label">R${i}</div>`;
+        leftLabelsHtml += '</div>';
+
+        let gridHtml = '<div class="sudoku-grid">';
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                const cell = currentGrid[r][c];
+                const isGiven = originalGrid && originalGrid[r][c] !== 0;
+                const isFilled = cell !== 0;
+                const notes = notesGrid[r][c] || [];
+                const notesText = notes.join('');
+                let cellClass = 'cell';
+                if (isGiven) cellClass += ' given';
+                else if (isFilled) cellClass += ' filled';
+                gridHtml += `<div class="${cellClass}" data-row="${r}" data-col="${c}">
+                    ${cell !== 0 ? cell : ''}
+                    ${cell === 0 && notes.length > 0 ? `<div class="notes">${notesText}</div>` : ''}
+                </div>`;
+            }
+        }
+        gridHtml += '</div>';
+
+        const finalHtml = `<div class="grid-wrapper">${topLabelsHtml}${leftLabelsHtml}${gridHtml}</div>`;
         document.getElementById('gridSection').innerHTML = finalHtml;
     }
 
     function isValidPlacement(row, col, num) {
-        // Implementation...
+        for (let i = 0; i < 9; i++) {
+            if (currentGrid[row][i] === num || currentGrid[i][col] === num) return false;
+        }
+        const boxRow = Math.floor(row / 3) * 3, boxCol = Math.floor(col / 3) * 3;
+        for (let r = boxRow; r < boxRow + 3; r++) {
+            for (let c = boxCol; c < boxCol + 3; c++) {
+                if (currentGrid[r][c] === num) return false;
+            }
+        }
         return true;
     }
-    
-    // ... Toutes les autres fonctions (findLastPossibleNumber, etc.) ...
-    function findLineBoxReduction() {
-        // Implementation...
-        return null;
-    }
 
-    // --- NOUVELLE FONCTION X-WING ---
+    function findLastPossibleNumber() { /* ... implementation ... */ return null; }
+    function findHiddenSingle() { /* ... implementation ... */ return null; }
+    function findNakedPairs() { /* ... implementation ... */ return null; }
+    function findHiddenPairs() { /* ... implementation ... */ return null; }
+    function findNakedTriples() { /* ... implementation ... */ return null; }
+    function findLineBoxReduction() { /* ... implementation ... */ return null; }
+
     function findXWing() {
         for (let digit = 1; digit <= 9; digit++) {
             // Column-based X-Wing
-            const colsWithTwoCandidates = [];
+            const colsWithTwo = [];
             for (let c = 0; c < 9; c++) {
-                const candidateRows = [];
+                const rows = [];
                 for (let r = 0; r < 9; r++) {
-                    if (currentGrid[r][c] === 0 && (notesGrid[r][c] || []).includes(digit)) {
-                        candidateRows.push(r);
-                    }
+                    if (currentGrid[r][c] === 0 && (notesGrid[r][c] || []).includes(digit)) rows.push(r);
                 }
-                if (candidateRows.length === 2) {
-                    colsWithTwoCandidates.push({ col: c, rows: candidateRows });
-                }
+                if (rows.length === 2) colsWithTwo.push({ col: c, rows: rows });
             }
-
-            if (colsWithTwoCandidates.length >= 2) {
-                for (let i = 0; i < colsWithTwoCandidates.length; i++) {
-                    for (let j = i + 1; j < colsWithTwoCandidates.length; j++) {
-                        const col1 = colsWithTwoCandidates[i];
-                        const col2 = colsWithTwoCandidates[j];
-                        
-                        // Check if they share the same two rows
+            if (colsWithTwo.length >= 2) {
+                for (let i = 0; i < colsWithTwo.length; i++) {
+                    for (let j = i + 1; j < colsWithTwo.length; j++) {
+                        const col1 = colsWithTwo[i], col2 = colsWithTwo[j];
                         if (col1.rows[0] === col2.rows[0] && col1.rows[1] === col2.rows[1]) {
-                            const r1 = col1.rows[0];
-                            const r2 = col1.rows[1];
-                            const c1 = col1.col;
-                            const c2 = col2.col;
-                            let eliminations = [];
-
-                            // Check for eliminations in the first row
-                            for (let c = 0; c < 9; c++) {
-                                if (c !== c1 && c !== c2 && currentGrid[r1][c] === 0 && (notesGrid[r1][c] || []).includes(digit)) {
-                                    eliminations.push(`R${r1 + 1}C${c + 1}`);
+                            const [r1, r2] = col1.rows, [c1, c2] = [col1.col, col2.col];
+                            let elims = [];
+                            for (const r of [r1, r2]) {
+                                for (let c = 0; c < 9; c++) {
+                                    if (c !== c1 && c !== c2 && currentGrid[r][c] === 0 && (notesGrid[r][c] || []).includes(digit)) {
+                                        elims.push(`R${r + 1}C${c + 1}`);
+                                    }
                                 }
                             }
-                            // Check for eliminations in the second row
-                            for (let c = 0; c < 9; c++) {
-                                if (c !== c1 && c !== c2 && currentGrid[r2][c] === 0 && (notesGrid[r2][c] || []).includes(digit)) {
-                                    eliminations.push(`R${r2 + 1}C${c + 1}`);
-                                }
-                            }
-
-                            if (eliminations.length > 0) {
-                                return {
-                                    type: 'elimination',
-                                    cells: [{r: r1, c: c1}, {r: r1, c: c2}, {r: r2, c: c1}, {r: r2, c: c2}],
-                                    value: digit,
-                                    explanation: `X-Wing on digit ${digit} in columns ${c1 + 1} & ${c2 + 1} and rows ${r1 + 1} & ${r2 + 1}.`,
-                                    reasoning: `This removes ${digit} as a candidate from other cells in these rows.`,
-                                    eliminations: eliminations
-                                };
-                            }
+                            if (elims.length > 0) return { type: 'elimination', cells: [{r: r1, c: c1}, {r: r1, c: c2}, {r: r2, c: c1}, {r: r2, c: c2}], value: digit, explanation: `X-Wing on digit ${digit} in columns ${c1 + 1} & ${c2 + 1}.`, reasoning: `This removes ${digit} from other cells in rows ${r1 + 1} & ${r2 + 1}.`, eliminations: elims };
                         }
                     }
                 }
             }
-             // Row-based X-Wing can be implemented with similar logic, swapping rows and columns.
+
+            // Row-based X-Wing
+            const rowsWithTwo = [];
+            for (let r = 0; r < 9; r++) {
+                const cols = [];
+                for (let c = 0; c < 9; c++) {
+                    if (currentGrid[r][c] === 0 && (notesGrid[r][c] || []).includes(digit)) cols.push(c);
+                }
+                if (cols.length === 2) rowsWithTwo.push({ row: r, cols: cols });
+            }
+             if (rowsWithTwo.length >= 2) {
+                for (let i = 0; i < rowsWithTwo.length; i++) {
+                    for (let j = i + 1; j < rowsWithTwo.length; j++) {
+                        const row1 = rowsWithTwo[i], row2 = rowsWithTwo[j];
+                        if (row1.cols[0] === row2.cols[0] && row1.cols[1] === row2.cols[1]) {
+                            const [c1, c2] = row1.cols, [r1, r2] = [row1.row, row2.row];
+                             let elims = [];
+                            for (const c of [c1, c2]) {
+                                for (let r = 0; r < 9; r++) {
+                                    if (r !== r1 && r !== r2 && currentGrid[r][c] === 0 && (notesGrid[r][c] || []).includes(digit)) {
+                                        elims.push(`R${r + 1}C${c + 1}`);
+                                    }
+                                }
+                            }
+                            if (elims.length > 0) return { type: 'elimination', cells: [{r: r1, c: c1}, {r: r1, c: c2}, {r: r2, c: c1}, {r: r2, c: c2}], value: digit, explanation: `X-Wing on digit ${digit} in rows ${r1 + 1} & ${r2 + 1}.`, reasoning: `This removes ${digit} from other cells in columns ${c1 + 1} & ${c2 + 1}.`, eliminations: elims };
+                        }
+                    }
+                }
+            }
         }
         return null;
     }
@@ -376,11 +469,14 @@
 
         const hasUserNotes = notesGrid.some(row => row.some(cell => cell && cell.length > 0));
         if (hasUserNotes) {
-            // ... autres techniques
+            const nakedPair = findNakedPairs();
+            if (nakedPair) return displayAnalysis("Naked Pairs", nakedPair);
+            const hiddenPair = findHiddenPairs();
+            if (hiddenPair) return displayAnalysis("Hidden Pairs", hiddenPair);
+            const nakedTriple = findNakedTriples();
+            if (nakedTriple) return displayAnalysis("Naked Triples", nakedTriple);
             const lineBox = findLineBoxReduction();
             if (lineBox) return displayAnalysis("Line/Box Reduction", lineBox);
-
-            // --- INTÉGRATION DE X-WING ---
             const xWing = findXWing();
             if (xWing) return displayAnalysis("X-Wing", xWing);
         }
@@ -389,13 +485,54 @@
     }
 
     function displayAnalysis(foundTechnique, suggestion) {
-        // Implementation... (Ensure it correctly handles the 'cells' array with 4 corners for highlighting)
-        let html = `<div class="move-suggestion">...</div>`;
+        let html = '';
+        if (suggestion) {
+            document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('highlighted', 'highlighted-secondary'));
+            
+            if (suggestion.cells) {
+                 suggestion.cells.forEach((cellInfo, index) => {
+                    const targetCell = document.querySelector(`[data-row="${cellInfo.r}"][data-col="${cellInfo.c}"]`);
+                    if (targetCell) targetCell.classList.add(index % 2 === 0 ? 'highlighted' : 'highlighted-secondary');
+                });
+            } else if (suggestion.row !== undefined) {
+                 const targetCell = document.querySelector(`[data-row="${suggestion.row}"][data-col="${suggestion.col}"]`);
+                 if (targetCell) targetCell.classList.add('highlighted');
+            }
+
+            html = `
+                <div class="move-suggestion">
+                    <h4>🎯 ${foundTechnique}</h4>
+                    <p>${suggestion.explanation}</p>
+                    <p><em>${suggestion.reasoning}</em></p>
+                    ${suggestion.eliminations ? `<p><strong>❌ Eliminations: ${suggestion.eliminations.join(', ')}</strong></p>` : ''}
+                </div>
+            `;
+        } else {
+            const gridForWiki = formatGridForSudokuWiki();
+            html = `
+                <div class="technique">
+                    <h4>🧩 Advanced Techniques Required</h4>
+                    <p>No simple techniques detected. This grid requires expert techniques.</p>
+                    <div style="margin-top: 16px; padding: 12px; background: #2d2d2d; border-radius: 8px; border: 1px solid #4caf50;">
+                        <h5 style="color: #4caf50; margin-bottom: 8px;">💡 Use SudokuWiki</h5>
+                        <p style="margin-bottom: 12px;">Click 🧩 at the top right to copy your grid and open SudokuWiki.</p>
+                        <div style="font-family: monospace; font-size: 10px; background: #1e1e1e; padding: 8px; border-radius: 4px; word-break: break-all; color: #90caf9;">
+                            ${gridForWiki}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
         document.getElementById('analysisResult').innerHTML = html;
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        analyzeGrid(); // Using test data from analyzeGrid function
+        showLoading('Loading data...');
+        setTimeout(() => {
+            if (!loadDataFromURL()) {
+                showError('No grid found. Open this page from the Sudoku app.');
+            }
+        }, 100);
     });
 </script>
 
