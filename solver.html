@@ -67,8 +67,9 @@
 
     .grid-wrapper {
         display: grid;
-        grid-template-columns: 24px 1fr;
-        grid-template-rows: 24px 1fr;
+        /* Colonnes: 24px (labels), taille auto (grille), 24px (marge invisible) */
+        grid-template-columns: 24px auto 24px;
+        grid-template-rows: 24px auto;    /* Lignes: 24px (labels), taille auto (grille) */
         gap: 5px;
     }
 
