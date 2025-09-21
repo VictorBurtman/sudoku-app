@@ -104,6 +104,12 @@
             opacity: 0.8;
         }
 
+        .cell.highlighted-elimination {
+            background: #f44336 !important;
+            color: #ffffff;
+            opacity: 0.7;
+        }
+
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
@@ -167,7 +173,7 @@
     <div class="app-container">
         <div class="app-bar">
             <button class="back-button" onclick="window.close()">←</button>
-            <h1>Sudoku Assistant v2.5</h1>
+            <h1>Sudoku Assistant v2.6</h1>
             <button class="sudoku-wiki-button" onclick="copyToClipboardAndOpenSudokuWiki()" title="Copy grid and open SudokuWiki">🧩</button>
         </div>
 
@@ -948,6 +954,201 @@
         return null;
     }
 
+    // --- NOUVELLES TECHNIQUES AVANCÉES ---
+    
+    function findXWing() {
+        for (let digit = 1; digit <= 9; digit++) {
+            // Row-based X-Wing
+            const rowsWithTwo = [];
+            for (let r = 0; r < 9; r++) {
+                const cols = [];
+                for (let c = 0; c < 9; c++) {
+                    if (currentGrid[r][c] === 0 && (notesGrid[r][c] || []).includes(digit)) {
+                        cols.push(c);
+                    }
+                }
+                if (cols.length === 2) {
+                    rowsWithTwo.push({ row: r, cols: cols });
+                }
+            }
+            
+            if (rowsWithTwo.length >= 2) {
+                for (let i = 0; i < rowsWithTwo.length; i++) {
+                    for (let j = i + 1; j < rowsWithTwo.length; j++) {
+                        const row1 = rowsWithTwo[i], row2 = rowsWithTwo[j];
+                        if (row1.cols.toString() === row2.cols.toString()) {
+                            const [c1, c2] = row1.cols, [r1, r2] = [row1.row, row2.row];
+                            let eliminations = [];
+                            let eliminationDetails = [];
+                            
+                            for (const c of [c1, c2]) {
+                                for (let r = 0; r < 9; r++) {
+                                    if (r !== r1 && r !== r2 && currentGrid[r][c] === 0 && (notesGrid[r][c] || []).includes(digit)) {
+                                        eliminations.push({ r, c, val: digit });
+                                        eliminationDetails.push(`R${r+1}C${c+1}: remove ${digit}`);
+                                    }
+                                }
+                            }
+                            
+                            if (eliminations.length > 0) {
+                                return {
+                                    type: 'elimination',
+                                    cells: [{row: r1, col: c1}, {row: r1, col: c2}, {row: r2, col: c1}, {row: r2, col: c2}],
+                                    values: [digit],
+                                    explanation: `Row-based X-Wing on digit ${digit}.`,
+                                    reasoning: `Rows ${r1 + 1} & ${r2 + 1} form a pattern, removing ${digit} from other cells in columns ${c1 + 1} & ${c2 + 1}.`,
+                                    eliminations: eliminationDetails
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            
+            // Column-based X-Wing
+            const colsWithTwo = [];
+            for (let c = 0; c < 9; c++) {
+                const rows = [];
+                for (let r = 0; r < 9; r++) {
+                    if (currentGrid[r][c] === 0 && (notesGrid[r][c] || []).includes(digit)) {
+                        rows.push(r);
+                    }
+                }
+                if (rows.length === 2) {
+                    colsWithTwo.push({ col: c, rows: rows });
+                }
+            }
+            
+            if (colsWithTwo.length >= 2) {
+                for (let i = 0; i < colsWithTwo.length; i++) {
+                    for (let j = i + 1; j < colsWithTwo.length; j++) {
+                        const col1 = colsWithTwo[i], col2 = colsWithTwo[j];
+                        if (col1.rows.toString() === col2.rows.toString()) {
+                            const [r1, r2] = col1.rows, [c1, c2] = [col1.col, col2.col];
+                            let eliminations = [];
+                            let eliminationDetails = [];
+                            
+                            for (const r of [r1, r2]) {
+                                for (let c = 0; c < 9; c++) {
+                                    if (c !== c1 && c !== c2 && currentGrid[r][c] === 0 && (notesGrid[r][c] || []).includes(digit)) {
+                                        eliminations.push({ r, c, val: digit });
+                                        eliminationDetails.push(`R${r+1}C${c+1}: remove ${digit}`);
+                                    }
+                                }
+                            }
+                            
+                            if (eliminations.length > 0) {
+                                return {
+                                    type: 'elimination',
+                                    cells: [{row: r1, col: c1}, {row: r1, col: c2}, {row: r2, col: c1}, {row: r2, col: c2}],
+                                    values: [digit],
+                                    explanation: `Column-based X-Wing on digit ${digit}.`,
+                                    reasoning: `Columns ${c1 + 1} & ${c2 + 1} form a pattern, removing ${digit} from other cells in rows ${r1 + 1} & ${r2 + 1}.`,
+                                    eliminations: eliminationDetails
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    function findRemotePairs() {
+        const pairCells = [];
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                if (currentGrid[r][c] === 0 && (notesGrid[r][c] || []).length === 2) {
+                    pairCells.push({ r, c, notes: notesGrid[r][c] });
+                }
+            }
+        }
+        
+        const pairs = {};
+        pairCells.forEach(cell => {
+            const key = [...cell.notes].sort().join(',');
+            if (!pairs[key]) pairs[key] = [];
+            pairs[key].push(cell);
+        });
+        
+        const sees = (c1, c2) => {
+            if (c1.r === c2.r && c1.c === c2.c) return false;
+            if (c1.r === c2.r || c1.c === c2.c) return true;
+            return Math.floor(c1.r / 3) === Math.floor(c2.r / 3) && Math.floor(c1.c / 3) === Math.floor(c2.c / 3);
+        };
+        
+        for (const key in pairs) {
+            const group = pairs[key];
+            if (group.length < 3) continue;
+            
+            const adj = new Map(group.map(cell => [`${cell.r},${cell.c}`, []]));
+            for (let i = 0; i < group.length; i++) {
+                for (let j = i + 1; j < group.length; j++) {
+                    if (sees(group[i], group[j])) {
+                        adj.get(`${group[i].r},${group[i].c}`).push(group[j]);
+                        adj.get(`${group[j].r},${group[j].c}`).push(group[i]);
+                    }
+                }
+            }
+            
+            for (let i = 0; i < group.length; i++) {
+                const startNode = group[i];
+                const queue = [[startNode, [startNode]]];
+                const visited = new Set([`${startNode.r},${startNode.c}`]);
+                
+                while (queue.length > 0) {
+                    const [current, path] = queue.shift();
+                    if (path.length >= 2) {
+                        const endNode = current;
+                        const [d1, d2] = key.split(',').map(Number);
+                        let eliminations = [];
+                        let eliminationDetails = [];
+                        const pathCoords = new Set(path.map(p => `${p.r},${p.c}`));
+                        
+                        for (let r = 0; r < 9; r++) {
+                            for (let c = 0; c < 9; c++) {
+                                if (pathCoords.has(`${r},${c}`)) continue;
+                                const checkCell = { r, c };
+                                if (currentGrid[r][c] === 0 && sees(checkCell, startNode) && sees(checkCell, endNode)) {
+                                    const notes = notesGrid[r][c] || [];
+                                    if (notes.includes(d1)) {
+                                        eliminations.push({ r, c, val: d1 });
+                                        eliminationDetails.push(`R${r+1}C${c+1}: remove ${d1}`);
+                                    }
+                                    if (notes.includes(d2)) {
+                                        eliminations.push({ r, c, val: d2 });
+                                        eliminationDetails.push(`R${r+1}C${c+1}: remove ${d2}`);
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if (eliminations.length > 0) {
+                            return {
+                                type: 'elimination',
+                                cells: path.map(p => ({row: p.r, col: p.c})),
+                                values: [d1, d2],
+                                explanation: `Remote Pair chain on {${key}} of length ${path.length}.`,
+                                reasoning: `Any cell seeing both ends of the chain cannot contain ${d1} or ${d2}.`,
+                                eliminations: eliminationDetails
+                            };
+                        }
+                    }
+                    
+                    const neighbors = adj.get(`${current.r},${current.c}`);
+                    for (const neighbor of neighbors) {
+                        if (!visited.has(`${neighbor.r},${neighbor.c}`)) {
+                            visited.add(`${neighbor.r},${neighbor.c}`);
+                            queue.push([neighbor, [...path, neighbor]]);
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     function performAnalysis() {
         console.log('Performing analysis...');
 
@@ -988,6 +1189,20 @@
                 displayAnalysis("Naked Triples", nakedTriple);
                 return;
             }
+
+            // 6. X-Wing (nouvelle technique)
+            const xWing = findXWing();
+            if (xWing) {
+                displayAnalysis("X-Wing", xWing);
+                return;
+            }
+
+            // 7. Remote Pairs (nouvelle technique)
+            const remotePairs = findRemotePairs();
+            if (remotePairs) {
+                displayAnalysis("Remote Pairs", remotePairs);
+                return;
+            }
         }
 
         displayAnalysis(null, null);
@@ -999,12 +1214,12 @@
         if (suggestion) {
             // Clear highlights
             document.querySelectorAll('.cell').forEach(cell => {
-                cell.classList.remove('highlighted', 'highlighted-secondary');
+                cell.classList.remove('highlighted', 'highlighted-secondary', 'highlighted-elimination');
             });
 
             // Highlight cells based on technique type
             if (suggestion.cells && suggestion.cells.length > 1) {
-                // Naked Pairs/Triples/Hidden Pairs - highlight all cells
+                // Techniques with multiple cells - highlight all cells
                 suggestion.cells.forEach((cellInfo, index) => {
                     const targetCell = document.querySelector(`[data-row="${cellInfo.row}"][data-col="${cellInfo.col}"]`);
                     if (targetCell) {
@@ -1059,7 +1274,7 @@
 
     // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('Sudoku Assistant v2.5 started');
+        console.log('Sudoku Assistant v2.6 started');
         showLoading('Loading data...');
         
         setTimeout(() => {
