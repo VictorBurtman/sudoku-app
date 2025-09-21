@@ -47,7 +47,7 @@
     <div class="app-container">
         <div class="app-bar">
             <button class="back-button" onclick="window.close()">←</button>
-            <h1>Sudoku Assistant v2.6</h1>
+            <h1>Sudoku Assistant v2.5</h1>
             <button class="sudoku-wiki-button" onclick="copyToClipboardAndOpenSudokuWiki()" title="Copy grid and open SudokuWiki">🧩</button>
         </div>
         <div class="main-content">
@@ -61,7 +61,8 @@
 <script>
     let currentGrid = null, originalGrid = null, notesGrid = null;
 
-    function showError(message) { document.getElementById('analysisResult').innerHTML = `<div class="error-state">${message}</div>`; }
+    // --- SECTION UTILITAIRES (COMPLÈTE) ---
+    function showError(message) { document.getElementById('analysisResult').innerHTML = `<div class="error-state">${message}</div>`; console.error('Error:', message); }
     function showLoading(message) { document.getElementById('analysisResult').innerHTML = `<div class="loading-state">${message}</div>`; }
     function showTemporaryMessage(message) {
         const notification = document.createElement('div');
@@ -71,10 +72,45 @@
         setTimeout(() => { if (notification.parentNode) notification.parentNode.removeChild(notification); }, 4000);
     }
     
-    function formatGridForSudokuWiki() { /* ... implementation (restored) ... */ return ""; }
-    function copyToClipboardAndOpenSudokuWiki() { /* ... implementation (restored) ... */ }
+    // --- SECTION EXPORT (COMPLÈTE) ---
+    function formatGridForSudokuWiki() {
+        if (!currentGrid) return '';
+        let result = 'S9B';
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                let cellValue = 0;
+                if (currentGrid[r][c] !== 0) {
+                    const isGiven = originalGrid && originalGrid[r][c] !== 0;
+                    cellValue = isGiven ? currentGrid[r][c] : currentGrid[r][c] + 9;
+                } else {
+                    const userNotes = notesGrid[r][c] || [];
+                    if (userNotes.length > 0) {
+                        let candidateBits = 0;
+                        for (const digit of userNotes) candidateBits |= (1 << (digit - 1));
+                        cellValue = candidateBits + 18;
+                    }
+                }
+                let cellStr = cellValue.toString(36);
+                if (cellStr.length < 2) cellStr = '0' + cellStr;
+                result += cellStr;
+            }
+        }
+        return result;
+    }
 
-    // --- FONCTION loadDataFromURL ENTIÈREMENT RESTAURÉE ---
+    function copyToClipboardAndOpenSudokuWiki() {
+        if (!currentGrid) { showTemporaryMessage('No grid data to copy.'); return; }
+        const gridString = formatGridForSudokuWiki();
+        navigator.clipboard.writeText(gridString).then(() => {
+            showTemporaryMessage('Grid copied in SudokuWiki 2.0 format!');
+            setTimeout(() => { window.open('https://www.sudokuwiki.org/sudoku.htm', '_blank'); }, 1000);
+        }).catch(err => {
+            showTemporaryMessage('Manual copy: ' + gridString);
+            window.open('https://www.sudokuwiki.org/sudoku.htm', '_blank');
+        });
+    }
+
+    // --- SECTION CHARGEMENT & AFFICHAGE (LOGIQUE CORRIGÉE) ---
     function loadDataFromURL() {
         const urlParams = new URLSearchParams(window.location.search);
         const encodedData = urlParams.get('data');
@@ -86,10 +122,7 @@
                 originalGrid = data.originalGrid;
                 notesGrid = data.notesGrid;
                 return true;
-            } catch (error) {
-                showError('URL Error: ' + error.message);
-                return false;
-            }
+            } catch (error) { showError('URL Error: ' + error.message); return false; }
         }
         const dataId = urlParams.get('id');
         if (dataId) {
@@ -103,69 +136,142 @@
                     originalGrid = data.originalGrid;
                     notesGrid = data.notesGrid;
                     return true;
-                } else {
-                    showError('Data expired or not found (ID: ' + dataId + ')');
-                    return false;
-                }
-            } catch (error) {
-                showError('Storage Error: ' + error.message);
-                return false;
-            }
+                } else { return false; }
+            } catch (error) { showError('Storage Error: ' + error.message); return false; }
         }
         return false;
     }
-
-    function loadDemoDataAndAnalyze() {
+    
+    function loadDemoData() {
+        console.log("Loading demo data.");
         const testData = {"currentGrid":[[0,0,2,8,0,0,0,0,0],[0,0,0,0,0,0,0,7,0],[4,0,0,0,9,0,0,0,0],[0,0,0,0,0,0,0,0,1],[0,0,0,6,0,5,0,0,0],[7,0,0,0,0,0,0,0,0],[0,0,0,0,1,0,0,0,6],[0,4,0,0,0,0,0,0,0],[0,0,0,0,0,2,5,0,0]],"notesGrid":[[[1,5],[1,6],[],[],[1,3,4,5],[1,3,4],[1,3,4,9],[1,3,9],[3,4,5,9]],[[1,5,6],[1,3,5,6],[1,5,6],[1,3,4],[2,3,4,5],[1,3,4],[1,2,3,8,9],[],[2,3,5,8,9]],[[],[1,3,5,6],[1,5,6],[1,3,4],[],[1,3,4],[1,2,3,8,9],[2,3,5,8,9],[2,3,5,8,9]],[[3,5,6,8,9],[3,5,6],[3,5,6,8],[2,3,4,7],[2,3,4,7],[4,7],[2,3,4,7,8,9],[2,3,5,8,9],[]],[[1,2,3,8,9],[1,2,3],[1,3,8],[],[2,4,7],[],[2,3,4,7,8,9],[2,3,5,8,9],[2,3,4,5,7,8,9]],[[],[2,3],[3,8],[1,2,4,7,9],[2,4,7],[1,4,7,9],[2,3,4,7,8,9],[2,3,5,8,9],[2,3,4,5,7,8,9]],[[2,3,8,9],[2,3,7,8,9],[3,7,8,9],[2,3,4,7,9],[],[3,4,7,8,9],[2,3,4,7,8],[1,2,3,4,8,9],[]],[[],[],[1,3,7,8],[1,3,7,9],[3,6,7,8],[1,3,6,7,8,9],[1,2,3],[1,3,4,8,9],[2,3,4,7,8]],[[1,3,8,9],[1,3,6,7,8,9],[1,3,6,7,8,9],[1,3,4,7,9],[3,4,6,7,8],[],[],[1,3,4,8,9],[2,3,4,7,8]]]};
         currentGrid = testData.currentGrid;
         originalGrid = testData.originalGrid || JSON.parse(JSON.stringify(testData.currentGrid));
         notesGrid = testData.notesGrid;
-        analyzeGrid();
     }
-    
+
     function analyzeGrid() {
-        if (!currentGrid || !notesGrid) {
-            showError('Analysis called without grid data.'); return;
-        }
+        if (!currentGrid || !notesGrid) { showError('Analysis called without grid data.'); return; }
         try {
             displayGrid();
             performAnalysis();
-        } catch (error) {
-            showError('Analysis error: ' + error.message);
-        }
+        } catch (error) { showError('Analysis error: ' + error.message); }
     }
 
     function displayGrid() {
-        // ... (Implementation remains the same)
-        let finalHtml = `...`;
+        let topLabelsHtml = '<div class="coord-labels-row">';
+        for (let i = 1; i <= 9; i++) topLabelsHtml += `<div class="coord-label">C${i}</div>`;
+        topLabelsHtml += '</div>';
+        let leftLabelsHtml = '<div class="coord-labels-col">';
+        for (let i = 1; i <= 9; i++) leftLabelsHtml += `<div class="coord-label">R${i}</div>`;
+        leftLabelsHtml += '</div>';
+        let gridHtml = '<div class="sudoku-grid">';
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                const cellValue = currentGrid[r][c];
+                const notes = notesGrid[r][c] || [];
+                let notesHtml = '';
+                if (cellValue === 0 && notes.length > 0) {
+                    const notesSpans = Array(9).fill('');
+                    notes.forEach(n => { notesSpans[n - 1] = `<span data-note="${n}">${n}</span>`; });
+                    notesHtml = notesSpans.join('');
+                }
+                gridHtml += `<div class="cell" data-row="${r}" data-col="${c}">
+                    ${cellValue !== 0 ? cellValue : ''}
+                    ${notesHtml ? `<div class="notes">${notesHtml}</div>` : ''}
+                </div>`;
+            }
+        }
+        gridHtml += '</div>';
+        const finalHtml = `<div class="grid-wrapper">${topLabelsHtml}${leftLabelsHtml}${gridHtml}</div>`;
         document.getElementById('gridSection').innerHTML = finalHtml;
     }
 
-    function findXWing() { /* ... (Implementation remains the same) ... */ return null; }
-    // ... (Other technique finders)
+    // --- SECTION DES TECHNIQUES DE DÉTECTION ---
+    function findXWing() {
+        for (let digit = 1; digit <= 9; digit++) {
+            const colsWithTwo = [];
+            for (let c = 0; c < 9; c++) {
+                const rows = [];
+                for (let r = 0; r < 9; r++) if (currentGrid[r][c] === 0 && (notesGrid[r][c] || []).includes(digit)) rows.push(r);
+                if (rows.length === 2) colsWithTwo.push({ col: c, rows: rows });
+            }
+            if (colsWithTwo.length >= 2) {
+                for (let i = 0; i < colsWithTwo.length; i++) {
+                    for (let j = i + 1; j < colsWithTwo.length; j++) {
+                        const col1 = colsWithTwo[i], col2 = colsWithTwo[j];
+                        if (col1.rows.toString() === col2.rows.toString()) {
+                            const [r1, r2] = col1.rows, [c1, c2] = [col1.col, col2.col];
+                            let elims = [];
+                            for (const r of [r1, r2]) {
+                                for (let c = 0; c < 9; c++) {
+                                    if (c !== c1 && c !== c2 && currentGrid[r][c] === 0 && (notesGrid[r][c] || []).includes(digit)) {
+                                        elims.push({ r, c, val: digit });
+                                    }
+                                }
+                            }
+                            if (elims.length > 0) return { cells: [{r: r1, c: c1}, {r: r1, c: c2}, {r: r2, c: c1}, {r: r2, c: c2}], eliminations: elims, explanation: `X-Wing on digit ${digit} in columns ${c1 + 1} & ${c2 + 1}.`, reasoning: `This removes ${digit} from other cells in rows ${r1 + 1} & ${r2 + 1}.` };
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
 
     function performAnalysis() {
+        // La chaîne de techniques peut être étendue ici
         const xWing = findXWing();
         if (xWing) return displayAnalysis("X-Wing", xWing);
-        displayAnalysis(null, null); // No other techniques for now
+
+        displayAnalysis(null, null);
     }
 
     function displayAnalysis(foundTechnique, suggestion) {
-        // ... (Implementation remains the same)
+        let html = '';
+        if (suggestion) {
+            document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('highlighted', 'highlighted-secondary'));
+            if (suggestion.cells) {
+                 suggestion.cells.forEach(cellInfo => {
+                    const targetCell = document.querySelector(`[data-row="${cellInfo.r}"][data-col="${cellInfo.c}"]`);
+                    if (targetCell) targetCell.classList.add('highlighted');
+                });
+            }
+            let eliminationsText = [];
+            if (suggestion.eliminations && suggestion.eliminations.length > 0) {
+                suggestion.eliminations.forEach(elim => {
+                    const cell = document.querySelector(`[data-row="${elim.r}"][data-col="${elim.c}"]`);
+                    if (cell) {
+                        const noteSpan = cell.querySelector(`.notes span[data-note="${elim.val}"]`);
+                        if (noteSpan) noteSpan.classList.add('eliminated-candidate');
+                    }
+                    eliminationsText.push(` ${elim.val} from R${elim.r + 1}C${elim.c + 1}`);
+                });
+            }
+            html = `
+                <div class="move-suggestion">
+                    <h4>🎯 ${foundTechnique}</h4>
+                    <p>${suggestion.explanation || ''}</p>
+                    <p><em>${suggestion.reasoning || ''}</em></p>
+                    ${eliminationsText.length > 0 ? `<p><strong>❌ Remove:${eliminationsText.join(',')}</strong></p>` : ''}
+                </div>
+            `;
+        } else {
+             const gridForWiki = formatGridForSudokuWiki();
+            html = `<div class="technique"><h4>🧩 No simple techniques detected.</h4><p>Use the export button 🧩 to analyze this grid with an external solver.</p>${gridForWiki ? `<div style="font-family: monospace; font-size: 10px; background: #1e1e1e; padding: 8px; border-radius: 4px; word-break: break-all; color: #90caf9; margin-top: 1em;">${gridForWiki}</div>` : ''}</div>`;
+        }
+        document.getElementById('analysisResult').innerHTML = html;
     }
 
-    // --- LOGIQUE DE DÉMARRAGE CORRIGÉE ---
+    // --- LOGIQUE DE DÉMARRAGE FINALE ---
     document.addEventListener('DOMContentLoaded', function() {
-        showLoading('Loading data...');
+        showLoading('Loading grid...');
         setTimeout(() => {
-            const loadedFromUrl = loadDataFromURL();
-            if (!loadedFromUrl) {
-                // Si rien n'est chargé depuis l'URL, on charge la démo
-                loadDemoDataAndAnalyze();
-            } else {
-                // Sinon, les données de l'URL ont déjà été chargées et analysées
-                analyzeGrid();
+            const loaded = loadDataFromURL();
+            if (!loaded) {
+                loadDemoData();
             }
+            analyzeGrid();
         }, 100);
     });
 </script>
