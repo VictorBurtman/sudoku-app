@@ -104,22 +104,10 @@
             opacity: 0.8;
         }
 
-        .cell.highlighted-elimination {
-            background: #ffeb3b !important;
-            color: #000000;
-            opacity: 0.8;
-        }
-
         .cell.suggested-value {
             color: #2196f3 !important;
             font-size: 18px;
             font-weight: bold;
-            animation: glow 2s infinite;
-        }
-
-        @keyframes glow {
-            0%, 100% { text-shadow: 0 0 5px #2196f3; }
-            50% { text-shadow: 0 0 15px #2196f3, 0 0 20px #2196f3; }
         }
 
         @keyframes pulse {
@@ -140,12 +128,6 @@
             color: #f44336;
             text-decoration: line-through;
             font-weight: bold;
-            animation: blink 1.5s infinite;
-        }
-
-        @keyframes blink {
-            0%, 50% { opacity: 1; }
-            51%, 100% { opacity: 0.3; }
         }
 
         .analysis-section {
@@ -1238,7 +1220,7 @@
         if (suggestion) {
             // Clear highlights and suggested values
             document.querySelectorAll('.cell').forEach(cell => {
-                cell.classList.remove('highlighted', 'highlighted-secondary', 'highlighted-elimination', 'suggested-value');
+                cell.classList.remove('highlighted', 'highlighted-secondary', 'suggested-value');
                 // Restore original notes display
                 const row = parseInt(cell.getAttribute('data-row'));
                 const col = parseInt(cell.getAttribute('data-col'));
@@ -1263,9 +1245,9 @@
                 });
             }
 
-            // Highlight cells based on technique type
+            // Highlight only the cells directly involved in the technique
             if (suggestion.cells && suggestion.cells.length > 1) {
-                // Techniques with multiple cells - highlight all cells
+                // Techniques with multiple cells - highlight only the technique cells
                 suggestion.cells.forEach((cellInfo, index) => {
                     const targetCell = document.querySelector(`[data-row="${cellInfo.row}"][data-col="${cellInfo.col}"]`);
                     if (targetCell) {
@@ -1289,7 +1271,7 @@
                 }
             }
 
-            // Show eliminations in red
+            // Show eliminations in red (without coloring the cells)
             eliminationsMap.forEach((candidatesToRemove, cellKey) => {
                 const [row, col] = cellKey.split(',').map(Number);
                 const targetCell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
@@ -1308,7 +1290,7 @@
                     if (notesHtml) {
                         targetCell.innerHTML = `<div class="notes">${notesHtml}</div>`;
                     }
-                    targetCell.classList.add('highlighted-elimination');
+                    // Don't add any highlighting class to elimination cells
                 }
             });
 
