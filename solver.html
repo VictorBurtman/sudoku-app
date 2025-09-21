@@ -434,6 +434,117 @@
         return candidates;
     }
 
+    function findLastPossibleNumber() {
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                if (currentGrid[r][c] === 0) {
+                    const possibleNumbers = [];
+                    for (let num = 1; num <= 9; num++) {
+                        if (isValidPlacement(r, c, num)) {
+                            possibleNumbers.push(num);
+                        }
+                    }
+                    
+                    if (possibleNumbers.length === 1) {
+                        return {
+                            row: r,
+                            col: c,
+                            value: possibleNumbers[0],
+                            explanation: `Cell R${r+1}C${c+1} can only contain digit ${possibleNumbers[0]}.`,
+                            reasoning: `All other digits already appear in its row, column, or 3x3 box.`
+                        };
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    function findHiddenSingle() {
+        // Check 3x3 boxes first
+        for (let boxR = 0; boxR < 3; boxR++) {
+            for (let boxC = 0; boxC < 3; boxC++) {
+                for (let digit = 1; digit <= 9; digit++) {
+                    let digitFound = false;
+                    const possibleCells = [];
+                    
+                    for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
+                        for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
+                            if (currentGrid[r][c] === digit) {
+                                digitFound = true;
+                                break;
+                            }
+                            if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
+                                possibleCells.push({r, c});
+                            }
+                        }
+                        if (digitFound) break;
+                    }
+                    
+                    if (!digitFound && possibleCells.length === 1) {
+                        return {
+                            row: possibleCells[0].r,
+                            col: possibleCells[0].c,
+                            value: digit,
+                            explanation: `Digit ${digit} can only go in R${possibleCells[0].r+1}C${possibleCells[0].c+1} within the 3x3 box (rows ${boxR*3+1}-${boxR*3+3}, columns ${boxC*3+1}-${boxC*3+3}).`,
+                            reasoning: `Hidden Single in 3x3 box`
+                        };
+                    }
+                }
+            }
+        }
+
+        // Check rows
+        for (let r = 0; r < 9; r++) {
+            for (let digit = 1; digit <= 9; digit++) {
+                if (currentGrid[r].includes(digit)) continue;
+                
+                const possibleCols = [];
+                for (let c = 0; c < 9; c++) {
+                    if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
+                        possibleCols.push(c);
+                    }
+                }
+                
+                if (possibleCols.length === 1) {
+                    return {
+                        row: r,
+                        col: possibleCols[0],
+                        value: digit,
+                        explanation: `Digit ${digit} can only go in R${r+1}C${possibleCols[0]+1} within row ${r+1}.`,
+                        reasoning: `Hidden Single in row ${r+1}`
+                    };
+                }
+            }
+        }
+
+        // Check columns
+        for (let c = 0; c < 9; c++) {
+            for (let digit = 1; digit <= 9; digit++) {
+                if (currentGrid.some(row => row[c] === digit)) continue;
+                
+                const possibleRows = [];
+                for (let r = 0; r < 9; r++) {
+                    if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
+                        possibleRows.push(r);
+                    }
+                }
+                
+                if (possibleRows.length === 1) {
+                    return {
+                        row: possibleRows[0],
+                        col: c,
+                        value: digit,
+                        explanation: `Digit ${digit} can only go in R${possibleRows[0]+1}C${c+1} within column ${c+1}.`,
+                        reasoning: `Hidden Single in column ${c+1}`
+                    };
+                }
+            }
+        }
+
+        return null;
+    }
+
     function findNakedPairs(candidates) {
         // Check columns
         for (let c = 0; c < 9; c++) {
@@ -563,10 +674,173 @@
         return null;
     }
 
+    function findHiddenPairs() {
+        // Check columns
+        for (let c = 0; c < 9; c++) {
+            for (let digit1 = 1; digit1 <= 8; digit1++) {
+                for (let digit2 = digit1 + 1; digit2 <= 9; digit2++) {
+                    const cellsWithDigit1 = [];
+                    const cellsWithDigit2 = [];
+                    
+                    for (let r = 0; r < 9; r++) {
+                        if (currentGrid[r][c] === 0) {
+                            const userNotes = notesGrid[r][c] || [];
+                            if (userNotes.includes(digit1)) {
+                                cellsWithDigit1.push(r);
+                            }
+                            if (userNotes.includes(digit2)) {
+                                cellsWithDigit2.push(r);
+                            }
+                        }
+                    }
+                    
+                    if (cellsWithDigit1.length === 2 && cellsWithDigit2.length === 2 &&
+                        cellsWithDigit1[0] === cellsWithDigit2[0] && cellsWithDigit1[1] === cellsWithDigit2[1]) {
+                        
+                        const row1 = cellsWithDigit1[0];
+                        const row2 = cellsWithDigit1[1];
+                        
+                        let canEliminate = false;
+                        let eliminationDetails = [];
+                        
+                        for (const row of [row1, row2]) {
+                            const userNotes = notesGrid[row][c] || [];
+                            const candidatesToEliminate = userNotes.filter(num => num !== digit1 && num !== digit2);
+                            if (candidatesToEliminate.length > 0) {
+                                canEliminate = true;
+                                eliminationDetails.push(`R${row+1}C${c+1}: remove ${candidatesToEliminate.join(', ')}`);
+                            }
+                        }
+                        
+                        if (canEliminate) {
+                            return {
+                                type: 'elimination',
+                                cells: [{row: row1, col: c}, {row: row2, col: c}],
+                                values: [digit1, digit2],
+                                explanation: `Hidden pair ${digit1}/${digit2} found at R${row1+1}C${c+1} and R${row2+1}C${c+1} in column ${c+1}.`,
+                                reasoning: `These digits can only appear in these two cells in this column, so eliminate all other candidates from these cells.`,
+                                eliminations: eliminationDetails
+                            };
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check rows
+        for (let r = 0; r < 9; r++) {
+            for (let digit1 = 1; digit1 <= 8; digit1++) {
+                for (let digit2 = digit1 + 1; digit2 <= 9; digit2++) {
+                    const cellsWithDigit1 = [];
+                    const cellsWithDigit2 = [];
+                    
+                    for (let c = 0; c < 9; c++) {
+                        if (currentGrid[r][c] === 0) {
+                            const userNotes = notesGrid[r][c] || [];
+                            if (userNotes.includes(digit1)) {
+                                cellsWithDigit1.push(c);
+                            }
+                            if (userNotes.includes(digit2)) {
+                                cellsWithDigit2.push(c);
+                            }
+                        }
+                    }
+                    
+                    if (cellsWithDigit1.length === 2 && cellsWithDigit2.length === 2 &&
+                        cellsWithDigit1[0] === cellsWithDigit2[0] && cellsWithDigit1[1] === cellsWithDigit2[1]) {
+                        
+                        const col1 = cellsWithDigit1[0];
+                        const col2 = cellsWithDigit1[1];
+                        
+                        let canEliminate = false;
+                        let eliminationDetails = [];
+                        
+                        for (const col of [col1, col2]) {
+                            const userNotes = notesGrid[r][col] || [];
+                            const candidatesToEliminate = userNotes.filter(num => num !== digit1 && num !== digit2);
+                            if (candidatesToEliminate.length > 0) {
+                                canEliminate = true;
+                                eliminationDetails.push(`R${r+1}C${col+1}: remove ${candidatesToEliminate.join(', ')}`);
+                            }
+                        }
+                        
+                        if (canEliminate) {
+                            return {
+                                type: 'elimination',
+                                cells: [{row: r, col: col1}, {row: r, col: col2}],
+                                values: [digit1, digit2],
+                                explanation: `Hidden pair ${digit1}/${digit2} found at R${r+1}C${col1+1} and R${r+1}C${col2+1} in row ${r+1}.`,
+                                reasoning: `These digits can only appear in these two cells in this row, so eliminate all other candidates from these cells.`,
+                                eliminations: eliminationDetails
+                            };
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check 3x3 boxes
+        for (let boxR = 0; boxR < 3; boxR++) {
+            for (let boxC = 0; boxC < 3; boxC++) {
+                for (let digit1 = 1; digit1 <= 8; digit1++) {
+                    for (let digit2 = digit1 + 1; digit2 <= 9; digit2++) {
+                        const cellsWithDigit1 = [];
+                        const cellsWithDigit2 = [];
+                        
+                        for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
+                            for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
+                                if (currentGrid[r][c] === 0) {
+                                    const userNotes = notesGrid[r][c] || [];
+                                    if (userNotes.includes(digit1)) {
+                                        cellsWithDigit1.push({row: r, col: c});
+                                    }
+                                    if (userNotes.includes(digit2)) {
+                                        cellsWithDigit2.push({row: r, col: c});
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if (cellsWithDigit1.length === 2 && cellsWithDigit2.length === 2 &&
+                            cellsWithDigit1[0].row === cellsWithDigit2[0].row && cellsWithDigit1[0].col === cellsWithDigit2[0].col &&
+                            cellsWithDigit1[1].row === cellsWithDigit2[1].row && cellsWithDigit1[1].col === cellsWithDigit2[1].col) {
+                            
+                            const cell1 = cellsWithDigit1[0];
+                            const cell2 = cellsWithDigit1[1];
+                            
+                            let canEliminate = false;
+                            let eliminationDetails = [];
+                            
+                            for (const cell of [cell1, cell2]) {
+                                const userNotes = notesGrid[cell.row][cell.col] || [];
+                                const candidatesToEliminate = userNotes.filter(num => num !== digit1 && num !== digit2);
+                                if (candidatesToEliminate.length > 0) {
+                                    canEliminate = true;
+                                    eliminationDetails.push(`R${cell.row+1}C${cell.col+1}: remove ${candidatesToEliminate.join(', ')}`);
+                                }
+                            }
+                            
+                            if (canEliminate) {
+                                return {
+                                    type: 'elimination',
+                                    cells: [{row: cell1.row, col: cell1.col}, {row: cell2.row, col: cell2.col}],
+                                    values: [digit1, digit2],
+                                    explanation: `Hidden pair ${digit1}/${digit2} found at R${cell1.row+1}C${cell1.col+1} and R${cell2.row+1}C${cell2.col+1} in box ${boxR + 1}.${boxC + 1}.`,
+                                    reasoning: `These digits can only appear in these two cells in this box, so eliminate all other candidates from these cells.`,
+                                    eliminations: eliminationDetails
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
     function findNakedTriples() {
-        // Helper function to check if three cells form a naked triple based on user notes
         function isNakedTripleFromNotes(cells) {
-            // Get all unique candidates from user notes in the three cells
             const allCandidates = new Set();
             for (const cell of cells) {
                 const userNotes = notesGrid[cell.row][cell.col] || [];
@@ -575,12 +849,10 @@
                 }
             }
             
-            // For a naked triple, we need exactly 3 unique candidates across the 3 cells
             if (allCandidates.size !== 3) return false;
             
             const tripleValues = Array.from(allCandidates);
             
-            // Check that each cell's user notes are a subset of the triple
             for (const cell of cells) {
                 const userNotes = notesGrid[cell.row][cell.col] || [];
                 if (userNotes.length < 2 || userNotes.length > 3) return false;
@@ -590,7 +862,7 @@
             return tripleValues;
         }
 
-        // Check rows using user notes
+        // Check rows
         for (let r = 0; r < 9; r++) {
             const rowCells = [];
             for (let c = 0; c < 9; c++) {
@@ -602,7 +874,6 @@
                 }
             }
             
-            // Check all combinations of 3 cells
             for (let i = 0; i < rowCells.length - 2; i++) {
                 for (let j = i + 1; j < rowCells.length - 1; j++) {
                     for (let k = j + 1; k < rowCells.length; k++) {
@@ -610,7 +881,6 @@
                         const tripleValues = isNakedTripleFromNotes(threeCells);
                         
                         if (tripleValues) {
-                            // Check if we can eliminate from user notes in this row
                             let canEliminate = false;
                             let eliminationDetails = [];
                             
@@ -637,226 +907,6 @@
                             }
                         }
                     }
-                }
-            }
-        }
-
-        // Check columns using user notes
-        for (let c = 0; c < 9; c++) {
-            const colCells = [];
-            for (let r = 0; r < 9; r++) {
-                if (currentGrid[r][c] === 0) {
-                    const userNotes = notesGrid[r][c] || [];
-                    if (userNotes.length >= 2 && userNotes.length <= 3) {
-                        colCells.push({row: r, col: c});
-                    }
-                }
-            }
-            
-            // Check all combinations of 3 cells
-            for (let i = 0; i < colCells.length - 2; i++) {
-                for (let j = i + 1; j < colCells.length - 1; j++) {
-                    for (let k = j + 1; k < colCells.length; k++) {
-                        const threeCells = [colCells[i], colCells[j], colCells[k]];
-                        const tripleValues = isNakedTripleFromNotes(threeCells);
-                        
-                        if (tripleValues) {
-                            // Check if we can eliminate from user notes in this column
-                            let canEliminate = false;
-                            let eliminationDetails = [];
-                            
-                            for (let r = 0; r < 9; r++) {
-                                if (r !== threeCells[0].row && r !== threeCells[1].row && r !== threeCells[2].row && currentGrid[r][c] === 0) {
-                                    const userNotes = notesGrid[r][c] || [];
-                                    const candidatesToEliminate = userNotes.filter(num => tripleValues.includes(num));
-                                    if (candidatesToEliminate.length > 0) {
-                                        canEliminate = true;
-                                        eliminationDetails.push(`R${r+1}C${c+1}: remove ${candidatesToEliminate.join(', ')}`);
-                                    }
-                                }
-                            }
-                            
-                            if (canEliminate) {
-                                return {
-                                    type: 'elimination',
-                                    cells: threeCells.map(cell => ({row: cell.row, col: cell.col})),
-                                    values: tripleValues,
-                                    explanation: `Naked triple ${tripleValues.join('/')} found at ${threeCells.map(c => `R${c.row+1}C${c.col+1}`).join(', ')} in column ${c+1}.`,
-                                    reasoning: `These three cells can only contain ${tripleValues.join(', ')}, so eliminate these digits from other cells in column ${c+1}.`,
-                                    eliminations: eliminationDetails
-                                };
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Check 3x3 boxes using user notes
-        for (let boxR = 0; boxR < 3; boxR++) {
-            for (let boxC = 0; boxC < 3; boxC++) {
-                const boxCells = [];
-                
-                for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
-                    for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
-                        if (currentGrid[r][c] === 0) {
-                            const userNotes = notesGrid[r][c] || [];
-                            if (userNotes.length >= 2 && userNotes.length <= 3) {
-                                boxCells.push({row: r, col: c});
-                            }
-                        }
-                    }
-                }
-                
-                // Check all combinations of 3 cells
-                for (let i = 0; i < boxCells.length - 2; i++) {
-                    for (let j = i + 1; j < boxCells.length - 1; j++) {
-                        for (let k = j + 1; k < boxCells.length; k++) {
-                            const threeCells = [boxCells[i], boxCells[j], boxCells[k]];
-                            const tripleValues = isNakedTripleFromNotes(threeCells);
-                            
-                            if (tripleValues) {
-                                // Check if we can eliminate from user notes in this box
-                                let canEliminate = false;
-                                let eliminationDetails = [];
-                                
-                                for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
-                                    for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
-                                        if (!threeCells.some(cell => cell.row === r && cell.col === c) && currentGrid[r][c] === 0) {
-                                            const userNotes = notesGrid[r][c] || [];
-                                            const candidatesToEliminate = userNotes.filter(num => tripleValues.includes(num));
-                                            if (candidatesToEliminate.length > 0) {
-                                                canEliminate = true;
-                                                eliminationDetails.push(`R${r+1}C${c+1}: remove ${candidatesToEliminate.join(', ')}`);
-                                            }
-                                        }
-                                    }
-                                }
-                                
-                                if (canEliminate) {
-                                    return {
-                                        type: 'elimination',
-                                        cells: threeCells.map(cell => ({row: cell.row, col: cell.col})),
-                                        values: tripleValues,
-                                        explanation: `Naked triple ${tripleValues.join('/')} found at ${threeCells.map(c => `R${c.row+1}C${c.col+1}`).join(', ')} in box ${boxR + 1}.${boxC + 1}.`,
-                                        reasoning: `These three cells can only contain ${tripleValues.join(', ')}, so eliminate these digits from other cells in this box.`,
-                                        eliminations: eliminationDetails
-                                    };
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        return null;
-    }
-
-    function findLastPossibleNumber() {
-        for (let r = 0; r < 9; r++) {
-            for (let c = 0; c < 9; c++) {
-                if (currentGrid[r][c] === 0) {
-                    const possibleNumbers = [];
-                    for (let num = 1; num <= 9; num++) {
-                        if (isValidPlacement(r, c, num)) {
-                            possibleNumbers.push(num);
-                        }
-                    }
-                    
-                    if (possibleNumbers.length === 1) {
-                        return {
-                            row: r,
-                            col: c,
-                            value: possibleNumbers[0],
-                            explanation: `Cell R${r+1}C${c+1} can only contain digit ${possibleNumbers[0]}.`,
-                            reasoning: `All other digits already appear in its row, column, or 3x3 box.`
-                        };
-                    }
-                }
-            }
-        }
-        return null;
-    }
-
-    function findHiddenSingle() {
-        // Check 3x3 boxes first
-        for (let boxR = 0; boxR < 3; boxR++) {
-            for (let boxC = 0; boxC < 3; boxC++) {
-                for (let digit = 1; digit <= 9; digit++) {
-                    let digitFound = false;
-                    const possibleCells = [];
-                    
-                    for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
-                        for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
-                            if (currentGrid[r][c] === digit) {
-                                digitFound = true;
-                                break;
-                            }
-                            if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
-                                possibleCells.push({r, c});
-                            }
-                        }
-                        if (digitFound) break;
-                    }
-                    
-                    if (!digitFound && possibleCells.length === 1) {
-                        return {
-                            row: possibleCells[0].r,
-                            col: possibleCells[0].c,
-                            value: digit,
-                            explanation: `Digit ${digit} can only go in R${possibleCells[0].r+1}C${possibleCells[0].c+1} within the 3x3 box (rows ${boxR*3+1}-${boxR*3+3}, columns ${boxC*3+1}-${boxC*3+3}).`,
-                            reasoning: `Hidden Single in 3x3 box`
-                        };
-                    }
-                }
-            }
-        }
-
-        // Check rows
-        for (let r = 0; r < 9; r++) {
-            for (let digit = 1; digit <= 9; digit++) {
-                if (currentGrid[r].includes(digit)) continue;
-                
-                const possibleCols = [];
-                for (let c = 0; c < 9; c++) {
-                    if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
-                        possibleCols.push(c);
-                    }
-                }
-                
-                if (possibleCols.length === 1) {
-                    return {
-                        row: r,
-                        col: possibleCols[0],
-                        value: digit,
-                        explanation: `Digit ${digit} can only go in R${r+1}C${possibleCols[0]+1} within row ${r+1}.`,
-                        reasoning: `Hidden Single in row ${r+1}`
-                    };
-                }
-            }
-        }
-
-        // Check columns
-        for (let c = 0; c < 9; c++) {
-            for (let digit = 1; digit <= 9; digit++) {
-                if (currentGrid.some(row => row[c] === digit)) continue;
-                
-                const possibleRows = [];
-                for (let r = 0; r < 9; r++) {
-                    if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
-                        possibleRows.push(r);
-                    }
-                }
-                
-                if (possibleRows.length === 1) {
-                    return {
-                        row: possibleRows[0],
-                        col: c,
-                        value: digit,
-                        explanation: `Digit ${digit} can only go in R${possibleRows[0]+1}C${c+1} within column ${c+1}.`,
-                        reasoning: `Hidden Single in column ${c+1}`
-                    };
                 }
             }
         }
@@ -893,7 +943,14 @@
                 return;
             }
 
-            // 4. Naked Triples
+            // 4. Hidden Pairs
+            const hiddenPair = findHiddenPairs();
+            if (hiddenPair) {
+                displayAnalysis("Hidden Pairs", hiddenPair);
+                return;
+            }
+
+            // 5. Naked Triples
             const nakedTriple = findNakedTriples();
             if (nakedTriple) {
                 displayAnalysis("Naked Triples", nakedTriple);
@@ -915,7 +972,7 @@
 
             // Highlight cells based on technique type
             if (suggestion.cells && suggestion.cells.length > 1) {
-                // Naked Pairs/Triples - highlight all cells
+                // Naked Pairs/Triples/Hidden Pairs - highlight all cells
                 suggestion.cells.forEach((cellInfo, index) => {
                     const targetCell = document.querySelector(`[data-row="${cellInfo.row}"][data-col="${cellInfo.col}"]`);
                     if (targetCell) {
