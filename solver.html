@@ -110,6 +110,18 @@
             opacity: 0.7;
         }
 
+        .cell.suggested-value {
+            color: #2196f3 !important;
+            font-size: 18px;
+            font-weight: bold;
+            animation: glow 2s infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { text-shadow: 0 0 5px #2196f3; }
+            50% { text-shadow: 0 0 15px #2196f3, 0 0 20px #2196f3; }
+        }
+
         @keyframes pulse {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.05); }
@@ -122,6 +134,18 @@
             font-size: 6px;
             color: #ffffff;
             line-height: 1;
+        }
+
+        .notes .candidate-to-remove {
+            color: #f44336;
+            text-decoration: line-through;
+            font-weight: bold;
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
         }
 
         .analysis-section {
@@ -1212,10 +1236,32 @@
         let html = '';
 
         if (suggestion) {
-            // Clear highlights
+            // Clear highlights and suggested values
             document.querySelectorAll('.cell').forEach(cell => {
-                cell.classList.remove('highlighted', 'highlighted-secondary', 'highlighted-elimination');
+                cell.classList.remove('highlighted', 'highlighted-secondary', 'highlighted-elimination', 'suggested-value');
+                // Restore original notes display
+                const row = parseInt(cell.getAttribute('data-row'));
+                const col = parseInt(cell.getAttribute('data-col'));
+                if (currentGrid[row][col] === 0) {
+                    const notes = notesGrid[row][col] || [];
+                    const notesText = notes.length > 0 ? notes.join('') : '';
+                    cell.innerHTML = notesText ? `<div class="notes">${notesText}</div>` : '';
+                }
             });
+
+            // Parse eliminations if present
+            let eliminationsMap = new Map();
+            if (suggestion.eliminations) {
+                suggestion.eliminations.forEach(elim => {
+                    const match = elim.match(/R(\d+)C(\d+): remove (.+)/);
+                    if (match) {
+                        const row = parseInt(match[1]) - 1;
+                        const col = parseInt(match[2]) - 1;
+                        const values = match[3].split(', ').map(v => parseInt(v.trim()));
+                        eliminationsMap.set(`${row},${col}`, values);
+                    }
+                });
+            }
 
             // Highlight cells based on technique type
             if (suggestion.cells && suggestion.cells.length > 1) {
@@ -1231,12 +1277,40 @@
                     }
                 });
             } else if (suggestion.row !== undefined && suggestion.col !== undefined) {
-                // Single cell techniques
+                // Single cell techniques - show suggested value
                 const targetCell = document.querySelector(`[data-row="${suggestion.row}"][data-col="${suggestion.col}"]`);
-                if (targetCell) {
+                if (targetCell && suggestion.value) {
+                    targetCell.classList.add('highlighted', 'suggested-value');
+                    // Display the suggested value in blue
+                    const notes = targetCell.querySelector('.notes');
+                    targetCell.innerHTML = suggestion.value + (notes ? notes.outerHTML : '');
+                } else if (targetCell) {
                     targetCell.classList.add('highlighted');
                 }
             }
+
+            // Show eliminations in red
+            eliminationsMap.forEach((candidatesToRemove, cellKey) => {
+                const [row, col] = cellKey.split(',').map(Number);
+                const targetCell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                if (targetCell && currentGrid[row][col] === 0) {
+                    const notes = notesGrid[row][col] || [];
+                    let notesHtml = '';
+                    
+                    for (const note of notes) {
+                        if (candidatesToRemove.includes(note)) {
+                            notesHtml += `<span class="candidate-to-remove">${note}</span>`;
+                        } else {
+                            notesHtml += note;
+                        }
+                    }
+                    
+                    if (notesHtml) {
+                        targetCell.innerHTML = `<div class="notes">${notesHtml}</div>`;
+                    }
+                    targetCell.classList.add('highlighted-elimination');
+                }
+            });
 
             html = `
                 <div class="move-suggestion">
