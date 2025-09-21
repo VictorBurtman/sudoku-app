@@ -71,7 +71,6 @@
         setTimeout(() => { if (notification.parentNode) notification.parentNode.removeChild(notification); }, 4000);
     }
     
-    // --- FONCTIONS D'EXPORT RESTAURÉES ---
     function formatGridForSudokuWiki() {
         if (!currentGrid) return '';
         let result = 'S9B';
@@ -85,9 +84,7 @@
                     const userNotes = notesGrid[r][c] || [];
                     if (userNotes.length > 0) {
                         let candidateBits = 0;
-                        for (const digit of userNotes) {
-                            candidateBits |= (1 << (digit - 1));
-                        }
+                        for (const digit of userNotes) candidateBits |= (1 << (digit - 1));
                         cellValue = candidateBits + 18;
                     }
                 }
@@ -100,10 +97,7 @@
     }
 
     function copyToClipboardAndOpenSudokuWiki() {
-        if (!currentGrid) {
-            showTemporaryMessage('No grid data to copy.');
-            return;
-        }
+        if (!currentGrid) { showTemporaryMessage('No grid data to copy.'); return; }
         const gridString = formatGridForSudokuWiki();
         navigator.clipboard.writeText(gridString).then(() => {
             showTemporaryMessage('Grid copied in SudokuWiki 2.0 format!');
@@ -163,11 +157,91 @@
         document.getElementById('gridSection').innerHTML = finalHtml;
     }
     
-    function findXWing() { /* ... implementation ... */ return null; }
+    // --- SECTION DES TECHNIQUES DE DÉTECTION (COMPLÈTE) ---
+    function findXWing() {
+        for (let digit = 1; digit <= 9; digit++) {
+            // Row-based X-Wing
+            const rowsWithTwo = [];
+            for (let r = 0; r < 9; r++) {
+                const cols = [];
+                for (let c = 0; c < 9; c++) if (currentGrid[r][c] === 0 && (notesGrid[r][c] || []).includes(digit)) cols.push(c);
+                if (cols.length === 2) rowsWithTwo.push({ row: r, cols: cols });
+            }
+            if (rowsWithTwo.length >= 2) {
+                for (let i = 0; i < rowsWithTwo.length; i++) {
+                    for (let j = i + 1; j < rowsWithTwo.length; j++) {
+                        const row1 = rowsWithTwo[i], row2 = rowsWithTwo[j];
+                        if (row1.cols.toString() === row2.cols.toString()) {
+                            const [c1, c2] = row1.cols, [r1, r2] = [row1.row, row2.row];
+                            let elims = [];
+                            for (const c of [c1, c2]) {
+                                for (let r = 0; r < 9; r++) {
+                                    if (r !== r1 && r !== r2 && currentGrid[r][c] === 0 && (notesGrid[r][c] || []).includes(digit)) {
+                                        elims.push({ r, c, val: digit });
+                                    }
+                                }
+                            }
+                            if (elims.length > 0) return { cells: [{r: r1, c: c1}, {r: r1, c: c2}, {r: r2, c: c1}, {r: r2, c: c2}], eliminations: elims, explanation: `Row-based X-Wing on digit ${digit}.`, reasoning: `Rows ${r1 + 1} & ${r2 + 1} form a pattern, removing ${digit} from other cells in columns ${c1 + 1} & ${c2 + 1}.` };
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    function findRemotePairs() {
+        const pairCells = [];
+        for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) if (currentGrid[r][c] === 0 && (notesGrid[r][c] || []).length === 2) pairCells.push({ r, c, notes: notesGrid[r][c] });
+        const pairs = {};
+        pairCells.forEach(cell => { const key = [...cell.notes].sort().join(','); if (!pairs[key]) pairs[key] = []; pairs[key].push(cell); });
+        const sees = (c1, c2) => {
+            if (c1.r === c2.r && c1.c === c2.c) return false;
+            if (c1.r === c2.r || c1.c === c2.c) return true;
+            return Math.floor(c1.r / 3) === Math.floor(c2.r / 3) && Math.floor(c1.c / 3) === Math.floor(c2.c / 3);
+        };
+        for (const key in pairs) {
+            const group = pairs[key];
+            if (group.length < 3) continue;
+            const adj = new Map(group.map(cell => [`${cell.r},${cell.c}`, []]));
+            for (let i = 0; i < group.length; i++) for (let j = i + 1; j < group.length; j++) if (sees(group[i], group[j])) { adj.get(`${group[i].r},${group[i].c}`).push(group[j]); adj.get(`${group[j].r},${group[j].c}`).push(group[i]); }
+            for (let i = 0; i < group.length; i++) {
+                const startNode = group[i];
+                const queue = [[startNode, [startNode]]];
+                const visited = new Set([`${startNode.r},${startNode.c}`]);
+                while (queue.length > 0) {
+                    const [current, path] = queue.shift();
+                    if (path.length >= 2) {
+                        const endNode = current;
+                        const [d1, d2] = key.split(',').map(Number);
+                        let eliminations = [];
+                        const pathCoords = new Set(path.map(p => `${p.r},${p.c}`));
+                        for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
+                            if (pathCoords.has(`${r},${c}`)) continue;
+                            const checkCell = { r, c };
+                            if (currentGrid[r][c] === 0 && sees(checkCell, startNode) && sees(checkCell, endNode)) {
+                                const notes = notesGrid[r][c] || [];
+                                if (notes.includes(d1)) eliminations.push({ r, c, val: d1 });
+                                if (notes.includes(d2)) eliminations.push({ r, c, val: d2 });
+                            }
+                        }
+                        if (eliminations.length > 0) return { cells: path, eliminations, explanation: `Remote Pair chain on {${key}} of length ${path.length}.`, reasoning: `Any cell seeing both ends of the chain cannot contain ${d1} or ${d2}.` };
+                    }
+                    const neighbors = adj.get(`${current.r},${current.c}`);
+                    for (const neighbor of neighbors) if (!visited.has(`${neighbor.r},${neighbor.c}`)) { visited.add(`${neighbor.r},${neighbor.c}`); queue.push([neighbor, [...path, neighbor]]); }
+                }
+            }
+        }
+        return null;
+    }
 
     function performAnalysis() {
         const xWing = findXWing();
         if (xWing) return displayAnalysis("X-Wing", xWing);
+
+        const remotePairs = findRemotePairs();
+        if (remotePairs) return displayAnalysis("Remote Pairs", remotePairs);
+        
         displayAnalysis(null, null);
     }
 
@@ -176,9 +250,12 @@
         if (suggestion) {
             document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('highlighted', 'highlighted-secondary'));
             if (suggestion.cells) {
-                 suggestion.cells.forEach(cellInfo => {
+                suggestion.cells.forEach((cellInfo, index) => {
                     const targetCell = document.querySelector(`[data-row="${cellInfo.r}"][data-col="${cellInfo.c}"]`);
-                    if (targetCell) targetCell.classList.add('highlighted');
+                    if (targetCell) {
+                        if (index === 0 || index === suggestion.cells.length - 1) targetCell.classList.add('highlighted');
+                        else targetCell.classList.add('highlighted-secondary');
+                    }
                 });
             }
             let eliminationsText = [];
@@ -206,7 +283,7 @@
         }
         document.getElementById('analysisResult').innerHTML = html;
     }
-
+    
     document.addEventListener('DOMContentLoaded', function() {
         showLoading('Checking for grid data...');
         setTimeout(() => {
