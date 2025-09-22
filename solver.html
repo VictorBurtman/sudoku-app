@@ -179,7 +179,7 @@
     <div class="app-container">
         <div class="app-bar">
             <button class="back-button" onclick="window.close()">←</button>
-            <h1>Sudoku Assistant v1.00</h1>
+            <h1>Sudoku Assistant v2.6</h1>
             <button class="sudoku-wiki-button" onclick="copyToClipboardAndOpenSudokuWiki()" title="Copy grid and open SudokuWiki">🧩</button>
         </div>
 
@@ -491,24 +491,7 @@
         for (let r = 0; r < 9; r++) {
             for (let c = 0; c < 9; c++) {
                 if (currentGrid[r][c] === 0) {
-                    // First check user notes
-                    const userNotes = notesGrid[r][c] || [];
-                    if (userNotes.length === 1) {
-                        const candidate = userNotes[0];
-                        // VALIDATE: Ensure the user's candidate is actually valid
-                        if (isValidPlacement(r, c, candidate)) {
-                            return {
-                                row: r,
-                                col: c,
-                                value: candidate,
-                                explanation: `Cell R${r+1}C${c+1} has only one candidate: ${candidate}.`,
-                                reasoning: `Based on your notes, this cell can only contain ${candidate}.`
-                            };
-                        }
-                        // If user's note is invalid, skip to automatic calculation
-                    }
-                    
-                    // Automatic calculation (either no user notes, multiple notes, or invalid single note)
+                    // Always calculate actual possible numbers first
                     const possibleNumbers = [];
                     for (let num = 1; num <= 9; num++) {
                         if (isValidPlacement(r, c, num)) {
@@ -516,14 +499,29 @@
                         }
                     }
                     
+                    // If there's exactly one valid placement, that's the answer
                     if (possibleNumbers.length === 1) {
-                        return {
-                            row: r,
-                            col: c,
-                            value: possibleNumbers[0],
-                            explanation: `Cell R${r+1}C${c+1} can only contain digit ${possibleNumbers[0]}.`,
-                            reasoning: `All other digits already appear in its row, column, or 3x3 box.`
-                        };
+                        const correctValue = possibleNumbers[0];
+                        const userNotes = notesGrid[r][c] || [];
+                        
+                        // Check if user notes match the correct answer
+                        if (userNotes.length === 1 && userNotes[0] === correctValue) {
+                            return {
+                                row: r,
+                                col: c,
+                                value: correctValue,
+                                explanation: `Cell R${r+1}C${c+1} has only one candidate: ${correctValue}.`,
+                                reasoning: `Based on your notes, this cell can only contain ${correctValue}.`
+                            };
+                        } else {
+                            return {
+                                row: r,
+                                col: c,
+                                value: correctValue,
+                                explanation: `Cell R${r+1}C${c+1} can only contain digit ${correctValue}.`,
+                                reasoning: `All other digits already appear in its row, column, or 3x3 box.`
+                            };
+                        }
                     }
                 }
             }
