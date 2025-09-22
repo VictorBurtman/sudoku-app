@@ -440,6 +440,53 @@
         return candidates;
     }
 
+    // Nouvelle fonction pour analyser la complétude des notes
+    function analyzeNotesCompleteness() {
+        let emptyCells = 0;
+        let cellsWithNotes = 0;
+        let cellsWithFewNotes = 0;
+        let totalCandidates = 0;
+        
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                if (currentGrid[r][c] === 0) {
+                    emptyCells++;
+                    const userNotes = notesGrid[r][c] || [];
+                    
+                    if (userNotes.length > 0) {
+                        cellsWithNotes++;
+                        totalCandidates += userNotes.length;
+                        
+                        // Compter les cellules avec très peu de candidats possibles
+                        const possibleCandidates = [];
+                        for (let num = 1; num <= 9; num++) {
+                            if (isValidPlacement(r, c, num)) {
+                                possibleCandidates.push(num);
+                            }
+                        }
+                        
+                        // Si l'utilisateur a noté moins de candidats qu'il n'y en a réellement
+                        if (userNotes.length < possibleCandidates.length - 1) {
+                            cellsWithFewNotes++;
+                        }
+                    }
+                }
+            }
+        }
+        
+        const percentageWithNotes = emptyCells > 0 ? (cellsWithNotes / emptyCells) * 100 : 100;
+        const averageCandidatesPerCell = cellsWithNotes > 0 ? totalCandidates / cellsWithNotes : 0;
+        
+        return {
+            emptyCells,
+            cellsWithNotes,
+            cellsWithFewNotes,
+            percentageWithNotes,
+            averageCandidatesPerCell,
+            hasInsufficientNotes: percentageWithNotes < 70 || cellsWithFewNotes > emptyCells * 0.3
+        };
+    }
+
     function findLastPossibleNumber() {
         for (let r = 0; r < 9; r++) {
             for (let c = 0; c < 9; c++) {
@@ -1129,8 +1176,14 @@
         return null;
     }
 
+    // Fonction modifiée pour analyser la grille
     function performAnalysis() {
         console.log('Performing analysis...');
+
+        if (!currentGrid || !notesGrid) {
+            showError('Missing grid data');
+            return;
+        }
 
         // 1. Last Possible Digit (Naked Single)
         const lastNumber = findLastPossibleNumber();
@@ -1146,38 +1199,35 @@
             return;
         }
 
-        // 3. Naked Pairs - only if we have user notes
-        const hasUserNotes = notesGrid.some(row => row.some(cell => cell && cell.length > 0));
+        // Analyser la complétude des notes avant de continuer
+        const notesAnalysis = analyzeNotesCompleteness();
         
-        if (hasUserNotes) {
+        // 3. Techniques avancées seulement si on a suffisamment de notes
+        if (notesAnalysis.cellsWithNotes > 0) {
             const nakedPair = findNakedPairs();
             if (nakedPair) {
                 displayAnalysis("Naked Pairs", nakedPair);
                 return;
             }
 
-            // 4. Hidden Pairs
             const hiddenPair = findHiddenPairs();
             if (hiddenPair) {
                 displayAnalysis("Hidden Pairs", hiddenPair);
                 return;
             }
 
-            // 5. Naked Triples
             const nakedTriple = findNakedTriples();
             if (nakedTriple) {
                 displayAnalysis("Naked Triples", nakedTriple);
                 return;
             }
 
-            // 6. X-Wing (nouvelle technique)
             const xWing = findXWing();
             if (xWing) {
                 displayAnalysis("X-Wing", xWing);
                 return;
             }
 
-            // 7. Remote Pairs (nouvelle technique)
             const remotePairs = findRemotePairs();
             if (remotePairs) {
                 displayAnalysis("Remote Pairs", remotePairs);
@@ -1185,10 +1235,12 @@
             }
         }
 
-        displayAnalysis(null, null);
+        // Aucune technique trouvée - analyser pourquoi
+        displayAnalysis(null, null, notesAnalysis);
     }
 
-    function displayAnalysis(foundTechnique, suggestion) {
+    // Fonction modifiée pour afficher l'analyse
+    function displayAnalysis(foundTechnique, suggestion, notesAnalysis = null) {
         let html = '';
 
         if (suggestion) {
@@ -1280,23 +1332,55 @@
                 </div>
             `;
         } else {
-            const gridForWiki = formatGridForSudokuWiki();
-            
-            html = `
-                <div class="technique">
-                    <h4>🧩 Advanced Techniques Required</h4>
-                    <p>No simple techniques detected. This grid requires expert techniques.</p>
-                    
-                    <div style="margin-top: 16px; padding: 12px; background: #2d2d2d; border-radius: 8px; border: 1px solid #4caf50;">
-                        <h5 style="color: #4caf50; margin-bottom: 8px;">💡 Use SudokuWiki</h5>
-                        <p style="margin-bottom: 12px;">Click 🧩 at the top right to copy your grid in the new SudokuWiki 2.0 format and open SudokuWiki.</p>
-                        <div style="font-family: monospace; font-size: 10px; background: #1e1e1e; padding: 8px; border-radius: 4px; word-break: break-all; color: #90caf9;">
-                            ${gridForWiki}
+            // No technique found - determine why
+            if (notesAnalysis && notesAnalysis.hasInsufficientNotes) {
+                // Not enough notes - encourage user to add more
+                html = `
+                    <div class="technique">
+                        <h4>📝 Insufficient Notes</h4>
+                        <p>To find the next move, you need to add more candidates to empty cells.</p>
+                        
+                        <div style="margin: 12px 0; padding: 10px; background: #2d2d2d; border-radius: 6px; border-left: 4px solid #ff9800;">
+                            <p style="margin-bottom: 8px;"><strong>Current statistics:</strong></p>
+                            <p>• Empty cells: ${notesAnalysis.emptyCells}</p>
+                            <p>• Cells with notes: ${notesAnalysis.cellsWithNotes} (${Math.round(notesAnalysis.percentageWithNotes)}%)</p>
+                            <p>• Average candidates per cell: ${notesAnalysis.averageCandidatesPerCell.toFixed(1)}</p>
                         </div>
-                        <p style="margin-top: 8px; font-size: 11px; color: #b0b0b0;">This format preserves your progress including solved cells and notes.</p>
+                        
+                        <div style="margin-top: 16px; padding: 12px; background: #2d2d2d; border-radius: 8px; border: 1px solid #ff9800;">
+                            <h5 style="color: #ff9800; margin-bottom: 8px;">💡 Tips</h5>
+                            <p>• Add candidates to at least 70% of empty cells</p>
+                            <p>• Use the "Auto-candidates" function if available</p>
+                            <p>• Focus on cells with few possibilities</p>
+                        </div>
                     </div>
-                </div>
-            `;
+                `;
+            } else {
+                // Sufficient notes but advanced techniques required
+                const gridForWiki = formatGridForSudokuWiki();
+                
+                html = `
+                    <div class="technique">
+                        <h4>🧩 Advanced Techniques Required</h4>
+                        <p>Your notes appear complete, but this grid requires expert techniques.</p>
+                        
+                        <div style="margin: 12px 0; padding: 10px; background: #2d2d2d; border-radius: 6px; border-left: 4px solid #4caf50;">
+                            <p><strong>Notes analyzed:</strong></p>
+                            <p>• ${notesAnalysis.cellsWithNotes}/${notesAnalysis.emptyCells} cells with candidates (${Math.round(notesAnalysis.percentageWithNotes)}%)</p>
+                            <p>• Average: ${notesAnalysis.averageCandidatesPerCell.toFixed(1)} candidates per cell</p>
+                        </div>
+                        
+                        <div style="margin-top: 16px; padding: 12px; background: #2d2d2d; border-radius: 8px; border: 1px solid #4caf50;">
+                            <h5 style="color: #4caf50; margin-bottom: 8px;">💡 Use SudokuWiki</h5>
+                            <p style="margin-bottom: 12px;">Click 🧩 at the top right to copy your grid in SudokuWiki 2.0 format and open SudokuWiki.</p>
+                            <div style="font-family: monospace; font-size: 10px; background: #1e1e1e; padding: 8px; border-radius: 4px; word-break: break-all; color: #90caf9;">
+                                ${gridForWiki}
+                            </div>
+                            <p style="margin-top: 8px; font-size: 11px; color: #b0b0b0;">This format preserves your progress including solved cells and notes.</p>
+                        </div>
+                    </div>
+                `;
+            }
         }
 
         document.getElementById('analysisResult').innerHTML = html;
