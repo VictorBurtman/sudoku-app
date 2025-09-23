@@ -816,11 +816,15 @@
         <div id="menuScreen" class="screen">
             <div class="menu-screen">
                 <div class="main-title">SUDOKU</div>
-                <div class="warning-text" id="versionText">By Victor Burtman</div>
                 
                 <button class="option-button" onclick="showOptionsModal()">
                     <span>⚙️</span>
                     <span>Options</span>
+                </button>
+                
+                <button class="option-button" onclick="showAboutModal()">
+                    <span>ℹ️</span>
+                    <span>About</span>
                 </button>
                 
                 <button class="difficulty-button" style="background: #4caf50; color: white;" onclick="startGame(0.2, 'Very Easy')">Very Easy</button>
@@ -943,6 +947,32 @@
                 <div class="modal-actions">
                     <button class="btn btn-secondary" onclick="closeResetConfirmModal()">Cancel</button>
                     <button class="btn btn-danger" onclick="confirmReset()">Reset Game</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="aboutModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-title">About Sudoku</div>
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="font-size: 24px; font-weight: bold; margin-bottom: 8px;">SUDOKU</div>
+                    <div style="color: #b0b0b0; font-size: 14px;" id="aboutVersion">Version 1.00</div>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <div style="margin-bottom: 8px;"><strong>Created by:</strong> Victor Burtman</div>
+                    <div style="margin-bottom: 8px;"><strong>Website:</strong> <a href="https://www.victorburtman.com" target="_blank" style="color: #2196f3; text-decoration: none;">www.victorburtman.com</a></div>
+                    <div style="margin-bottom: 8px;"><strong>GitHub:</strong> <a href="https://github.com/VictorBurtman/sudoku-app/tree/main" target="_blank" style="color: #2196f3; text-decoration: none;">sudoku-app repository</a></div>
+                    <div style="margin-bottom: 15px;"><strong>License:</strong> Creative Commons CC BY-NC 4.0</div>
+                </div>
+                <div style="background: #1e1e1e; padding: 12px; border-radius: 8px; border: 1px solid #404040; margin-bottom: 15px;">
+                    <div style="font-size: 14px; font-weight: bold; margin-bottom: 6px;">Bug Reports, Ideas & Suggestions:</div>
+                    <div style="color: #90caf9;">victorburtman@gmail.com</div>
+                </div>
+                <div style="font-size: 12px; color: #b0b0b0; text-align: center; line-height: 1.4;">
+                    This Sudoku app is provided free of charge for personal and educational use.
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-primary" onclick="closeAboutModal()">Close</button>
                 </div>
             </div>
         </div>
@@ -1437,8 +1467,6 @@
             }, 200);
         }
 
-
-
         // Modifier la fonction showOptionsModal pour inclure le nouvel option
        window.showOptionsModal = function() {
             const modal = document.getElementById('optionsModal');
@@ -1563,6 +1591,17 @@
         window.confirmReset = function() {
             closeResetConfirmModal();
             resetGame();
+        }
+
+        window.showAboutModal = function() {
+            const modal = document.getElementById('aboutModal');
+            // Update the version dynamically in the modal content
+            document.getElementById('aboutVersion').textContent = `Version ${appVersion}`;
+            modal.classList.add('show');
+        }
+
+        window.closeAboutModal = function() {
+            document.getElementById('aboutModal').classList.remove('show');
         }
 
         // --- Game Logic ---
@@ -1761,8 +1800,6 @@
             document.getElementById('gameOverModal').classList.remove('show');
         }
 
-
-
         window.shareGrid = function() {
             if (!gameState.originalGrid || gameState.originalGrid.length === 0) {
                 alert('No grid to share!');
@@ -1782,7 +1819,6 @@
                 showShareModal(shareUrl, false);
             }
         }
-
 
         // Ajouter cette fonction dans le script de ton app sudoku
         
@@ -2402,7 +2438,6 @@
             modal.classList.add('show');
         }
 
-
         function encodeGrid(originalGrid, difficulty, difficultyLabel) {
             const gridData = {
                 grid: originalGrid,
@@ -2550,8 +2585,6 @@
 
         // --- App Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('versionText').textContent = `By Victor Burtman - v${appVersion}`;
-
             // Ajout de l'écouteur d'événements pour les raccourcis clavier
             document.addEventListener('keydown', handleKeyboardShortcuts);
 
