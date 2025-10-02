@@ -179,7 +179,7 @@
     <div class="app-container">
         <div class="app-bar">
             <button class="back-button" onclick="window.close()">←</button>
-            <h1>Sudoku Assistant v2.6</h1>
+            <h1>Sudoku Assistant v2.7</h1>
             <button class="sudoku-wiki-button" onclick="copyToClipboardAndOpenSudokuWiki()" title="Copy grid and open SudokuWiki">🧩</button>
         </div>
 
@@ -229,41 +229,32 @@
     }
 
     function formatGridForSudokuWiki() {
-        // Use Sudoku String Definitions 2.0 format
-        let result = 'S9B'; // Header: Sudoku 9x9 version B
+        let result = 'S9B';
         
         for (let r = 0; r < 9; r++) {
             for (let c = 0; c < 9; c++) {
                 let cellValue = 0;
                 
                 if (currentGrid[r][c] !== 0) {
-                    // Check if this is a given (clue) or a solved cell
                     const isGiven = originalGrid && originalGrid[r][c] !== 0;
                     if (isGiven) {
-                        // Clue: store as 1-9
                         cellValue = currentGrid[r][c];
                     } else {
-                        // Solved cell: store as 10-18 (value + 9)
                         cellValue = currentGrid[r][c] + 9;
                     }
                 } else {
-                    // Empty cell with candidates
                     const userNotes = notesGrid[r][c] || [];
                     if (userNotes.length > 0) {
-                        // Convert candidates to bit pattern
                         let candidateBits = 0;
                         for (const digit of userNotes) {
-                            candidateBits |= (1 << (digit - 1)); // bit position for digit 1-9
+                            candidateBits |= (1 << (digit - 1));
                         }
-                        // Candidates: store as bit pattern + 18
                         cellValue = candidateBits + 18;
                     } else {
-                        // Empty cell with no candidates: store as 0
                         cellValue = 0;
                     }
                 }
                 
-                // Convert to base 36 and pad to 2 characters
                 let cellStr = cellValue.toString(36);
                 if (cellStr.length < 2) {
                     cellStr = '0' + cellStr;
@@ -395,18 +386,31 @@
         document.getElementById('gridDisplay').innerHTML = gridHtml;
     }
 
+    function getBoxNumber(row, col) {
+        return Math.floor(row / 3) * 3 + Math.floor(col / 3);
+    }
+
+    function getBoxIndices(boxNum) {
+        const startRow = Math.floor(boxNum / 3) * 3;
+        const startCol = (boxNum % 3) * 3;
+        const indices = [];
+        for (let r = startRow; r < startRow + 3; r++) {
+            for (let c = startCol; c < startCol + 3; c++) {
+                indices.push([r, c]);
+            }
+        }
+        return indices;
+    }
+
     function isValidPlacement(row, col, num) {
-        // Check row
         for (let c = 0; c < 9; c++) {
             if (currentGrid[row][c] === num) return false;
         }
         
-        // Check column
         for (let r = 0; r < 9; r++) {
             if (currentGrid[r][col] === num) return false;
         }
         
-        // Check 3x3 box
         const boxRow = Math.floor(row / 3) * 3;
         const boxCol = Math.floor(col / 3) * 3;
         for (let r = boxRow; r < boxRow + 3; r++) {
@@ -440,7 +444,6 @@
         return candidates;
     }
 
-    // Nouvelle fonction pour analyser la complétude des notes
     function analyzeNotesCompleteness() {
         let emptyCells = 0;
         let cellsWithNotes = 0;
@@ -457,7 +460,6 @@
                         cellsWithNotes++;
                         totalCandidates += userNotes.length;
                         
-                        // Compter les cellules avec très peu de candidats possibles
                         const possibleCandidates = [];
                         for (let num = 1; num <= 9; num++) {
                             if (isValidPlacement(r, c, num)) {
@@ -465,7 +467,6 @@
                             }
                         }
                         
-                        // Si l'utilisateur a noté moins de candidats qu'il n'y en a réellement
                         if (userNotes.length < possibleCandidates.length - 1) {
                             cellsWithFewNotes++;
                         }
@@ -491,7 +492,6 @@
         for (let r = 0; r < 9; r++) {
             for (let c = 0; c < 9; c++) {
                 if (currentGrid[r][c] === 0) {
-                    // Always calculate actual possible numbers first
                     const possibleNumbers = [];
                     for (let num = 1; num <= 9; num++) {
                         if (isValidPlacement(r, c, num)) {
@@ -499,12 +499,10 @@
                         }
                     }
                     
-                    // If there's exactly one valid placement, that's the answer
                     if (possibleNumbers.length === 1) {
                         const correctValue = possibleNumbers[0];
                         const userNotes = notesGrid[r][c] || [];
                         
-                        // Check if user notes match the correct answer
                         if (userNotes.length === 1 && userNotes[0] === correctValue) {
                             return {
                                 row: r,
@@ -530,7 +528,6 @@
     }
 
     function findHiddenSingle() {
-        // Function to get candidates for a cell (user notes first, then automatic calculation)
         function getCandidates(row, col) {
             if (currentGrid[row][col] !== 0) return [];
             
@@ -539,7 +536,6 @@
                 return userNotes;
             }
             
-            // Fallback to automatic calculation
             const candidates = [];
             for (let num = 1; num <= 9; num++) {
                 if (isValidPlacement(row, col, num)) {
@@ -549,7 +545,6 @@
             return candidates;
         }
 
-        // Check 3x3 boxes first
         for (let boxR = 0; boxR < 3; boxR++) {
             for (let boxC = 0; boxC < 3; boxC++) {
                 for (let digit = 1; digit <= 9; digit++) {
@@ -583,7 +578,6 @@
             }
         }
 
-        // Check rows
         for (let r = 0; r < 9; r++) {
             for (let digit = 1; digit <= 9; digit++) {
                 if (currentGrid[r].includes(digit)) continue;
@@ -608,7 +602,6 @@
             }
         }
 
-        // Check columns
         for (let c = 0; c < 9; c++) {
             for (let digit = 1; digit <= 9; digit++) {
                 if (currentGrid.some(row => row[c] === digit)) continue;
@@ -636,8 +629,150 @@
         return null;
     }
 
+    // ==================== POINTING PAIRS ====================
+    function findPointingPairs() {
+        for (let boxNum = 0; boxNum < 9; boxNum++) {
+            const boxIndices = getBoxIndices(boxNum);
+            
+            for (let num = 1; num <= 9; num++) {
+                const positions = boxIndices.filter(([r, c]) => {
+                    const notes = notesGrid[r][c] || [];
+                    return currentGrid[r][c] === 0 && notes.includes(num);
+                });
+
+                if (positions.length === 0 || positions.length > 3) continue;
+
+                const rows = [...new Set(positions.map(([r, c]) => r))];
+                if (rows.length === 1) {
+                    const row = rows[0];
+                    let eliminationDetails = [];
+                    let eliminationCells = [];
+                    
+                    for (let col = 0; col < 9; col++) {
+                        const cellBox = getBoxNumber(row, col);
+                        const notes = notesGrid[row][col] || [];
+                        if (cellBox !== boxNum && currentGrid[row][col] === 0 && notes.includes(num)) {
+                            eliminationDetails.push(`R${row+1}C${col+1}: remove ${num}`);
+                            eliminationCells.push({row, col});
+                        }
+                    }
+                    
+                    if (eliminationDetails.length > 0) {
+                        return {
+                            type: 'elimination',
+                            cells: positions.map(([r, c]) => ({row: r, col: c})),
+                            values: [num],
+                            explanation: `Pointing Pair: ${num} in Box ${boxNum + 1} restricted to Row ${row + 1}`,
+                            reasoning: `All candidates for ${num} in Box ${boxNum + 1} are in Row ${row + 1}, so ${num} can be eliminated from other cells in this row.`,
+                            eliminations: eliminationDetails,
+                            eliminationCells: eliminationCells
+                        };
+                    }
+                }
+
+                const cols = [...new Set(positions.map(([r, c]) => c))];
+                if (cols.length === 1) {
+                    const col = cols[0];
+                    let eliminationDetails = [];
+                    let eliminationCells = [];
+                    
+                    for (let row = 0; row < 9; row++) {
+                        const cellBox = getBoxNumber(row, col);
+                        const notes = notesGrid[row][col] || [];
+                        if (cellBox !== boxNum && currentGrid[row][col] === 0 && notes.includes(num)) {
+                            eliminationDetails.push(`R${row+1}C${col+1}: remove ${num}`);
+                            eliminationCells.push({row, col});
+                        }
+                    }
+                    
+                    if (eliminationDetails.length > 0) {
+                        return {
+                            type: 'elimination',
+                            cells: positions.map(([r, c]) => ({row: r, col: c})),
+                            values: [num],
+                            explanation: `Pointing Pair: ${num} in Box ${boxNum + 1} restricted to Column ${col + 1}`,
+                            reasoning: `All candidates for ${num} in Box ${boxNum + 1} are in Column ${col + 1}, so ${num} can be eliminated from other cells in this column.`,
+                            eliminations: eliminationDetails,
+                            eliminationCells: eliminationCells
+                        };
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    // ==================== RECTANGLE ELIMINATION ====================
+    function findRectangleElimination() {
+        for (let r1 = 0; r1 < 8; r1++) {
+            for (let c1 = 0; c1 < 8; c1++) {
+                const notes1 = notesGrid[r1][c1] || [];
+                if (currentGrid[r1][c1] !== 0 || notes1.length < 2) continue;
+
+                for (let a = 0; a < notes1.length - 1; a++) {
+                    for (let b = a + 1; b < notes1.length; b++) {
+                        const val1 = notes1[a], val2 = notes1[b];
+                        
+                        for (let r2 = r1 + 1; r2 < 9; r2++) {
+                            for (let c2 = c1 + 1; c2 < 9; c2++) {
+                                if (getBoxNumber(r1, c1) === getBoxNumber(r2, c2)) continue;
+                                if (getBoxNumber(r1, c2) === getBoxNumber(r2, c1)) continue;
+
+                                const corners = [
+                                    [r1, c1], [r1, c2], [r2, c1], [r2, c2]
+                                ];
+
+                                let exactMatch = 0;
+                                let roofCorners = [];
+
+                                for (const [r, c] of corners) {
+                                    const candidates = notesGrid[r][c] || [];
+                                    if (currentGrid[r][c] !== 0) continue;
+                                    
+                                    if (candidates.length === 2 && 
+                                        candidates.includes(val1) && 
+                                        candidates.includes(val2)) {
+                                        exactMatch++;
+                                    } else if (candidates.length > 2 &&
+                                               candidates.includes(val1) && 
+                                               candidates.includes(val2)) {
+                                        roofCorners.push([r, c]);
+                                    }
+                                }
+
+                                if (exactMatch === 3 && roofCorners.length === 1) {
+                                    const [roofR, roofC] = roofCorners[0];
+                                    const roofCandidates = notesGrid[roofR][roofC] || [];
+                                    const eliminationDetails = [];
+
+                                    for (const val of [val1, val2]) {
+                                        if (roofCandidates.includes(val)) {
+                                            eliminationDetails.push(`R${roofR+1}C${roofC+1}: remove ${val}`);
+                                        }
+                                    }
+
+                                    if (eliminationDetails.length > 0) {
+                                        return {
+                                            type: 'elimination',
+                                            cells: corners.map(([r, c]) => ({row: r, col: c})),
+                                            values: [val1, val2],
+                                            explanation: `Unique Rectangle Type 1: corners at ${corners.map(([r,c]) => `R${r+1}C${c+1}`).join(', ')}`,
+                                            reasoning: `To avoid a deadly pattern with ${val1}/${val2}, the roof cell R${roofR+1}C${roofC+1} cannot be ${val1} or ${val2}.`,
+                                            eliminations: eliminationDetails,
+                                            eliminationCells: [{row: roofR, col: roofC}]
+                                        };
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     function findNakedPairs() {
-        // Find all cells with exactly 2 candidates
         const pairCells = [];
         for (let r = 0; r < 9; r++) {
             for (let c = 0; c < 9; c++) {
@@ -653,19 +788,16 @@
         let bestPair = null;
         let maxEliminations = 0;
 
-        // Check all combinations of 2 cells to find naked pairs
         for (let i = 0; i < pairCells.length - 1; i++) {
             for (let j = i + 1; j < pairCells.length; j++) {
                 const cell1 = pairCells[i];
                 const cell2 = pairCells[j];
                 
-                // Check if both cells have exactly the same 2 candidates
                 if (JSON.stringify(cell1.notes.sort()) === JSON.stringify(cell2.notes.sort())) {
                     const pair = cell1.notes;
-                    let eliminationCells = new Set(); // Use Set to avoid duplicates
+                    let eliminationCells = new Set();
                     let units = [];
                     
-                    // Check if they're in the same row
                     if (cell1.row === cell2.row) {
                         const r = cell1.row;
                         units.push(`row ${r+1}`);
@@ -680,7 +812,6 @@
                         }
                     }
                     
-                    // Check if they're in the same column
                     if (cell1.col === cell2.col) {
                         const c = cell1.col;
                         units.push(`column ${c+1}`);
@@ -695,7 +826,6 @@
                         }
                     }
                     
-                    // Check if they're in the same 3x3 box
                     const box1R = Math.floor(cell1.row / 3);
                     const box1C = Math.floor(cell1.col / 3);
                     const box2R = Math.floor(cell2.row / 3);
@@ -718,7 +848,6 @@
                         }
                     }
                     
-                    // If this pair has more eliminations than the current best, save it
                     if (eliminationCells.size > maxEliminations) {
                         maxEliminations = eliminationCells.size;
                         const eliminationDetails = Array.from(eliminationCells).sort();
@@ -740,7 +869,6 @@
     }
 
     function findHiddenPairs() {
-        // Check columns
         for (let c = 0; c < 9; c++) {
             for (let digit1 = 1; digit1 <= 8; digit1++) {
                 for (let digit2 = digit1 + 1; digit2 <= 9; digit2++) {
@@ -792,7 +920,6 @@
             }
         }
 
-        // Check rows
         for (let r = 0; r < 9; r++) {
             for (let digit1 = 1; digit1 <= 8; digit1++) {
                 for (let digit2 = digit1 + 1; digit2 <= 9; digit2++) {
@@ -844,7 +971,6 @@
             }
         }
 
-        // Check 3x3 boxes
         for (let boxR = 0; boxR < 3; boxR++) {
             for (let boxC = 0; boxC < 3; boxC++) {
                 for (let digit1 = 1; digit1 <= 8; digit1++) {
@@ -927,7 +1053,6 @@
             return tripleValues;
         }
 
-        // Check rows
         for (let r = 0; r < 9; r++) {
             const rowCells = [];
             for (let c = 0; c < 9; c++) {
@@ -979,11 +1104,8 @@
         return null;
     }
 
-    // --- NOUVELLES TECHNIQUES AVANCÉES ---
-    
     function findXWing() {
         for (let digit = 1; digit <= 9; digit++) {
-            // Row-based X-Wing
             const rowsWithTwo = [];
             for (let r = 0; r < 9; r++) {
                 const cols = [];
@@ -1030,7 +1152,6 @@
                 }
             }
             
-            // Column-based X-Wing
             const colsWithTwo = [];
             for (let c = 0; c < 9; c++) {
                 const rows = [];
@@ -1174,7 +1295,6 @@
         return null;
     }
 
-    // Fonction modifiée pour analyser la grille
     function performAnalysis() {
         console.log('Performing analysis...');
 
@@ -1183,25 +1303,28 @@
             return;
         }
 
-        // 1. Last Possible Digit (Naked Single)
         const lastNumber = findLastPossibleNumber();
         if (lastNumber) {
             displayAnalysis("Last Possible Digit", lastNumber);
             return;
         }
 
-        // 2. Hidden Single
         const hiddenSingle = findHiddenSingle();
         if (hiddenSingle) {
             displayAnalysis("Hidden Single", hiddenSingle);
             return;
         }
 
-        // Analyser la complétude des notes avant de continuer
         const notesAnalysis = analyzeNotesCompleteness();
         
-        // 3. Techniques avancées seulement si on a suffisamment de notes
         if (notesAnalysis.cellsWithNotes > 0) {
+            // Pointing Pairs - NEW
+            const pointingPairs = findPointingPairs();
+            if (pointingPairs) {
+                displayAnalysis("Pointing Pairs", pointingPairs);
+                return;
+            }
+
             const nakedPair = findNakedPairs();
             if (nakedPair) {
                 displayAnalysis("Naked Pairs", nakedPair);
@@ -1220,6 +1343,13 @@
                 return;
             }
 
+            // Rectangle Elimination - NEW
+            const rectangleElim = findRectangleElimination();
+            if (rectangleElim) {
+                displayAnalysis("Rectangle Elimination", rectangleElim);
+                return;
+            }
+
             const xWing = findXWing();
             if (xWing) {
                 displayAnalysis("X-Wing", xWing);
@@ -1233,19 +1363,15 @@
             }
         }
 
-        // Aucune technique trouvée - analyser pourquoi
         displayAnalysis(null, null, notesAnalysis);
     }
 
-    // Fonction modifiée pour afficher l'analyse
     function displayAnalysis(foundTechnique, suggestion, notesAnalysis = null) {
         let html = '';
 
         if (suggestion) {
-            // Clear highlights and suggested values
             document.querySelectorAll('.cell').forEach(cell => {
                 cell.classList.remove('highlighted', 'highlighted-secondary', 'suggested-value');
-                // Restore original notes display
                 const row = parseInt(cell.getAttribute('data-row'));
                 const col = parseInt(cell.getAttribute('data-col'));
                 if (currentGrid[row][col] === 0) {
@@ -1255,7 +1381,6 @@
                 }
             });
 
-            // Parse eliminations if present
             let eliminationsMap = new Map();
             if (suggestion.eliminations) {
                 suggestion.eliminations.forEach(elim => {
@@ -1269,9 +1394,7 @@
                 });
             }
 
-            // Highlight only the cells directly involved in the technique
             if (suggestion.cells && suggestion.cells.length > 1) {
-                // Techniques with multiple cells - highlight only the technique cells
                 suggestion.cells.forEach((cellInfo, index) => {
                     const targetCell = document.querySelector(`[data-row="${cellInfo.row}"][data-col="${cellInfo.col}"]`);
                     if (targetCell) {
@@ -1283,11 +1406,9 @@
                     }
                 });
             } else if (suggestion.row !== undefined && suggestion.col !== undefined) {
-                // Single cell techniques - show suggested value
                 const targetCell = document.querySelector(`[data-row="${suggestion.row}"][data-col="${suggestion.col}"]`);
                 if (targetCell && suggestion.value) {
                     targetCell.classList.add('highlighted', 'suggested-value');
-                    // Display the suggested value in blue
                     const notes = targetCell.querySelector('.notes');
                     targetCell.innerHTML = suggestion.value + (notes ? notes.outerHTML : '');
                 } else if (targetCell) {
@@ -1295,7 +1416,6 @@
                 }
             }
 
-            // Show eliminations in red (without coloring the cells)
             eliminationsMap.forEach((candidatesToRemove, cellKey) => {
                 const [row, col] = cellKey.split(',').map(Number);
                 const targetCell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
@@ -1314,7 +1434,6 @@
                     if (notesHtml) {
                         targetCell.innerHTML = `<div class="notes">${notesHtml}</div>`;
                     }
-                    // Don't add any highlighting class to elimination cells
                 }
             });
 
@@ -1330,9 +1449,7 @@
                 </div>
             `;
         } else {
-            // No technique found - determine why
             if (notesAnalysis && notesAnalysis.hasInsufficientNotes) {
-                // Not enough notes - encourage user to add more
                 html = `
                     <div class="technique">
                         <h4>📝 Insufficient Notes</h4>
@@ -1354,7 +1471,6 @@
                     </div>
                 `;
             } else {
-                // Sufficient notes but advanced techniques required
                 const gridForWiki = formatGridForSudokuWiki();
                 
                 html = `
@@ -1384,9 +1500,8 @@
         document.getElementById('analysisResult').innerHTML = html;
     }
 
-    // Initialize on page load
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('Sudoku Assistant v2.6 started');
+        console.log('Sudoku Assistant v2.7 started');
         showLoading('Loading data...');
         
         setTimeout(() => {
