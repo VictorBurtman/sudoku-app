@@ -701,8 +701,8 @@
 
         let html = `
             <div class="move-suggestion" style="background: #f44336;">
-                <h4>⚠️ Notes invalides détectées</h4>
-                <p>Certaines notes contiennent des candidats impossibles.</p>
+                <h4>⚠️ Invalid Notes Detected</h4>
+                <p>Some notes contain impossible candidates.</p>
                 <div style="margin-top: 12px; text-align: left;">
         `;
 
@@ -711,15 +711,15 @@
             html += `
                 <p style="margin: 8px 0;">
                     <strong>R${noteInfo.row+1}C${noteInfo.col+1}:</strong> 
-                    Supprimer ${invalidList}
-                    ${noteInfo.invalidCandidates.length === 1 ? ' (déjà présent dans la ligne/colonne/boîte)' : ' (déjà présents dans la ligne/colonne/boîte)'}
+                    Remove ${invalidList}
+                    ${noteInfo.invalidCandidates.length === 1 ? ' (already present in row/column/box)' : ' (already present in row/column/box)'}
                 </p>
             `;
         });
 
         html += `
                 </div>
-                <p style="margin-top: 12px;"><em>Corrigez ces notes avant de continuer l'analyse.</em></p>
+                <p style="margin-top: 12px;"><em>Fix these notes before continuing the analysis.</em></p>
             </div>
         `;
 
