@@ -637,6 +637,405 @@
         return null;
     }
 
+    function findPointingPairs() {
+        for (let boxNum = 0; boxNum < 9; boxNum++) {
+            const boxIndices = getBoxIndices(boxNum);
+            
+            for (let num = 1; num <= 9; num++) {
+                const positions = boxIndices.filter(([r, c]) => {
+                    const notes = notesGrid[r][c] || [];
+                    return currentGrid[r][c] === 0 && notes.includes(num);
+                });
+
+                if (positions.length === 0 || positions.length > 3) continue;
+
+                const rows = [...new Set(positions.map(([r, c]) => r))];
+                if (rows.length === 1) {
+                    const row = rows[0];
+                    let eliminationDetails = [];
+                    let eliminationCells = [];
+                    
+                    for (let col = 0; col < 9; col++) {
+                        const cellBox = getBoxNumber(row, col);
+                        const notes = notesGrid[row][col] || [];
+                        if (cellBox !== boxNum && currentGrid[row][col] === 0 && notes.includes(num)) {
+                            eliminationDetails.push(`R${row+1}C${col+1}: remove ${num}`);
+                            eliminationCells.push({row, col});
+                        }
+                    }
+                    
+                    if (eliminationDetails.length > 0) {
+                        return {
+                            type: 'elimination',
+                            cells: positions.map(([r, c]) => ({row: r, col: c})),
+                            values: [num],
+                            explanation: `Pointing Pair: ${num} in Box ${boxNum + 1} restricted to Row ${row + 1}`,
+                            reasoning: `All candidates for ${num} in Box ${boxNum + 1} are in Row ${row + 1}, so ${num} can be eliminated from other cells in this row.`,
+                            eliminations: eliminationDetails,
+                            eliminationCells: eliminationCells
+                        };
+                    }
+                }
+
+                const cols = [...new Set(positions.map(([r, c]) => c))];
+                if (cols.length === 1) {
+                    const col = cols[0];
+                    let eliminationDetails = [];
+                    let eliminationCells = [];
+                    
+                    for (let row = 0; row < 9; row++) {
+                        const cellBox = getBoxNumber(row, col);
+                        const notes = notesGrid[row][col] || [];
+                        if (cellBox !== boxNum && currentGrid[row][col] === 0 && notes.includes(num)) {
+                            eliminationDetails.push(`R${row+1}C${col+1}: remove ${num}`);
+                            eliminationCells.push({row, col});
+                        }
+                    }
+                    
+                    if (eliminationDetails.length > 0) {
+                        return {
+                            type: 'elimination',
+                            cells: positions.map(([r, c]) => ({row: r, col: c})),
+                            values: [num],
+                            explanation: `Pointing Pair: ${num} in Box ${boxNum + 1} restricted to Column ${col + 1}`,
+                            reasoning: `All candidates for ${num} in Box ${boxNum + 1} are in Column ${col + 1}, so ${num} can be eliminated from other cells in this column.`,
+                            eliminations: eliminationDetails,
+                            eliminationCells: eliminationCells
+                        };
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    function findRectangleElimination() {
+        for (let r1 = 0; r1 < 8; r1++) {
+            for (let c1 = 0; c1 < 8; c1++) {
+                const notes1 = notesGrid[r1][c1] || [];
+                if (currentGrid[r1][c1] !== 0 || notes1.length < 2) continue;
+
+                for (let a = 0; a < notes1.length - 1; a++) {
+                    for (let b = a + 1; b < notes1.length; b++) {
+                        const val1 = notes1[a], val2 = notes1[b];
+                        
+                        for (let r2 = r1 + 1; r2 < 9; r2++) {
+                            for (let c2 = c1 + 1; c2 < 9; c2++) {
+                                if (getBoxNumber(r1, c1) === getBoxNumber(r2, c2)) continue;
+                                if (getBoxNumber(r1, c2) === getBoxNumber(r2, c1)) continue;
+
+                                const corners = [
+                                    [r1, c1], [r1, c2], [r2, c1], [r2, c2]
+                                ];
+
+                                let exactMatch = 0;
+                                let roofCorners = [];
+
+                                for (const [r, c] of corners) {
+                                    const candidates = notesGrid[r][c] || [];
+                                    if (currentGrid[r][c] !== 0) continue;
+                                    
+                                    if (candidates.length === 2 && 
+                                        candidates.includes(val1) && 
+                                        candidates.includes(val2)) {
+                                        exactMatch++;
+                                    } else if (candidates.length > 2 &&
+                                               candidates.includes(val1) && 
+                                               candidates.includes(val2)) {
+                                        roofCorners.push([r, c]);
+                                    }
+                                }
+
+                                if (exactMatch === 3 && roofCorners.length === 1) {
+                                    const [roofR, roofC] = roofCorners[0];
+                                    const roofCandidates = notesGrid[roofR][roofC] || [];
+                                    const eliminationDetails = [];
+
+                                    for (const val of [val1, val2]) {
+                                        if (roofCandidates.includes(val)) {
+                                            eliminationDetails.push(`R${roofR+1}C${roofC+1}: remove ${val}`);
+                                        }
+                                    }
+
+                                    if (eliminationDetails.length > 0) {
+                                        return {
+                                            type: 'elimination',
+                                            cells: corners.map(([r, c]) => ({row: r, col: c})),
+                                            values: [val1, val2],
+                                            explanation: `Unique Rectangle Type 1: corners at ${corners.map(([r,c]) => `R${r+1}C${c+1}`).join(', ')}`,
+                                            reasoning: `To avoid a deadly pattern with ${val1}/${val2}, the roof cell R${roofR+1}C${roofC+1} cannot be ${val1} or ${val2}.`,
+                                            eliminations: eliminationDetails,
+                                            eliminationCells: [{row: roofR, col: roofC}]
+                                        };
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    function findNakedPairs() {
+        const pairCells = [];
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                if (currentGrid[r][c] === 0) {
+                    const userNotes = notesGrid[r][c] || [];
+                    if (userNotes.length === 2) {
+                        pairCells.push({row: r, col: c, notes: userNotes});
+                    }
+                }
+            }
+        }
+
+        let bestPair = null;
+        let maxEliminations = 0;
+
+        for (let i = 0; i < pairCells.length - 1; i++) {
+            for (let j = i + 1; j < pairCells.length; j++) {
+                const cell1 = pairCells[i];
+                const cell2 = pairCells[j];
+                
+                if (JSON.stringify(cell1.notes.sort()) === JSON.stringify(cell2.notes.sort())) {
+                    const pair = cell1.notes;
+                    let eliminationCells = new Set();
+                    let units = [];
+                    
+                    if (cell1.row === cell2.row) {
+                        const r = cell1.row;
+                        units.push(`row ${r+1}`);
+                        for (let c = 0; c < 9; c++) {
+                            if (c !== cell1.col && c !== cell2.col && currentGrid[r][c] === 0) {
+                                const userNotes = notesGrid[r][c] || [];
+                                const candidatesToEliminate = userNotes.filter(num => pair.includes(num));
+                                if (candidatesToEliminate.length > 0) {
+                                    eliminationCells.add(`R${r+1}C${c+1}: remove ${candidatesToEliminate.join(', ')}`);
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (cell1.col === cell2.col) {
+                        const c = cell1.col;
+                        units.push(`column ${c+1}`);
+                        for (let r = 0; r < 9; r++) {
+                            if (r !== cell1.row && r !== cell2.row && currentGrid[r][c] === 0) {
+                                const userNotes = notesGrid[r][c] || [];
+                                const candidatesToEliminate = userNotes.filter(num => pair.includes(num));
+                                if (candidatesToEliminate.length > 0) {
+                                    eliminationCells.add(`R${r+1}C${c+1}: remove ${candidatesToEliminate.join(', ')}`);
+                                }
+                            }
+                        }
+                    }
+                    
+                    const box1R = Math.floor(cell1.row / 3);
+                    const box1C = Math.floor(cell1.col / 3);
+                    const box2R = Math.floor(cell2.row / 3);
+                    const box2C = Math.floor(cell2.col / 3);
+                    
+                    if (box1R === box2R && box1C === box2C) {
+                        units.push(`box ${box1R + 1}.${box1C + 1}`);
+                        for (let r = box1R * 3; r < (box1R + 1) * 3; r++) {
+                            for (let c = box1C * 3; c < (box1C + 1) * 3; c++) {
+                                if ((r !== cell1.row || c !== cell1.col) && 
+                                    (r !== cell2.row || c !== cell2.col) && 
+                                    currentGrid[r][c] === 0) {
+                                    const userNotes = notesGrid[r][c] || [];
+                                    const candidatesToEliminate = userNotes.filter(num => pair.includes(num));
+                                    if (candidatesToEliminate.length > 0) {
+                                        eliminationCells.add(`R${r+1}C${c+1}: remove ${candidatesToEliminate.join(', ')}`);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    
+                    if (eliminationCells.size > maxEliminations) {
+                        maxEliminations = eliminationCells.size;
+                        const eliminationDetails = Array.from(eliminationCells).sort();
+                        const unitsText = units.length === 1 ? units[0] : units.join(' and ');
+                        bestPair = {
+                            type: 'elimination',
+                            cells: [{row: cell1.row, col: cell1.col}, {row: cell2.row, col: cell2.col}],
+                            values: pair,
+                            explanation: `Naked pair ${pair.join('/')} found at R${cell1.row+1}C${cell1.col+1} and R${cell2.row+1}C${cell2.col+1} in ${unitsText}.`,
+                            reasoning: `These two cells can only contain ${pair.join(' or ')}, so eliminate ${pair.join(' and ')} from other cells in the affected unit(s).`,
+                            eliminations: eliminationDetails
+                        };
+                    }
+                }
+            }
+        }
+
+        return bestPair;
+    }
+
+    function findHiddenPairs() {
+        for (let c = 0; c < 9; c++) {
+            for (let digit1 = 1; digit1 <= 8; digit1++) {
+                for (let digit2 = digit1 + 1; digit2 <= 9; digit2++) {
+                    const cellsWithDigit1 = [];
+                    const cellsWithDigit2 = [];
+                    
+                    for (let r = 0; r < 9; r++) {
+                        if (currentGrid[r][c] === 0) {
+                            const userNotes = notesGrid[r][c] || [];
+                            if (userNotes.includes(digit1)) {
+                                cellsWithDigit1.push(r);
+                            }
+                            if (userNotes.includes(digit2)) {
+                                cellsWithDigit2.push(r);
+                            }
+                        }
+                    }
+                    
+                    if (cellsWithDigit1.length === 2 && cellsWithDigit2.length === 2 &&
+                        cellsWithDigit1[0] === cellsWithDigit2[0] && cellsWithDigit1[1] === cellsWithDigit2[1]) {
+                        
+                        const row1 = cellsWithDigit1[0];
+                        const row2 = cellsWithDigit1[1];
+                        
+                        let canEliminate = false;
+                        let eliminationDetails = [];
+                        
+                        for (const row of [row1, row2]) {
+                            const userNotes = notesGrid[row][c] || [];
+                            const candidatesToEliminate = userNotes.filter(num => num !== digit1 && num !== digit2);
+                            if (candidatesToEliminate.length > 0) {
+                                canEliminate = true;
+                                eliminationDetails.push(`R${row+1}C${c+1}: remove ${candidatesToEliminate.join(', ')}`);
+                            }
+                        }
+                        
+                        if (canEliminate) {
+                            return {
+                                type: 'elimination',
+                                cells: [{row: row1, col: c}, {row: row2, col: c}],
+                                values: [digit1, digit2],
+                                explanation: `Hidden pair ${digit1}/${digit2} found at R${row1+1}C${c+1} and R${row2+1}C${c+1} in column ${c+1}.`,
+                                reasoning: `These digits can only appear in these two cells in this column, so eliminate all other candidates from these cells.`,
+                                eliminations: eliminationDetails
+                            };
+                        }
+                    }
+                }
+            }
+        }
+
+        for (let r = 0; r < 9; r++) {
+            for (let digit1 = 1; digit1 <= 8; digit1++) {
+                for (let digit2 = digit1 + 1; digit2 <= 9; digit2++) {
+                    const cellsWithDigit1 = [];
+                    const cellsWithDigit2 = [];
+                    
+                    for (let c = 0; c < 9; c++) {
+                        if (currentGrid[r][c] === 0) {
+                            const userNotes = notesGrid[r][c] || [];
+                            if (userNotes.includes(digit1)) {
+                                cellsWithDigit1.push(c);
+                            }
+                            if (userNotes.includes(digit2)) {
+                                cellsWithDigit2.push(c);
+                            }
+                        }
+                    }
+                    
+                    if (cellsWithDigit1.length === 2 && cellsWithDigit2.length === 2 &&
+                        cellsWithDigit1[0] === cellsWithDigit2[0] && cellsWithDigit1[1] === cellsWithDigit2[1]) {
+                        
+                        const col1 = cellsWithDigit1[0];
+                        const col2 = cellsWithDigit1[1];
+                        
+                        let canEliminate = false;
+                        let eliminationDetails = [];
+                        
+                        for (const col of [col1, col2]) {
+                            const userNotes = notesGrid[r][col] || [];
+                            const candidatesToEliminate = userNotes.filter(num => num !== digit1 && num !== digit2);
+                            if (candidatesToEliminate.length > 0) {
+                                canEliminate = true;
+                                eliminationDetails.push(`R${r+1}C${col+1}: remove ${candidatesToEliminate.join(', ')}`);
+                            }
+                        }
+                        
+                        if (canEliminate) {
+                            return {
+                                type: 'elimination',
+                                cells: [{row: r, col: col1}, {row: r, col: col2}],
+                                values: [digit1, digit2],
+                                explanation: `Hidden pair ${digit1}/${digit2} found at R${r+1}C${col1+1} and R${r+1}C${col2+1} in row ${r+1}.`,
+                                reasoning: `These digits can only appear in these two cells in this row, so eliminate all other candidates from these cells.`,
+                                eliminations: eliminationDetails
+                            };
+                        }
+                    }
+                }
+            }
+        }
+
+        for (let boxR = 0; boxR < 3; boxR++) {
+            for (let boxC = 0; boxC < 3; boxC++) {
+                for (let digit1 = 1; digit1 <= 8; digit1++) {
+                    for (let digit2 = digit1 + 1; digit2 <= 9; digit2++) {
+                        const cellsWithDigit1 = [];
+                        const cellsWithDigit2 = [];
+                        
+                        for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
+                            for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
+                                if (currentGrid[r][c] === 0) {
+                                    const userNotes = notesGrid[r][c] || [];
+                                    if (userNotes.includes(digit1)) {
+                                        cellsWithDigit1.push({row: r, col: c});
+                                    }
+                                    if (userNotes.includes(digit2)) {
+                                        cellsWithDigit2.push({row: r, col: c});
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if (cellsWithDigit1.length === 2 && cellsWithDigit2.length === 2 &&
+                            cellsWithDigit1[0].row === cellsWithDigit2[0].row && cellsWithDigit1[0].col === cellsWithDigit2[0].col &&
+                            cellsWithDigit1[1].row === cellsWithDigit2[1].row && cellsWithDigit1[1].col === cellsWithDigit2[1].col) {
+                            
+                            const cell1 = cellsWithDigit1[0];
+                            const cell2 = cellsWithDigit1[1];
+                            
+                            let canEliminate = false;
+                            let eliminationDetails = [];
+                            
+                            for (const cell of [cell1, cell2]) {
+                                const userNotes = notesGrid[cell.row][cell.col] || [];
+                                const candidatesToEliminate = userNotes.filter(num => num !== digit1 && num !== digit2);
+                                if (candidatesToEliminate.length > 0) {
+                                    canEliminate = true;
+                                    eliminationDetails.push(`R${cell.row+1}C${cell.col+1}: remove ${candidatesToEliminate.join(', ')}`);
+                                }
+                            }
+                            
+                            if (canEliminate) {
+                                return {
+                                    type: 'elimination',
+                                    cells: [{row: cell1.row, col: cell1.col}, {row: cell2.row, col: cell2.col}],
+                                    values: [digit1, digit2],
+                                    explanation: `Hidden pair ${digit1}/${digit2} found at R${cell1.row+1}C${cell1.col+1} and R${cell2.row+1}C${cell2.col+1} in box ${boxR + 1}.${boxC + 1}.`,
+                                    reasoning: `These digits can only appear in these two cells in this box, so eliminate all other candidates from these cells.`,
+                                    eliminations: eliminationDetails
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
     function findNakedTriples() {
         function isNakedTripleFromNotes(cells) {
             const allCandidates = new Set();
@@ -660,7 +1059,6 @@
             return tripleValues;
         }
 
-        // Check rows
         for (let r = 0; r < 9; r++) {
             const rowCells = [];
             for (let c = 0; c < 9; c++) {
@@ -709,7 +1107,6 @@
             }
         }
 
-        // Check columns
         for (let c = 0; c < 9; c++) {
             const colCells = [];
             for (let r = 0; r < 9; r++) {
@@ -758,7 +1155,6 @@
             }
         }
 
-        // Check boxes
         for (let boxR = 0; boxR < 3; boxR++) {
             for (let boxC = 0; boxC < 3; boxC++) {
                 const boxCells = [];
@@ -817,6 +1213,197 @@
         return null;
     }
 
+    function findXWing() {
+        for (let digit = 1; digit <= 9; digit++) {
+            const rowsWithTwo = [];
+            for (let r = 0; r < 9; r++) {
+                const cols = [];
+                for (let c = 0; c < 9; c++) {
+                    if (currentGrid[r][c] === 0 && (notesGrid[r][c] || []).includes(digit)) {
+                        cols.push(c);
+                    }
+                }
+                if (cols.length === 2) {
+                    rowsWithTwo.push({ row: r, cols: cols });
+                }
+            }
+            
+            if (rowsWithTwo.length >= 2) {
+                for (let i = 0; i < rowsWithTwo.length; i++) {
+                    for (let j = i + 1; j < rowsWithTwo.length; j++) {
+                        const row1 = rowsWithTwo[i], row2 = rowsWithTwo[j];
+                        if (row1.cols.toString() === row2.cols.toString()) {
+                            const [c1, c2] = row1.cols, [r1, r2] = [row1.row, row2.row];
+                            let eliminations = [];
+                            let eliminationDetails = [];
+                            
+                            for (const c of [c1, c2]) {
+                                for (let r = 0; r < 9; r++) {
+                                    if (r !== r1 && r !== r2 && currentGrid[r][c] === 0 && (notesGrid[r][c] || []).includes(digit)) {
+                                        eliminations.push({ r, c, val: digit });
+                                        eliminationDetails.push(`R${r+1}C${c+1}: remove ${digit}`);
+                                    }
+                                }
+                            }
+                            
+                            if (eliminations.length > 0) {
+                                return {
+                                    type: 'elimination',
+                                    cells: [{row: r1, col: c1}, {row: r1, col: c2}, {row: r2, col: c1}, {row: r2, col: c2}],
+                                    values: [digit],
+                                    explanation: `Row-based X-Wing on digit ${digit}.`,
+                                    reasoning: `Rows ${r1 + 1} & ${r2 + 1} form a pattern, removing ${digit} from other cells in columns ${c1 + 1} & ${c2 + 1}.`,
+                                    eliminations: eliminationDetails
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+            
+            const colsWithTwo = [];
+            for (let c = 0; c < 9; c++) {
+                const rows = [];
+                for (let r = 0; r < 9; r++) {
+                    if (currentGrid[r][c] === 0 && (notesGrid[r][c] || []).includes(digit)) {
+                        rows.push(r);
+                    }
+                }
+                if (rows.length === 2) {
+                    colsWithTwo.push({ col: c, rows: rows });
+                }
+            }
+            
+            if (colsWithTwo.length >= 2) {
+                for (let i = 0; i < colsWithTwo.length; i++) {
+                    for (let j = i + 1; j < colsWithTwo.length; j++) {
+                        const col1 = colsWithTwo[i], col2 = colsWithTwo[j];
+                        if (col1.rows.toString() === col2.rows.toString()) {
+                            const [r1, r2] = col1.rows, [c1, c2] = [col1.col, col2.col];
+                            let eliminations = [];
+                            let eliminationDetails = [];
+                            
+                            for (const r of [r1, r2]) {
+                                for (let c = 0; c < 9; c++) {
+                                    if (c !== c1 && c !== c2 && currentGrid[r][c] === 0 && (notesGrid[r][c] || []).includes(digit)) {
+                                        eliminations.push({ r, c, val: digit });
+                                        eliminationDetails.push(`R${r+1}C${c+1}: remove ${digit}`);
+                                    }
+                                }
+                            }
+                            
+                            if (eliminations.length > 0) {
+                                return {
+                                    type: 'elimination',
+                                    cells: [{row: r1, col: c1}, {row: r1, col: c2}, {row: r2, col: c1}, {row: r2, col: c2}],
+                                    values: [digit],
+                                    explanation: `Column-based X-Wing on digit ${digit}.`,
+                                    reasoning: `Columns ${c1 + 1} & ${c2 + 1} form a pattern, removing ${digit} from other cells in rows ${r1 + 1} & ${r2 + 1}.`,
+                                    eliminations: eliminationDetails
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    function findRemotePairs() {
+        const pairCells = [];
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                if (currentGrid[r][c] === 0 && (notesGrid[r][c] || []).length === 2) {
+                    pairCells.push({ r, c, notes: notesGrid[r][c] });
+                }
+            }
+        }
+        
+        const pairs = {};
+        pairCells.forEach(cell => {
+            const key = [...cell.notes].sort().join(',');
+            if (!pairs[key]) pairs[key] = [];
+            pairs[key].push(cell);
+        });
+        
+        const sees = (c1, c2) => {
+            if (c1.r === c2.r && c1.c === c2.c) return false;
+            if (c1.r === c2.r || c1.c === c2.c) return true;
+            return Math.floor(c1.r / 3) === Math.floor(c2.r / 3) && Math.floor(c1.c / 3) === Math.floor(c2.c / 3);
+        };
+        
+        for (const key in pairs) {
+            const group = pairs[key];
+            if (group.length < 3) continue;
+            
+            const adj = new Map(group.map(cell => [`${cell.r},${cell.c}`, []]));
+            for (let i = 0; i < group.length; i++) {
+                for (let j = i + 1; j < group.length; j++) {
+                    if (sees(group[i], group[j])) {
+                        adj.get(`${group[i].r},${group[i].c}`).push(group[j]);
+                        adj.get(`${group[j].r},${group[j].c}`).push(group[i]);
+                    }
+                }
+            }
+            
+            for (let i = 0; i < group.length; i++) {
+                const startNode = group[i];
+                const queue = [[startNode, [startNode]]];
+                const visited = new Set([`${startNode.r},${startNode.c}`]);
+                
+                while (queue.length > 0) {
+                    const [current, path] = queue.shift();
+                    if (path.length >= 2) {
+                        const endNode = current;
+                        const [d1, d2] = key.split(',').map(Number);
+                        let eliminations = [];
+                        let eliminationDetails = [];
+                        const pathCoords = new Set(path.map(p => `${p.r},${p.c}`));
+                        
+                        for (let r = 0; r < 9; r++) {
+                            for (let c = 0; c < 9; c++) {
+                                if (pathCoords.has(`${r},${c}`)) continue;
+                                const checkCell = { r, c };
+                                if (currentGrid[r][c] === 0 && sees(checkCell, startNode) && sees(checkCell, endNode)) {
+                                    const notes = notesGrid[r][c] || [];
+                                    if (notes.includes(d1)) {
+                                        eliminations.push({ r, c, val: d1 });
+                                        eliminationDetails.push(`R${r+1}C${c+1}: remove ${d1}`);
+                                    }
+                                    if (notes.includes(d2)) {
+                                        eliminations.push({ r, c, val: d2 });
+                                        eliminationDetails.push(`R${r+1}C${c+1}: remove ${d2}`);
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if (eliminations.length > 0) {
+                            return {
+                                type: 'elimination',
+                                cells: path.map(p => ({row: p.r, col: p.c})),
+                                values: [d1, d2],
+                                explanation: `Remote Pair chain on {${key}} of length ${path.length}.`,
+                                reasoning: `Any cell seeing both ends of the chain cannot contain ${d1} or ${d2}.`,
+                                eliminations: eliminationDetails
+                            };
+                        }
+                    }
+                    
+                    const neighbors = adj.get(`${current.r},${current.c}`);
+                    for (const neighbor of neighbors) {
+                        if (!visited.has(`${neighbor.r},${neighbor.c}`)) {
+                            visited.add(`${neighbor.r},${neighbor.c}`);
+                            queue.push([neighbor, [...path, neighbor]]);
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     function performAnalysis() {
         console.log('Performing analysis...');
 
@@ -846,9 +1433,45 @@
         const notesAnalysis = analyzeNotesCompleteness();
         
         if (notesAnalysis.cellsWithNotes > 0) {
+            const pointingPairs = findPointingPairs();
+            if (pointingPairs) {
+                displayAnalysis("Pointing Pairs", pointingPairs);
+                return;
+            }
+
+            const nakedPair = findNakedPairs();
+            if (nakedPair) {
+                displayAnalysis("Naked Pairs", nakedPair);
+                return;
+            }
+
+            const hiddenPair = findHiddenPairs();
+            if (hiddenPair) {
+                displayAnalysis("Hidden Pairs", hiddenPair);
+                return;
+            }
+
             const nakedTriple = findNakedTriples();
             if (nakedTriple) {
                 displayAnalysis("Naked Triples", nakedTriple);
+                return;
+            }
+
+            const rectangleElim = findRectangleElimination();
+            if (rectangleElim) {
+                displayAnalysis("Rectangle Elimination", rectangleElim);
+                return;
+            }
+
+            const xWing = findXWing();
+            if (xWing) {
+                displayAnalysis("X-Wing", xWing);
+                return;
+            }
+
+            const remotePairs = findRemotePairs();
+            if (remotePairs) {
+                displayAnalysis("Remote Pairs", remotePairs);
                 return;
             }
         }
