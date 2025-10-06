@@ -1702,11 +1702,12 @@
                 return;
             }
 
-            const simpleColoring = findSimpleColoring();
-            if (simpleColoring) {
-                displayAnalysis("Simple Coloring", simpleColoring);
-                return;
-            }
+            // Simple Coloring temporairement désactivé (bugs de validation)
+            // const simpleColoring = findSimpleColoring();
+            // if (simpleColoring) {
+            //     displayAnalysis("Simple Coloring", simpleColoring);
+            //     return;
+            // }
         }
 
         displayAnalysis(null, null, notesAnalysis);
