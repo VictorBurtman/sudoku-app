@@ -104,10 +104,10 @@
             opacity: 0.8;
         }
 
-        .cell.suggested-value {
-            color: #2196f3 !important;
-            font-size: 18px;
-            font-weight: bold;
+        .cell.highlighted-elimination {
+            background: #f44336 !important;
+            color: #ffffff;
+            opacity: 0.7;
         }
 
         @keyframes pulse {
@@ -122,12 +122,6 @@
             font-size: 6px;
             color: #ffffff;
             line-height: 1;
-        }
-
-        .notes .candidate-to-remove {
-            color: #f44336;
-            text-decoration: line-through;
-            font-weight: bold;
         }
 
         .analysis-section {
@@ -440,58 +434,10 @@
         return candidates;
     }
 
-    // Nouvelle fonction pour analyser la complétude des notes
-    function analyzeNotesCompleteness() {
-        let emptyCells = 0;
-        let cellsWithNotes = 0;
-        let cellsWithFewNotes = 0;
-        let totalCandidates = 0;
-        
-        for (let r = 0; r < 9; r++) {
-            for (let c = 0; c < 9; c++) {
-                if (currentGrid[r][c] === 0) {
-                    emptyCells++;
-                    const userNotes = notesGrid[r][c] || [];
-                    
-                    if (userNotes.length > 0) {
-                        cellsWithNotes++;
-                        totalCandidates += userNotes.length;
-                        
-                        // Compter les cellules avec très peu de candidats possibles
-                        const possibleCandidates = [];
-                        for (let num = 1; num <= 9; num++) {
-                            if (isValidPlacement(r, c, num)) {
-                                possibleCandidates.push(num);
-                            }
-                        }
-                        
-                        // Si l'utilisateur a noté moins de candidats qu'il n'y en a réellement
-                        if (userNotes.length < possibleCandidates.length - 1) {
-                            cellsWithFewNotes++;
-                        }
-                    }
-                }
-            }
-        }
-        
-        const percentageWithNotes = emptyCells > 0 ? (cellsWithNotes / emptyCells) * 100 : 100;
-        const averageCandidatesPerCell = cellsWithNotes > 0 ? totalCandidates / cellsWithNotes : 0;
-        
-        return {
-            emptyCells,
-            cellsWithNotes,
-            cellsWithFewNotes,
-            percentageWithNotes,
-            averageCandidatesPerCell,
-            hasInsufficientNotes: percentageWithNotes < 70 || cellsWithFewNotes > emptyCells * 0.3
-        };
-    }
-
     function findLastPossibleNumber() {
         for (let r = 0; r < 9; r++) {
             for (let c = 0; c < 9; c++) {
                 if (currentGrid[r][c] === 0) {
-                    // Always calculate actual possible numbers first
                     const possibleNumbers = [];
                     for (let num = 1; num <= 9; num++) {
                         if (isValidPlacement(r, c, num)) {
@@ -499,29 +445,14 @@
                         }
                     }
                     
-                    // If there's exactly one valid placement, that's the answer
                     if (possibleNumbers.length === 1) {
-                        const correctValue = possibleNumbers[0];
-                        const userNotes = notesGrid[r][c] || [];
-                        
-                        // Check if user notes match the correct answer
-                        if (userNotes.length === 1 && userNotes[0] === correctValue) {
-                            return {
-                                row: r,
-                                col: c,
-                                value: correctValue,
-                                explanation: `Cell R${r+1}C${c+1} has only one candidate: ${correctValue}.`,
-                                reasoning: `Based on your notes, this cell can only contain ${correctValue}.`
-                            };
-                        } else {
-                            return {
-                                row: r,
-                                col: c,
-                                value: correctValue,
-                                explanation: `Cell R${r+1}C${c+1} can only contain digit ${correctValue}.`,
-                                reasoning: `All other digits already appear in its row, column, or 3x3 box.`
-                            };
-                        }
+                        return {
+                            row: r,
+                            col: c,
+                            value: possibleNumbers[0],
+                            explanation: `Cell R${r+1}C${c+1} can only contain digit ${possibleNumbers[0]}.`,
+                            reasoning: `All other digits already appear in its row, column, or 3x3 box.`
+                        };
                     }
                 }
             }
@@ -530,25 +461,6 @@
     }
 
     function findHiddenSingle() {
-        // Function to get candidates for a cell (user notes first, then automatic calculation)
-        function getCandidates(row, col) {
-            if (currentGrid[row][col] !== 0) return [];
-            
-            const userNotes = notesGrid[row][col] || [];
-            if (userNotes.length > 0) {
-                return userNotes;
-            }
-            
-            // Fallback to automatic calculation
-            const candidates = [];
-            for (let num = 1; num <= 9; num++) {
-                if (isValidPlacement(row, col, num)) {
-                    candidates.push(num);
-                }
-            }
-            return candidates;
-        }
-
         // Check 3x3 boxes first
         for (let boxR = 0; boxR < 3; boxR++) {
             for (let boxC = 0; boxC < 3; boxC++) {
@@ -562,8 +474,7 @@
                                 digitFound = true;
                                 break;
                             }
-                            const candidates = getCandidates(r, c);
-                            if (candidates.includes(digit)) {
+                            if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
                                 possibleCells.push({r, c});
                             }
                         }
@@ -590,8 +501,7 @@
                 
                 const possibleCols = [];
                 for (let c = 0; c < 9; c++) {
-                    const candidates = getCandidates(r, c);
-                    if (candidates.includes(digit)) {
+                    if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
                         possibleCols.push(c);
                     }
                 }
@@ -615,8 +525,7 @@
                 
                 const possibleRows = [];
                 for (let r = 0; r < 9; r++) {
-                    const candidates = getCandidates(r, c);
-                    if (candidates.includes(digit)) {
+                    if (currentGrid[r][c] === 0 && isValidPlacement(r, c, digit)) {
                         possibleRows.push(r);
                     }
                 }
@@ -637,106 +546,172 @@
     }
 
     function findNakedPairs() {
-        // Find all cells with exactly 2 candidates
-        const pairCells = [];
+        // Check rows using user notes
         for (let r = 0; r < 9; r++) {
+            const rowCells = [];
             for (let c = 0; c < 9; c++) {
                 if (currentGrid[r][c] === 0) {
                     const userNotes = notesGrid[r][c] || [];
                     if (userNotes.length === 2) {
-                        pairCells.push({row: r, col: c, notes: userNotes});
+                        rowCells.push({row: r, col: c, notes: userNotes});
                     }
                 }
             }
-        }
-
-        let bestPair = null;
-        let maxEliminations = 0;
-
-        // Check all combinations of 2 cells to find naked pairs
-        for (let i = 0; i < pairCells.length - 1; i++) {
-            for (let j = i + 1; j < pairCells.length; j++) {
-                const cell1 = pairCells[i];
-                const cell2 = pairCells[j];
-                
-                // Check if both cells have exactly the same 2 candidates
-                if (JSON.stringify(cell1.notes.sort()) === JSON.stringify(cell2.notes.sort())) {
-                    const pair = cell1.notes;
-                    let eliminationCells = new Set(); // Use Set to avoid duplicates
-                    let units = [];
+            
+            // Check all combinations of 2 cells
+            for (let i = 0; i < rowCells.length - 1; i++) {
+                for (let j = i + 1; j < rowCells.length; j++) {
+                    const cell1 = rowCells[i];
+                    const cell2 = rowCells[j];
                     
-                    // Check if they're in the same row
-                    if (cell1.row === cell2.row) {
-                        const r = cell1.row;
-                        units.push(`row ${r+1}`);
+                    // Check if both cells have exactly the same 2 candidates
+                    if (JSON.stringify(cell1.notes.sort()) === JSON.stringify(cell2.notes.sort())) {
+                        const pair = cell1.notes;
+                        
+                        // Check if we can eliminate from other cells in this row
+                        let canEliminate = false;
+                        let eliminationDetails = [];
+                        
                         for (let c = 0; c < 9; c++) {
                             if (c !== cell1.col && c !== cell2.col && currentGrid[r][c] === 0) {
                                 const userNotes = notesGrid[r][c] || [];
                                 const candidatesToEliminate = userNotes.filter(num => pair.includes(num));
                                 if (candidatesToEliminate.length > 0) {
-                                    eliminationCells.add(`R${r+1}C${c+1}: remove ${candidatesToEliminate.join(', ')}`);
+                                    canEliminate = true;
+                                    eliminationDetails.push(`R${r+1}C${c+1}: remove ${candidatesToEliminate.join(', ')}`);
                                 }
                             }
                         }
-                    }
-                    
-                    // Check if they're in the same column
-                    if (cell1.col === cell2.col) {
-                        const c = cell1.col;
-                        units.push(`column ${c+1}`);
-                        for (let r = 0; r < 9; r++) {
-                            if (r !== cell1.row && r !== cell2.row && currentGrid[r][c] === 0) {
-                                const userNotes = notesGrid[r][c] || [];
-                                const candidatesToEliminate = userNotes.filter(num => pair.includes(num));
-                                if (candidatesToEliminate.length > 0) {
-                                    eliminationCells.add(`R${r+1}C${c+1}: remove ${candidatesToEliminate.join(', ')}`);
-                                }
-                            }
+                        
+                        if (canEliminate) {
+                            return {
+                                type: 'elimination',
+                                cells: [{row: cell1.row, col: cell1.col}, {row: cell2.row, col: cell2.col}],
+                                values: pair,
+                                explanation: `Naked pair ${pair.join('/')} found at R${cell1.row+1}C${cell1.col+1} and R${cell2.row+1}C${cell2.col+1} in row ${r+1}.`,
+                                reasoning: `These two cells can only contain ${pair.join(' or ')}, so eliminate ${pair.join(' and ')} from other cells in row ${r+1}.`,
+                                eliminations: eliminationDetails
+                            };
                         }
-                    }
-                    
-                    // Check if they're in the same 3x3 box
-                    const box1R = Math.floor(cell1.row / 3);
-                    const box1C = Math.floor(cell1.col / 3);
-                    const box2R = Math.floor(cell2.row / 3);
-                    const box2C = Math.floor(cell2.col / 3);
-                    
-                    if (box1R === box2R && box1C === box2C) {
-                        units.push(`box ${box1R + 1}.${box1C + 1}`);
-                        for (let r = box1R * 3; r < (box1R + 1) * 3; r++) {
-                            for (let c = box1C * 3; c < (box1C + 1) * 3; c++) {
-                                if ((r !== cell1.row || c !== cell1.col) && 
-                                    (r !== cell2.row || c !== cell2.col) && 
-                                    currentGrid[r][c] === 0) {
-                                    const userNotes = notesGrid[r][c] || [];
-                                    const candidatesToEliminate = userNotes.filter(num => pair.includes(num));
-                                    if (candidatesToEliminate.length > 0) {
-                                        eliminationCells.add(`R${r+1}C${c+1}: remove ${candidatesToEliminate.join(', ')}`);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    
-                    // If this pair has more eliminations than the current best, save it
-                    if (eliminationCells.size > maxEliminations) {
-                        maxEliminations = eliminationCells.size;
-                        const eliminationDetails = Array.from(eliminationCells).sort();
-                        const unitsText = units.length === 1 ? units[0] : units.join(' and ');
-                        bestPair = {
-                            type: 'elimination',
-                            cells: [{row: cell1.row, col: cell1.col}, {row: cell2.row, col: cell2.col}],
-                            values: pair,
-                            explanation: `Naked pair ${pair.join('/')} found at R${cell1.row+1}C${cell1.col+1} and R${cell2.row+1}C${cell2.col+1} in ${unitsText}.`,
-                            reasoning: `These two cells can only contain ${pair.join(' or ')}, so eliminate ${pair.join(' and ')} from other cells in the affected unit(s).`,
-                            eliminations: eliminationDetails
-                        };
                     }
                 }
             }
         }
 
-        return bestPair;
+        // Check columns using user notes
+        for (let c = 0; c < 9; c++) {
+            const colCells = [];
+            for (let r = 0; r < 9; r++) {
+                if (currentGrid[r][c] === 0) {
+                    const userNotes = notesGrid[r][c] || [];
+                    if (userNotes.length === 2) {
+                        colCells.push({row: r, col: c, notes: userNotes});
+                    }
+                }
+            }
+            
+            // Check all combinations of 2 cells
+            for (let i = 0; i < colCells.length - 1; i++) {
+                for (let j = i + 1; j < colCells.length; j++) {
+                    const cell1 = colCells[i];
+                    const cell2 = colCells[j];
+                    
+                    // Check if both cells have exactly the same 2 candidates
+                    if (JSON.stringify(cell1.notes.sort()) === JSON.stringify(cell2.notes.sort())) {
+                        const pair = cell1.notes;
+                        
+                        // Check if we can eliminate from other cells in this column
+                        let canEliminate = false;
+                        let eliminationDetails = [];
+                        
+                        for (let r = 0; r < 9; r++) {
+                            if (r !== cell1.row && r !== cell2.row && currentGrid[r][c] === 0) {
+                                const userNotes = notesGrid[r][c] || [];
+                                const candidatesToEliminate = userNotes.filter(num => pair.includes(num));
+                                if (candidatesToEliminate.length > 0) {
+                                    canEliminate = true;
+                                    eliminationDetails.push(`R${r+1}C${c+1}: remove ${candidatesToEliminate.join(', ')}`);
+                                }
+                            }
+                        }
+                        
+                        if (canEliminate) {
+                            return {
+                                type: 'elimination',
+                                cells: [{row: cell1.row, col: cell1.col}, {row: cell2.row, col: cell2.col}],
+                                values: pair,
+                                explanation: `Naked pair ${pair.join('/')} found at R${cell1.row+1}C${cell1.col+1} and R${cell2.row+1}C${cell2.col+1} in column ${c+1}.`,
+                                reasoning: `These two cells can only contain ${pair.join(' or ')}, so eliminate ${pair.join(' and ')} from other cells in column ${c+1}.`,
+                                eliminations: eliminationDetails
+                            };
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check 3x3 boxes using user notes
+        for (let boxR = 0; boxR < 3; boxR++) {
+            for (let boxC = 0; boxC < 3; boxC++) {
+                const boxCells = [];
+                
+                for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
+                    for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
+                        if (currentGrid[r][c] === 0) {
+                            const userNotes = notesGrid[r][c] || [];
+                            if (userNotes.length === 2) {
+                                boxCells.push({row: r, col: c, notes: userNotes});
+                            }
+                        }
+                    }
+                }
+                
+                // Check all combinations of 2 cells
+                for (let i = 0; i < boxCells.length - 1; i++) {
+                    for (let j = i + 1; j < boxCells.length; j++) {
+                        const cell1 = boxCells[i];
+                        const cell2 = boxCells[j];
+                        
+                        // Check if both cells have exactly the same 2 candidates
+                        if (JSON.stringify(cell1.notes.sort()) === JSON.stringify(cell2.notes.sort())) {
+                            const pair = cell1.notes;
+                            
+                            // Check if we can eliminate from other cells in this box
+                            let canEliminate = false;
+                            let eliminationDetails = [];
+                            
+                            for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
+                                for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
+                                    if ((r !== cell1.row || c !== cell1.col) && 
+                                        (r !== cell2.row || c !== cell2.col) && 
+                                        currentGrid[r][c] === 0) {
+                                        const userNotes = notesGrid[r][c] || [];
+                                        const candidatesToEliminate = userNotes.filter(num => pair.includes(num));
+                                        if (candidatesToEliminate.length > 0) {
+                                            canEliminate = true;
+                                            eliminationDetails.push(`R${r+1}C${c+1}: remove ${candidatesToEliminate.join(', ')}`);
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            if (canEliminate) {
+                                return {
+                                    type: 'elimination',
+                                    cells: [{row: cell1.row, col: cell1.col}, {row: cell2.row, col: cell2.col}],
+                                    values: pair,
+                                    explanation: `Naked pair ${pair.join('/')} found at R${cell1.row+1}C${cell1.col+1} and R${cell2.row+1}C${cell2.col+1} in box ${boxR + 1}.${boxC + 1}.`,
+                                    reasoning: `These two cells can only contain ${pair.join(' or ')}, so eliminate ${pair.join(' and ')} from other cells in this box.`,
+                                    eliminations: eliminationDetails
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return null;
     }
 
     function findHiddenPairs() {
@@ -1174,14 +1149,8 @@
         return null;
     }
 
-    // Fonction modifiée pour analyser la grille
     function performAnalysis() {
         console.log('Performing analysis...');
-
-        if (!currentGrid || !notesGrid) {
-            showError('Missing grid data');
-            return;
-        }
 
         // 1. Last Possible Digit (Naked Single)
         const lastNumber = findLastPossibleNumber();
@@ -1197,35 +1166,38 @@
             return;
         }
 
-        // Analyser la complétude des notes avant de continuer
-        const notesAnalysis = analyzeNotesCompleteness();
+        // 3. Naked Pairs - only if we have user notes
+        const hasUserNotes = notesGrid.some(row => row.some(cell => cell && cell.length > 0));
         
-        // 3. Techniques avancées seulement si on a suffisamment de notes
-        if (notesAnalysis.cellsWithNotes > 0) {
+        if (hasUserNotes) {
             const nakedPair = findNakedPairs();
             if (nakedPair) {
                 displayAnalysis("Naked Pairs", nakedPair);
                 return;
             }
 
+            // 4. Hidden Pairs
             const hiddenPair = findHiddenPairs();
             if (hiddenPair) {
                 displayAnalysis("Hidden Pairs", hiddenPair);
                 return;
             }
 
+            // 5. Naked Triples
             const nakedTriple = findNakedTriples();
             if (nakedTriple) {
                 displayAnalysis("Naked Triples", nakedTriple);
                 return;
             }
 
+            // 6. X-Wing (nouvelle technique)
             const xWing = findXWing();
             if (xWing) {
                 displayAnalysis("X-Wing", xWing);
                 return;
             }
 
+            // 7. Remote Pairs (nouvelle technique)
             const remotePairs = findRemotePairs();
             if (remotePairs) {
                 displayAnalysis("Remote Pairs", remotePairs);
@@ -1233,45 +1205,21 @@
             }
         }
 
-        // Aucune technique trouvée - analyser pourquoi
-        displayAnalysis(null, null, notesAnalysis);
+        displayAnalysis(null, null);
     }
 
-    // Fonction modifiée pour afficher l'analyse
-    function displayAnalysis(foundTechnique, suggestion, notesAnalysis = null) {
+    function displayAnalysis(foundTechnique, suggestion) {
         let html = '';
 
         if (suggestion) {
-            // Clear highlights and suggested values
+            // Clear highlights
             document.querySelectorAll('.cell').forEach(cell => {
-                cell.classList.remove('highlighted', 'highlighted-secondary', 'suggested-value');
-                // Restore original notes display
-                const row = parseInt(cell.getAttribute('data-row'));
-                const col = parseInt(cell.getAttribute('data-col'));
-                if (currentGrid[row][col] === 0) {
-                    const notes = notesGrid[row][col] || [];
-                    const notesText = notes.length > 0 ? notes.join('') : '';
-                    cell.innerHTML = notesText ? `<div class="notes">${notesText}</div>` : '';
-                }
+                cell.classList.remove('highlighted', 'highlighted-secondary', 'highlighted-elimination');
             });
 
-            // Parse eliminations if present
-            let eliminationsMap = new Map();
-            if (suggestion.eliminations) {
-                suggestion.eliminations.forEach(elim => {
-                    const match = elim.match(/R(\d+)C(\d+): remove (.+)/);
-                    if (match) {
-                        const row = parseInt(match[1]) - 1;
-                        const col = parseInt(match[2]) - 1;
-                        const values = match[3].split(', ').map(v => parseInt(v.trim()));
-                        eliminationsMap.set(`${row},${col}`, values);
-                    }
-                });
-            }
-
-            // Highlight only the cells directly involved in the technique
+            // Highlight cells based on technique type
             if (suggestion.cells && suggestion.cells.length > 1) {
-                // Techniques with multiple cells - highlight only the technique cells
+                // Techniques with multiple cells - highlight all cells
                 suggestion.cells.forEach((cellInfo, index) => {
                     const targetCell = document.querySelector(`[data-row="${cellInfo.row}"][data-col="${cellInfo.col}"]`);
                     if (targetCell) {
@@ -1283,40 +1231,12 @@
                     }
                 });
             } else if (suggestion.row !== undefined && suggestion.col !== undefined) {
-                // Single cell techniques - show suggested value
+                // Single cell techniques
                 const targetCell = document.querySelector(`[data-row="${suggestion.row}"][data-col="${suggestion.col}"]`);
-                if (targetCell && suggestion.value) {
-                    targetCell.classList.add('highlighted', 'suggested-value');
-                    // Display the suggested value in blue
-                    const notes = targetCell.querySelector('.notes');
-                    targetCell.innerHTML = suggestion.value + (notes ? notes.outerHTML : '');
-                } else if (targetCell) {
+                if (targetCell) {
                     targetCell.classList.add('highlighted');
                 }
             }
-
-            // Show eliminations in red (without coloring the cells)
-            eliminationsMap.forEach((candidatesToRemove, cellKey) => {
-                const [row, col] = cellKey.split(',').map(Number);
-                const targetCell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
-                if (targetCell && currentGrid[row][col] === 0) {
-                    const notes = notesGrid[row][col] || [];
-                    let notesHtml = '';
-                    
-                    for (const note of notes) {
-                        if (candidatesToRemove.includes(note)) {
-                            notesHtml += `<span class="candidate-to-remove">${note}</span>`;
-                        } else {
-                            notesHtml += note;
-                        }
-                    }
-                    
-                    if (notesHtml) {
-                        targetCell.innerHTML = `<div class="notes">${notesHtml}</div>`;
-                    }
-                    // Don't add any highlighting class to elimination cells
-                }
-            });
 
             html = `
                 <div class="move-suggestion">
@@ -1330,55 +1250,23 @@
                 </div>
             `;
         } else {
-            // No technique found - determine why
-            if (notesAnalysis && notesAnalysis.hasInsufficientNotes) {
-                // Not enough notes - encourage user to add more
-                html = `
-                    <div class="technique">
-                        <h4>📝 Insufficient Notes</h4>
-                        <p>To find the next move, you need to add more candidates to empty cells.</p>
-                        
-                        <div style="margin: 12px 0; padding: 10px; background: #2d2d2d; border-radius: 6px; border-left: 4px solid #ff9800;">
-                            <p style="margin-bottom: 8px;"><strong>Current statistics:</strong></p>
-                            <p>• Empty cells: ${notesAnalysis.emptyCells}</p>
-                            <p>• Cells with notes: ${notesAnalysis.cellsWithNotes} (${Math.round(notesAnalysis.percentageWithNotes)}%)</p>
-                            <p>• Average candidates per cell: ${notesAnalysis.averageCandidatesPerCell.toFixed(1)}</p>
+            const gridForWiki = formatGridForSudokuWiki();
+            
+            html = `
+                <div class="technique">
+                    <h4>🧩 Advanced Techniques Required</h4>
+                    <p>No simple techniques detected. This grid requires expert techniques.</p>
+                    
+                    <div style="margin-top: 16px; padding: 12px; background: #2d2d2d; border-radius: 8px; border: 1px solid #4caf50;">
+                        <h5 style="color: #4caf50; margin-bottom: 8px;">💡 Use SudokuWiki</h5>
+                        <p style="margin-bottom: 12px;">Click 🧩 at the top right to copy your grid in the new SudokuWiki 2.0 format and open SudokuWiki.</p>
+                        <div style="font-family: monospace; font-size: 10px; background: #1e1e1e; padding: 8px; border-radius: 4px; word-break: break-all; color: #90caf9;">
+                            ${gridForWiki}
                         </div>
-                        
-                        <div style="margin-top: 16px; padding: 12px; background: #2d2d2d; border-radius: 8px; border: 1px solid #ff9800;">
-                            <h5 style="color: #ff9800; margin-bottom: 8px;">💡 Tips</h5>
-                            <p>• Add candidates to at least 70% of empty cells</p>
-                            <p>• Use the "Auto-candidates" function if available</p>
-                            <p>• Focus on cells with few possibilities</p>
-                        </div>
+                        <p style="margin-top: 8px; font-size: 11px; color: #b0b0b0;">This format preserves your progress including solved cells and notes.</p>
                     </div>
-                `;
-            } else {
-                // Sufficient notes but advanced techniques required
-                const gridForWiki = formatGridForSudokuWiki();
-                
-                html = `
-                    <div class="technique">
-                        <h4>🧩 Advanced Techniques Required</h4>
-                        <p>Your notes appear complete, but this grid requires expert techniques.</p>
-                        
-                        <div style="margin: 12px 0; padding: 10px; background: #2d2d2d; border-radius: 6px; border-left: 4px solid #4caf50;">
-                            <p><strong>Notes analyzed:</strong></p>
-                            <p>• ${notesAnalysis.cellsWithNotes}/${notesAnalysis.emptyCells} cells with candidates (${Math.round(notesAnalysis.percentageWithNotes)}%)</p>
-                            <p>• Average: ${notesAnalysis.averageCandidatesPerCell.toFixed(1)} candidates per cell</p>
-                        </div>
-                        
-                        <div style="margin-top: 16px; padding: 12px; background: #2d2d2d; border-radius: 8px; border: 1px solid #4caf50;">
-                            <h5 style="color: #4caf50; margin-bottom: 8px;">💡 Use SudokuWiki</h5>
-                            <p style="margin-bottom: 12px;">Click 🧩 at the top right to copy your grid in SudokuWiki 2.0 format and open SudokuWiki.</p>
-                            <div style="font-family: monospace; font-size: 10px; background: #1e1e1e; padding: 8px; border-radius: 4px; word-break: break-all; color: #90caf9;">
-                                ${gridForWiki}
-                            </div>
-                            <p style="margin-top: 8px; font-size: 11px; color: #b0b0b0;">This format preserves your progress including solved cells and notes.</p>
-                        </div>
-                    </div>
-                `;
-            }
+                </div>
+            `;
         }
 
         document.getElementById('analysisResult').innerHTML = html;
