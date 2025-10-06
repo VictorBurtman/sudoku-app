@@ -1404,6 +1404,184 @@
         return null;
     }
 
+    function findSimpleColoring() {
+        const sees = (r1, c1, r2, c2) => {
+            if (r1 === r2 && c1 === c2) return false;
+            if (r1 === r2 || c1 === c2) return true;
+            return Math.floor(r1 / 3) === Math.floor(r2 / 3) && Math.floor(c1 / 3) === Math.floor(c2 / 3);
+        };
+
+        for (let digit = 1; digit <= 9; digit++) {
+            const cells = [];
+            for (let r = 0; r < 9; r++) {
+                for (let c = 0; c < 9; c++) {
+                    const notes = notesGrid[r][c] || [];
+                    if (currentGrid[r][c] === 0 && notes.includes(digit)) {
+                        cells.push({r, c});
+                    }
+                }
+            }
+
+            if (cells.length < 3) continue;
+
+            const links = [];
+            for (let unit = 0; unit < 27; unit++) {
+                let unitCells = [];
+                if (unit < 9) {
+                    const row = unit;
+                    unitCells = cells.filter(cell => cell.r === row);
+                } else if (unit < 18) {
+                    const col = unit - 9;
+                    unitCells = cells.filter(cell => cell.c === col);
+                } else {
+                    const boxR = Math.floor((unit - 18) / 3);
+                    const boxC = (unit - 18) % 3;
+                    unitCells = cells.filter(cell => 
+                        Math.floor(cell.r / 3) === boxR && Math.floor(cell.c / 3) === boxC
+                    );
+                }
+
+                if (unitCells.length === 2) {
+                    links.push([unitCells[0], unitCells[1]]);
+                }
+            }
+
+            if (links.length === 0) continue;
+
+            const adj = new Map();
+            cells.forEach(cell => {
+                const key = `${cell.r},${cell.c}`;
+                adj.set(key, []);
+            });
+
+            links.forEach(([cell1, cell2]) => {
+                const key1 = `${cell1.r},${cell1.c}`;
+                const key2 = `${cell2.r},${cell2.c}`;
+                adj.get(key1).push(cell2);
+                adj.get(key2).push(cell1);
+            });
+
+            const colors = new Map();
+            const visited = new Set();
+
+            for (const startCell of cells) {
+                const startKey = `${startCell.r},${startCell.c}`;
+                if (visited.has(startKey)) continue;
+
+                const queue = [[startCell, 0]];
+                visited.add(startKey);
+                colors.set(startKey, 0);
+
+                while (queue.length > 0) {
+                    const [current, color] = queue.shift();
+                    const currentKey = `${current.r},${current.c}`;
+
+                    for (const neighbor of adj.get(currentKey)) {
+                        const neighborKey = `${neighbor.r},${neighbor.c}`;
+                        if (!visited.has(neighborKey)) {
+                            visited.add(neighborKey);
+                            const newColor = 1 - color;
+                            colors.set(neighborKey, newColor);
+                            queue.push([neighbor, newColor]);
+                        }
+                    }
+                }
+            }
+
+            if (colors.size < 2) continue;
+
+            const color0Cells = [];
+            const color1Cells = [];
+            colors.forEach((color, key) => {
+                const [r, c] = key.split(',').map(Number);
+                if (color === 0) color0Cells.push({r, c});
+                else color1Cells.push({r, c});
+            });
+
+            for (let i = 0; i < color0Cells.length; i++) {
+                for (let j = i + 1; j < color0Cells.length; j++) {
+                    const c1 = color0Cells[i];
+                    const c2 = color0Cells[j];
+                    if (sees(c1.r, c1.c, c2.r, c2.c)) {
+                        const eliminationDetails = [];
+                        color0Cells.forEach(cell => {
+                            eliminationDetails.push(`R${cell.r+1}C${cell.c+1}: remove ${digit}`);
+                        });
+                        
+                        return {
+                            type: 'elimination',
+                            cells: [...color0Cells, ...color1Cells].map(c => ({row: c.r, col: c.c})),
+                            values: [digit],
+                            explanation: `Simple Coloring (Rule 2): Two cells of same color see each other for digit ${digit}.`,
+                            reasoning: `Cells R${c1.r+1}C${c1.c+1} and R${c2.r+1}C${c2.r+1} are the same color and see each other, so this color must be false.`,
+                            eliminations: eliminationDetails
+                        };
+                    }
+                }
+            }
+
+            for (let i = 0; i < color1Cells.length; i++) {
+                for (let j = i + 1; j < color1Cells.length; j++) {
+                    const c1 = color1Cells[i];
+                    const c2 = color1Cells[j];
+                    if (sees(c1.r, c1.c, c2.r, c2.c)) {
+                        const eliminationDetails = [];
+                        color1Cells.forEach(cell => {
+                            eliminationDetails.push(`R${cell.r+1}C${cell.c+1}: remove ${digit}`);
+                        });
+                        
+                        return {
+                            type: 'elimination',
+                            cells: [...color0Cells, ...color1Cells].map(c => ({row: c.r, col: c.c})),
+                            values: [digit],
+                            explanation: `Simple Coloring (Rule 2): Two cells of same color see each other for digit ${digit}.`,
+                            reasoning: `Cells R${c1.r+1}C${c1.c+1} and R${c2.r+1}C${c2.r+1} are the same color and see each other, so this color must be false.`,
+                            eliminations: eliminationDetails
+                        };
+                    }
+                }
+            }
+
+            const uncoloredCells = cells.filter(cell => !colors.has(`${cell.r},${cell.c}`));
+            
+            for (const uncolored of uncoloredCells) {
+                let seesColor0 = false;
+                let seesColor1 = false;
+                let color0Cell = null;
+                let color1Cell = null;
+
+                for (const c0 of color0Cells) {
+                    if (sees(uncolored.r, uncolored.c, c0.r, c0.c)) {
+                        seesColor0 = true;
+                        color0Cell = c0;
+                        break;
+                    }
+                }
+
+                for (const c1 of color1Cells) {
+                    if (sees(uncolored.r, uncolored.c, c1.r, c1.c)) {
+                        seesColor1 = true;
+                        color1Cell = c1;
+                        break;
+                    }
+                }
+
+                if (seesColor0 && seesColor1) {
+                    return {
+                        type: 'elimination',
+                        cells: [...color0Cells, ...color1Cells].map(c => ({row: c.r, col: c.c})),
+                        values: [digit],
+                        explanation: `Simple Coloring (Rule 4): Uncolored candidate ${digit} in R${uncolored.r+1}C${uncolored.c+1} can see both colors.`,
+                        reasoning: `Cell R${uncolored.r+1}C${uncolored.c+1} sees colored cells of both colors (e.g., R${color0Cell.r+1}C${color0Cell.c+1} and R${color1Cell.r+1}C${color1Cell.c+1}), so ${digit} must be eliminated from it.`,
+                        eliminations: [`R${uncolored.r+1}C${uncolored.c+1}: remove ${digit}`]
+                    };
+                }
+            }
+        }
+
+        return null;
+    }
+
     function performAnalysis() {
         console.log('Performing analysis...');
 
@@ -1472,6 +1650,12 @@
             const remotePairs = findRemotePairs();
             if (remotePairs) {
                 displayAnalysis("Remote Pairs", remotePairs);
+                return;
+            }
+
+            const simpleColoring = findSimpleColoring();
+            if (simpleColoring) {
+                displayAnalysis("Simple Coloring", simpleColoring);
                 return;
             }
         }
