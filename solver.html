@@ -637,6 +637,186 @@
         return null;
     }
 
+    function findNakedTriples() {
+        function isNakedTripleFromNotes(cells) {
+            const allCandidates = new Set();
+            for (const cell of cells) {
+                const userNotes = notesGrid[cell.row][cell.col] || [];
+                for (const candidate of userNotes) {
+                    allCandidates.add(candidate);
+                }
+            }
+            
+            if (allCandidates.size !== 3) return false;
+            
+            const tripleValues = Array.from(allCandidates);
+            
+            for (const cell of cells) {
+                const userNotes = notesGrid[cell.row][cell.col] || [];
+                if (userNotes.length < 2 || userNotes.length > 3) return false;
+                if (!userNotes.every(c => tripleValues.includes(c))) return false;
+            }
+            
+            return tripleValues;
+        }
+
+        // Check rows
+        for (let r = 0; r < 9; r++) {
+            const rowCells = [];
+            for (let c = 0; c < 9; c++) {
+                if (currentGrid[r][c] === 0) {
+                    const userNotes = notesGrid[r][c] || [];
+                    if (userNotes.length >= 2 && userNotes.length <= 3) {
+                        rowCells.push({row: r, col: c});
+                    }
+                }
+            }
+            
+            for (let i = 0; i < rowCells.length - 2; i++) {
+                for (let j = i + 1; j < rowCells.length - 1; j++) {
+                    for (let k = j + 1; k < rowCells.length; k++) {
+                        const threeCells = [rowCells[i], rowCells[j], rowCells[k]];
+                        const tripleValues = isNakedTripleFromNotes(threeCells);
+                        
+                        if (tripleValues) {
+                            let canEliminate = false;
+                            let eliminationDetails = [];
+                            
+                            for (let c = 0; c < 9; c++) {
+                                if (c !== threeCells[0].col && c !== threeCells[1].col && c !== threeCells[2].col && currentGrid[r][c] === 0) {
+                                    const userNotes = notesGrid[r][c] || [];
+                                    const candidatesToEliminate = userNotes.filter(num => tripleValues.includes(num));
+                                    if (candidatesToEliminate.length > 0) {
+                                        canEliminate = true;
+                                        eliminationDetails.push(`R${r+1}C${c+1}: remove ${candidatesToEliminate.join(', ')}`);
+                                    }
+                                }
+                            }
+                            
+                            if (canEliminate) {
+                                return {
+                                    type: 'elimination',
+                                    cells: threeCells.map(cell => ({row: cell.row, col: cell.col})),
+                                    values: tripleValues,
+                                    explanation: `Naked triple ${tripleValues.join('/')} found at ${threeCells.map(c => `R${c.row+1}C${c.col+1}`).join(', ')} in row ${r+1}.`,
+                                    reasoning: `These three cells can only contain ${tripleValues.join(', ')}, so eliminate these digits from other cells in row ${r+1}.`,
+                                    eliminations: eliminationDetails
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check columns
+        for (let c = 0; c < 9; c++) {
+            const colCells = [];
+            for (let r = 0; r < 9; r++) {
+                if (currentGrid[r][c] === 0) {
+                    const userNotes = notesGrid[r][c] || [];
+                    if (userNotes.length >= 2 && userNotes.length <= 3) {
+                        colCells.push({row: r, col: c});
+                    }
+                }
+            }
+            
+            for (let i = 0; i < colCells.length - 2; i++) {
+                for (let j = i + 1; j < colCells.length - 1; j++) {
+                    for (let k = j + 1; k < colCells.length; k++) {
+                        const threeCells = [colCells[i], colCells[j], colCells[k]];
+                        const tripleValues = isNakedTripleFromNotes(threeCells);
+                        
+                        if (tripleValues) {
+                            let canEliminate = false;
+                            let eliminationDetails = [];
+                            
+                            for (let r = 0; r < 9; r++) {
+                                if (r !== threeCells[0].row && r !== threeCells[1].row && r !== threeCells[2].row && currentGrid[r][c] === 0) {
+                                    const userNotes = notesGrid[r][c] || [];
+                                    const candidatesToEliminate = userNotes.filter(num => tripleValues.includes(num));
+                                    if (candidatesToEliminate.length > 0) {
+                                        canEliminate = true;
+                                        eliminationDetails.push(`R${r+1}C${c+1}: remove ${candidatesToEliminate.join(', ')}`);
+                                    }
+                                }
+                            }
+                            
+                            if (canEliminate) {
+                                return {
+                                    type: 'elimination',
+                                    cells: threeCells.map(cell => ({row: cell.row, col: cell.col})),
+                                    values: tripleValues,
+                                    explanation: `Naked triple ${tripleValues.join('/')} found at ${threeCells.map(c => `R${c.row+1}C${c.col+1}`).join(', ')} in column ${c+1}.`,
+                                    reasoning: `These three cells can only contain ${tripleValues.join(', ')}, so eliminate these digits from other cells in column ${c+1}.`,
+                                    eliminations: eliminationDetails
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check boxes
+        for (let boxR = 0; boxR < 3; boxR++) {
+            for (let boxC = 0; boxC < 3; boxC++) {
+                const boxCells = [];
+                for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
+                    for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
+                        if (currentGrid[r][c] === 0) {
+                            const userNotes = notesGrid[r][c] || [];
+                            if (userNotes.length >= 2 && userNotes.length <= 3) {
+                                boxCells.push({row: r, col: c});
+                            }
+                        }
+                    }
+                }
+                
+                for (let i = 0; i < boxCells.length - 2; i++) {
+                    for (let j = i + 1; j < boxCells.length - 1; j++) {
+                        for (let k = j + 1; k < boxCells.length; k++) {
+                            const threeCells = [boxCells[i], boxCells[j], boxCells[k]];
+                            const tripleValues = isNakedTripleFromNotes(threeCells);
+                            
+                            if (tripleValues) {
+                                let canEliminate = false;
+                                let eliminationDetails = [];
+                                
+                                for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
+                                    for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
+                                        const isInTriple = threeCells.some(cell => cell.row === r && cell.col === c);
+                                        if (!isInTriple && currentGrid[r][c] === 0) {
+                                            const userNotes = notesGrid[r][c] || [];
+                                            const candidatesToEliminate = userNotes.filter(num => tripleValues.includes(num));
+                                            if (candidatesToEliminate.length > 0) {
+                                                canEliminate = true;
+                                                eliminationDetails.push(`R${r+1}C${c+1}: remove ${candidatesToEliminate.join(', ')}`);
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                if (canEliminate) {
+                                    return {
+                                        type: 'elimination',
+                                        cells: threeCells.map(cell => ({row: cell.row, col: cell.col})),
+                                        values: tripleValues,
+                                        explanation: `Naked triple ${tripleValues.join('/')} found at ${threeCells.map(c => `R${c.row+1}C${c.col+1}`).join(', ')} in box ${boxR + 1},${boxC + 1}.`,
+                                        reasoning: `These three cells can only contain ${tripleValues.join(', ')}, so eliminate these digits from other cells in this box.`,
+                                        eliminations: eliminationDetails
+                                    };
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
     function performAnalysis() {
         console.log('Performing analysis...');
 
@@ -664,6 +844,15 @@
         }
 
         const notesAnalysis = analyzeNotesCompleteness();
+        
+        if (notesAnalysis.cellsWithNotes > 0) {
+            const nakedTriple = findNakedTriples();
+            if (nakedTriple) {
+                displayAnalysis("Naked Triples", nakedTriple);
+                return;
+            }
+        }
+
         displayAnalysis(null, null, notesAnalysis);
     }
 
@@ -741,7 +930,31 @@
                 }
             });
 
-            if (suggestion.row !== undefined && suggestion.col !== undefined) {
+            let eliminationsMap = new Map();
+            if (suggestion.eliminations) {
+                suggestion.eliminations.forEach(elim => {
+                    const match = elim.match(/R(\d+)C(\d+): remove (.+)/);
+                    if (match) {
+                        const row = parseInt(match[1]) - 1;
+                        const col = parseInt(match[2]) - 1;
+                        const values = match[3].split(', ').map(v => parseInt(v.trim()));
+                        eliminationsMap.set(`${row},${col}`, values);
+                    }
+                });
+            }
+
+            if (suggestion.cells && suggestion.cells.length > 1) {
+                suggestion.cells.forEach((cellInfo, index) => {
+                    const targetCell = document.querySelector(`[data-row="${cellInfo.row}"][data-col="${cellInfo.col}"]`);
+                    if (targetCell) {
+                        if (index === 0) {
+                            targetCell.classList.add('highlighted');
+                        } else {
+                            targetCell.classList.add('highlighted-secondary');
+                        }
+                    }
+                });
+            } else if (suggestion.row !== undefined && suggestion.col !== undefined) {
                 const targetCell = document.querySelector(`[data-row="${suggestion.row}"][data-col="${suggestion.col}"]`);
                 if (targetCell && suggestion.value) {
                     targetCell.classList.add('highlighted', 'suggested-value');
@@ -752,12 +965,36 @@
                 }
             }
 
+            eliminationsMap.forEach((candidatesToRemove, cellKey) => {
+                const [row, col] = cellKey.split(',').map(Number);
+                const targetCell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                if (targetCell && currentGrid[row][col] === 0) {
+                    const notes = notesGrid[row][col] || [];
+                    let notesHtml = '';
+                    
+                    for (const note of notes) {
+                        if (candidatesToRemove.includes(note)) {
+                            notesHtml += `<span class="candidate-to-remove">${note}</span>`;
+                        } else {
+                            notesHtml += note;
+                        }
+                    }
+                    
+                    if (notesHtml) {
+                        targetCell.innerHTML = `<div class="notes">${notesHtml}</div>`;
+                    }
+                }
+            });
+
             html = `
                 <div class="move-suggestion">
                     <h4>🎯 ${foundTechnique}</h4>
                     <p>${suggestion.explanation}</p>
                     <p><em>${suggestion.reasoning}</em></p>
                     ${suggestion.value ? `<p><strong>➤ Place digit ${suggestion.value} at R${suggestion.row + 1}C${suggestion.col + 1}</strong></p>` : ''}
+                    ${suggestion.cells && suggestion.cells.length > 1 ? `<p><strong>📍 Cells: ${suggestion.cells.map(c => `R${c.row+1}C${c.col+1}`).join(', ')}</strong></p>` : ''}
+                    ${suggestion.values ? `<p><strong>🔢 Values: ${suggestion.values.join('/')}</strong></p>` : ''}
+                    ${suggestion.eliminations && suggestion.eliminations.length > 0 ? `<p><strong>❌ Eliminations: ${suggestion.eliminations.join('; ')}</strong></p>` : ''}
                 </div>
             `;
         } else {
