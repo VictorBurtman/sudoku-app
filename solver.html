@@ -214,7 +214,7 @@
     <div class="app-container">
         <div class="app-bar">
             <button class="back-button" onclick="window.close()">←</button>
-            <h1>Sudoku Assistant v2.9</h1>
+            <h1>Sudoku Assistant v2.7</h1>
             <button class="sudoku-wiki-button" onclick="copyToClipboardAndOpenSudokuWiki()" title="Copy grid and open SudokuWiki">🧩</button>
         </div>
 
@@ -1471,6 +1471,8 @@
             }
         }
 
+        if (biValueCells.length === 0) return null;
+
         // Pour chaque paire de cellules bi-valeurs avec les mêmes candidats
         for (let i = 0; i < biValueCells.length; i++) {
             for (let j = i + 1; j < biValueCells.length; j++) {
@@ -1502,24 +1504,22 @@
                     
                     for (let r = Math.floor(thirdBox / 3) * 3; r < Math.floor(thirdBox / 3) * 3 + 3; r++) {
                         for (let c = (thirdBox % 3) * 3; c < (thirdBox % 3) * 3 + 3; c++) {
-                            yellowCells.push({r, c, value: currentGrid[r][c]});
+                            yellowCells.push({r, c});
                         }
                     }
 
-                    // Vérifier quels candidats sont dans la box jaune
+                    // Vérifier quels candidats sont dans la box jaune (SEULEMENT les candidats, pas les valeurs résolues)
                     let hasVal1 = false, hasVal2 = false;
                     
                     for (const yCell of yellowCells) {
-                        if (yCell.value === val1) hasVal1 = true;
-                        if (yCell.value === val2) hasVal2 = true;
                         const notes = notesGrid[yCell.r][yCell.c] || [];
                         if (notes.includes(val1)) hasVal1 = true;
                         if (notes.includes(val2)) hasVal2 = true;
                     }
 
-                    // Cas 1: Un seul candidat présent (pas absent!)
-                    if (hasVal1 && !hasVal2) {
-                        // Éliminer val1 (le candidat PRÉSENT) des cellules communes
+                    // Cas 1: Un seul candidat absent → éliminer celui qui est absent!
+                    if (!hasVal1 && hasVal2) {
+                        // Éliminer val1 (l'ABSENT)
                         const eliminations = [];
                         for (let r = 0; r < 9; r++) {
                             for (let c = 0; c < 9; c++) {
@@ -1539,13 +1539,13 @@
                                 type: 'elimination',
                                 cells: [{row: cell1.r, col: cell1.c}, {row: cell2.r, col: cell2.c}],
                                 values: [val1, val2],
-                                explanation: `Chute Remote Pair: ${val2} cannot be in yellow cells (box ${thirdBox + 1}) with Remote Pair {${val1}/${val2}}.`,
-                                reasoning: `Remote Pair at R${cell1.r+1}C${cell1.c+1} and R${cell2.r+1}C${cell2.c+1}. Since ${val2} does NOT appear in box ${thirdBox + 1} but ${val1} does, ${val1} can be eliminated from cells seeing both green cells.`,
+                                explanation: `Chute Remote Pair: ${val1} cannot be in yellow cells (box ${thirdBox + 1}) with Remote Pair {${val1}/${val2}}.`,
+                                reasoning: `Remote Pair at R${cell1.r+1}C${cell1.c+1} and R${cell2.r+1}C${cell2.c+1}. Since ${val1} does NOT appear as a candidate in box ${thirdBox + 1} but ${val2} does, ${val1} can be eliminated from cells seeing both green cells.`,
                                 eliminations: eliminations
                             };
                         }
-                    } else if (hasVal2 && !hasVal1) {
-                        // Éliminer val2 (le candidat PRÉSENT) des cellules communes
+                    } else if (!hasVal2 && hasVal1) {
+                        // Éliminer val2 (l'ABSENT)
                         const eliminations = [];
                         for (let r = 0; r < 9; r++) {
                             for (let c = 0; c < 9; c++) {
@@ -1565,8 +1565,8 @@
                                 type: 'elimination',
                                 cells: [{row: cell1.r, col: cell1.c}, {row: cell2.r, col: cell2.c}],
                                 values: [val1, val2],
-                                explanation: `Chute Remote Pair: ${val1} cannot be in yellow cells (box ${thirdBox + 1}) with Remote Pair {${val1}/${val2}}.`,
-                                reasoning: `Remote Pair at R${cell1.r+1}C${cell1.c+1} and R${cell2.r+1}C${cell2.c+1}. Since ${val1} does NOT appear in box ${thirdBox + 1} but ${val2} does, ${val2} can be eliminated from cells seeing both green cells.`,
+                                explanation: `Chute Remote Pair: ${val2} cannot be in yellow cells (box ${thirdBox + 1}) with Remote Pair {${val1}/${val2}}.`,
+                                reasoning: `Remote Pair at R${cell1.r+1}C${cell1.c+1} and R${cell2.r+1}C${cell2.c+1}. Since ${val2} does NOT appear as a candidate in box ${thirdBox + 1} but ${val1} does, ${val2} can be eliminated from cells seeing both green cells.`,
                                 eliminations: eliminations
                             };
                         }
@@ -1613,16 +1613,14 @@
                     
                     for (let r = Math.floor(thirdBox / 3) * 3; r < Math.floor(thirdBox / 3) * 3 + 3; r++) {
                         for (let c = (thirdBox % 3) * 3; c < (thirdBox % 3) * 3 + 3; c++) {
-                            yellowCells.push({r, c, value: currentGrid[r][c]});
+                            yellowCells.push({r, c});
                         }
                     }
 
-                    // Vérifier quels candidats sont dans la box jaune
+                    // Vérifier quels candidats sont dans la box jaune (SEULEMENT les candidats, pas les valeurs résolues)
                     let hasVal1 = false, hasVal2 = false;
                     
                     for (const yCell of yellowCells) {
-                        if (yCell.value === val1) hasVal1 = true;
-                        if (yCell.value === val2) hasVal2 = true;
                         const notes = notesGrid[yCell.r][yCell.c] || [];
                         if (notes.includes(val1)) hasVal1 = true;
                         if (notes.includes(val2)) hasVal2 = true;
