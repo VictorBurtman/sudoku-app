@@ -214,7 +214,7 @@
     <div class="app-container">
         <div class="app-bar">
             <button class="back-button" onclick="window.close()">←</button>
-            <h1>Sudoku Assistant v2.7</h1>
+            <h1>Sudoku Assistant v2.9</h1>
             <button class="sudoku-wiki-button" onclick="copyToClipboardAndOpenSudokuWiki()" title="Copy grid and open SudokuWiki">🧩</button>
         </div>
 
@@ -1517,35 +1517,9 @@
                         if (notes.includes(val2)) hasVal2 = true;
                     }
 
-                    // Cas 1: Un seul candidat absent
+                    // Cas 1: Un seul candidat présent (pas absent!)
                     if (hasVal1 && !hasVal2) {
-                        // Éliminer val2 des cellules communes
-                        const eliminations = [];
-                        for (let r = 0; r < 9; r++) {
-                            for (let c = 0; c < 9; c++) {
-                                if (currentGrid[r][c] === 0 && 
-                                    sees(r, c, cell1.r, cell1.c) && 
-                                    sees(r, c, cell2.r, cell2.c)) {
-                                    const notes = notesGrid[r][c] || [];
-                                    if (notes.includes(val2)) {
-                                        eliminations.push(`R${r+1}C${c+1}: remove ${val2}`);
-                                    }
-                                }
-                            }
-                        }
-
-                        if (eliminations.length > 0) {
-                            return {
-                                type: 'elimination',
-                                cells: [{row: cell1.r, col: cell1.c}, {row: cell2.r, col: cell2.c}],
-                                values: [val1, val2],
-                                explanation: `Chute Remote Pair: ${val2} cannot be in yellow cells (box ${thirdBox + 1}) with Remote Pair {${val1}/${val2}}.`,
-                                reasoning: `Remote Pair at R${cell1.r+1}C${cell1.c+1} and R${cell2.r+1}C${cell2.c+1}. Since ${val1} appears in box ${thirdBox + 1} but ${val2} does not, ${val2} can be eliminated from cells seeing both green cells.`,
-                                eliminations: eliminations
-                            };
-                        }
-                    } else if (hasVal2 && !hasVal1) {
-                        // Éliminer val1 des cellules communes
+                        // Éliminer val1 (le candidat PRÉSENT) des cellules communes
                         const eliminations = [];
                         for (let r = 0; r < 9; r++) {
                             for (let c = 0; c < 9; c++) {
@@ -1565,8 +1539,34 @@
                                 type: 'elimination',
                                 cells: [{row: cell1.r, col: cell1.c}, {row: cell2.r, col: cell2.c}],
                                 values: [val1, val2],
+                                explanation: `Chute Remote Pair: ${val2} cannot be in yellow cells (box ${thirdBox + 1}) with Remote Pair {${val1}/${val2}}.`,
+                                reasoning: `Remote Pair at R${cell1.r+1}C${cell1.c+1} and R${cell2.r+1}C${cell2.c+1}. Since ${val2} does NOT appear in box ${thirdBox + 1} but ${val1} does, ${val1} can be eliminated from cells seeing both green cells.`,
+                                eliminations: eliminations
+                            };
+                        }
+                    } else if (hasVal2 && !hasVal1) {
+                        // Éliminer val2 (le candidat PRÉSENT) des cellules communes
+                        const eliminations = [];
+                        for (let r = 0; r < 9; r++) {
+                            for (let c = 0; c < 9; c++) {
+                                if (currentGrid[r][c] === 0 && 
+                                    sees(r, c, cell1.r, cell1.c) && 
+                                    sees(r, c, cell2.r, cell2.c)) {
+                                    const notes = notesGrid[r][c] || [];
+                                    if (notes.includes(val2)) {
+                                        eliminations.push(`R${r+1}C${c+1}: remove ${val2}`);
+                                    }
+                                }
+                            }
+                        }
+
+                        if (eliminations.length > 0) {
+                            return {
+                                type: 'elimination',
+                                cells: [{row: cell1.r, col: cell1.c}, {row: cell2.r, col: cell2.c}],
+                                values: [val1, val2],
                                 explanation: `Chute Remote Pair: ${val1} cannot be in yellow cells (box ${thirdBox + 1}) with Remote Pair {${val1}/${val2}}.`,
-                                reasoning: `Remote Pair at R${cell1.r+1}C${cell1.c+1} and R${cell2.r+1}C${cell2.c+1}. Since ${val2} appears in box ${thirdBox + 1} but ${val1} does not, ${val1} can be eliminated from cells seeing both green cells.`,
+                                reasoning: `Remote Pair at R${cell1.r+1}C${cell1.c+1} and R${cell2.r+1}C${cell2.c+1}. Since ${val1} does NOT appear in box ${thirdBox + 1} but ${val2} does, ${val2} can be eliminated from cells seeing both green cells.`,
                                 eliminations: eliminations
                             };
                         }
@@ -1628,33 +1628,8 @@
                         if (notes.includes(val2)) hasVal2 = true;
                     }
 
-                    // Cas 1: Un seul candidat absent
+                    // Cas 1: Un seul candidat présent
                     if (hasVal1 && !hasVal2) {
-                        const eliminations = [];
-                        for (let r = 0; r < 9; r++) {
-                            for (let c = 0; c < 9; c++) {
-                                if (currentGrid[r][c] === 0 && 
-                                    sees(r, c, cell1.r, cell1.c) && 
-                                    sees(r, c, cell2.r, cell2.c)) {
-                                    const notes = notesGrid[r][c] || [];
-                                    if (notes.includes(val2)) {
-                                        eliminations.push(`R${r+1}C${c+1}: remove ${val2}`);
-                                    }
-                                }
-                            }
-                        }
-
-                        if (eliminations.length > 0) {
-                            return {
-                                type: 'elimination',
-                                cells: [{row: cell1.r, col: cell1.c}, {row: cell2.r, col: cell2.c}],
-                                values: [val1, val2],
-                                explanation: `Chute Remote Pair: ${val2} cannot be in yellow cells (box ${thirdBox + 1}) with Remote Pair {${val1}/${val2}}.`,
-                                reasoning: `Remote Pair at R${cell1.r+1}C${cell1.c+1} and R${cell2.r+1}C${cell2.c+1}. Since ${val1} appears in box ${thirdBox + 1} but ${val2} does not, ${val2} can be eliminated from cells seeing both green cells.`,
-                                eliminations: eliminations
-                            };
-                        }
-                    } else if (hasVal2 && !hasVal1) {
                         const eliminations = [];
                         for (let r = 0; r < 9; r++) {
                             for (let c = 0; c < 9; c++) {
@@ -1674,8 +1649,33 @@
                                 type: 'elimination',
                                 cells: [{row: cell1.r, col: cell1.c}, {row: cell2.r, col: cell2.c}],
                                 values: [val1, val2],
+                                explanation: `Chute Remote Pair: ${val2} cannot be in yellow cells (box ${thirdBox + 1}) with Remote Pair {${val1}/${val2}}.`,
+                                reasoning: `Remote Pair at R${cell1.r+1}C${cell1.c+1} and R${cell2.r+1}C${cell2.c+1}. Since ${val2} does NOT appear in box ${thirdBox + 1} but ${val1} does, ${val1} can be eliminated from cells seeing both green cells.`,
+                                eliminations: eliminations
+                            };
+                        }
+                    } else if (hasVal2 && !hasVal1) {
+                        const eliminations = [];
+                        for (let r = 0; r < 9; r++) {
+                            for (let c = 0; c < 9; c++) {
+                                if (currentGrid[r][c] === 0 && 
+                                    sees(r, c, cell1.r, cell1.c) && 
+                                    sees(r, c, cell2.r, cell2.c)) {
+                                    const notes = notesGrid[r][c] || [];
+                                    if (notes.includes(val2)) {
+                                        eliminations.push(`R${r+1}C${c+1}: remove ${val2}`);
+                                    }
+                                }
+                            }
+                        }
+
+                        if (eliminations.length > 0) {
+                            return {
+                                type: 'elimination',
+                                cells: [{row: cell1.r, col: cell1.c}, {row: cell2.r, col: cell2.c}],
+                                values: [val1, val2],
                                 explanation: `Chute Remote Pair: ${val1} cannot be in yellow cells (box ${thirdBox + 1}) with Remote Pair {${val1}/${val2}}.`,
-                                reasoning: `Remote Pair at R${cell1.r+1}C${cell1.c+1} and R${cell2.r+1}C${cell2.c+1}. Since ${val2} appears in box ${thirdBox + 1} but ${val1} does not, ${val1} can be eliminated from cells seeing both green cells.`,
+                                reasoning: `Remote Pair at R${cell1.r+1}C${cell1.c+1} and R${cell2.r+1}C${cell2.c+1}. Since ${val1} does NOT appear in box ${thirdBox + 1} but ${val2} does, ${val2} can be eliminated from cells seeing both green cells.`,
                                 eliminations: eliminations
                             };
                         }
