@@ -1471,8 +1471,6 @@
             }
         }
 
-        console.log('CRP: Found', biValueCells.length, 'bi-value cells');
-
         // Pour chaque paire de cellules bi-valeurs avec les mêmes candidats
         for (let i = 0; i < biValueCells.length; i++) {
             for (let j = i + 1; j < biValueCells.length; j++) {
@@ -1485,13 +1483,9 @@
                 // Vérifier qu'elles ne se voient pas (Remote Pair)
                 if (sees(cell1.r, cell1.c, cell2.r, cell2.c)) continue;
 
-                console.log(`CRP: Remote Pair found at R${cell1.r+1}C${cell1.c+1} and R${cell2.r+1}C${cell2.c+1} with values [${cell1.values}]`);
-
                 const [val1, val2] = cell1.values;
                 const box1 = Math.floor(cell1.r / 3) * 3 + Math.floor(cell1.c / 3);
                 const box2 = Math.floor(cell2.r / 3) * 3 + Math.floor(cell2.c / 3);
-
-                console.log(`CRP: box1=${box1}, box2=${box2}`);
 
                 // Vérifier si elles sont dans la même chute horizontale
                 const chuteRow1 = Math.floor(box1 / 3);
@@ -1960,15 +1954,15 @@
                 return;
             }
 
-            const remotePairs = findRemotePairs();
-            if (remotePairs) {
-                displayAnalysis("Remote Pairs", remotePairs);
-                return;
-            }
-
             const chuteRemotePairs = findChuteRemotePairs();
             if (chuteRemotePairs) {
                 displayAnalysis("Chute Remote Pairs", chuteRemotePairs);
+                return;
+            }
+
+            const remotePairs = findRemotePairs();
+            if (remotePairs) {
+                displayAnalysis("Remote Pairs", remotePairs);
                 return;
             }
 
