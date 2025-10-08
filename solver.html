@@ -1104,15 +1104,19 @@
                             }
                         }
                         
-                        // Check if all three digits appear in exactly the same 3 cells
-                        if (cellsWithDigit1.length === 3 && cellsWithDigit2.length === 3 && cellsWithDigit3.length === 3 &&
-                            JSON.stringify(cellsWithDigit1) === JSON.stringify(cellsWithDigit2) &&
-                            JSON.stringify(cellsWithDigit1) === JSON.stringify(cellsWithDigit3)) {
+                        // Union of all cells containing these digits
+                        const allCells = new Set([...cellsWithDigit1, ...cellsWithDigit2, ...cellsWithDigit3]);
+                        
+                        // Hidden Triple: these 3 digits appear ONLY in exactly 3 cells (each digit in 2 or 3 of them)
+                        if (allCells.size === 3 && 
+                            cellsWithDigit1.length >= 2 && cellsWithDigit1.length <= 3 &&
+                            cellsWithDigit2.length >= 2 && cellsWithDigit2.length <= 3 &&
+                            cellsWithDigit3.length >= 2 && cellsWithDigit3.length <= 3) {
                             
                             let canEliminate = false;
                             let eliminationDetails = [];
                             
-                            for (const row of cellsWithDigit1) {
+                            for (const row of Array.from(allCells)) {
                                 const userNotes = notesGrid[row][c] || [];
                                 const candidatesToEliminate = userNotes.filter(num => num !== digit1 && num !== digit2 && num !== digit3);
                                 if (candidatesToEliminate.length > 0) {
@@ -1124,9 +1128,9 @@
                             if (canEliminate) {
                                 return {
                                     type: 'elimination',
-                                    cells: cellsWithDigit1.map(row => ({row: row, col: c})),
+                                    cells: Array.from(allCells).map(row => ({row: row, col: c})),
                                     values: [digit1, digit2, digit3],
-                                    explanation: `Hidden triple ${digit1}/${digit2}/${digit3} found at ${cellsWithDigit1.map(r => `R${r+1}C${c+1}`).join(', ')} in column ${c+1}.`,
+                                    explanation: `Hidden triple ${digit1}/${digit2}/${digit3} found at ${Array.from(allCells).map(r => `R${r+1}C${c+1}`).join(', ')} in column ${c+1}.`,
                                     reasoning: `These three digits can only appear in these three cells in this column, so eliminate all other candidates from these cells.`,
                                     eliminations: eliminationDetails
                                 };
@@ -1155,14 +1159,19 @@
                             }
                         }
                         
-                        if (cellsWithDigit1.length === 3 && cellsWithDigit2.length === 3 && cellsWithDigit3.length === 3 &&
-                            JSON.stringify(cellsWithDigit1) === JSON.stringify(cellsWithDigit2) &&
-                            JSON.stringify(cellsWithDigit1) === JSON.stringify(cellsWithDigit3)) {
+                        // Union of all cells containing these digits
+                        const allCells = new Set([...cellsWithDigit1, ...cellsWithDigit2, ...cellsWithDigit3]);
+                        
+                        // Hidden Triple: these 3 digits appear ONLY in exactly 3 cells (each digit in 2 or 3 of them)
+                        if (allCells.size === 3 && 
+                            cellsWithDigit1.length >= 2 && cellsWithDigit1.length <= 3 &&
+                            cellsWithDigit2.length >= 2 && cellsWithDigit2.length <= 3 &&
+                            cellsWithDigit3.length >= 2 && cellsWithDigit3.length <= 3) {
                             
                             let canEliminate = false;
                             let eliminationDetails = [];
                             
-                            for (const col of cellsWithDigit1) {
+                            for (const col of Array.from(allCells)) {
                                 const userNotes = notesGrid[r][col] || [];
                                 const candidatesToEliminate = userNotes.filter(num => num !== digit1 && num !== digit2 && num !== digit3);
                                 if (candidatesToEliminate.length > 0) {
@@ -1174,9 +1183,9 @@
                             if (canEliminate) {
                                 return {
                                     type: 'elimination',
-                                    cells: cellsWithDigit1.map(col => ({row: r, col: col})),
+                                    cells: Array.from(allCells).map(col => ({row: r, col: col})),
                                     values: [digit1, digit2, digit3],
-                                    explanation: `Hidden triple ${digit1}/${digit2}/${digit3} found at ${cellsWithDigit1.map(c => `R${r+1}C${c+1}`).join(', ')} in row ${r+1}.`,
+                                    explanation: `Hidden triple ${digit1}/${digit2}/${digit3} found at ${Array.from(allCells).map(c => `R${r+1}C${c+1}`).join(', ')} in row ${r+1}.`,
                                     reasoning: `These three digits can only appear in these three cells in this row, so eliminate all other candidates from these cells.`,
                                     eliminations: eliminationDetails
                                 };
@@ -1208,35 +1217,41 @@
                                 }
                             }
                             
-                            // Compare the cells
-                            if (cellsWithDigit1.length === 3 && cellsWithDigit2.length === 3 && cellsWithDigit3.length === 3) {
-                                const keys1 = cellsWithDigit1.map(c => `${c.row},${c.col}`).sort().join(';');
-                                const keys2 = cellsWithDigit2.map(c => `${c.row},${c.col}`).sort().join(';');
-                                const keys3 = cellsWithDigit3.map(c => `${c.row},${c.col}`).sort().join(';');
+                            // Create a map to track unique cells
+                            const allCellsMap = new Map();
+                            cellsWithDigit1.forEach(cell => allCellsMap.set(`${cell.row},${cell.col}`, cell));
+                            cellsWithDigit2.forEach(cell => allCellsMap.set(`${cell.row},${cell.col}`, cell));
+                            cellsWithDigit3.forEach(cell => allCellsMap.set(`${cell.row},${cell.col}`, cell));
+                            
+                            const allCells = Array.from(allCellsMap.values());
+                            
+                            // Hidden Triple: these 3 digits appear ONLY in exactly 3 cells (each digit in 2 or 3 of them)
+                            if (allCells.length === 3 && 
+                                cellsWithDigit1.length >= 2 && cellsWithDigit1.length <= 3 &&
+                                cellsWithDigit2.length >= 2 && cellsWithDigit2.length <= 3 &&
+                                cellsWithDigit3.length >= 2 && cellsWithDigit3.length <= 3) {
                                 
-                                if (keys1 === keys2 && keys1 === keys3) {
-                                    let canEliminate = false;
-                                    let eliminationDetails = [];
-                                    
-                                    for (const cell of cellsWithDigit1) {
-                                        const userNotes = notesGrid[cell.row][cell.col] || [];
-                                        const candidatesToEliminate = userNotes.filter(num => num !== digit1 && num !== digit2 && num !== digit3);
-                                        if (candidatesToEliminate.length > 0) {
-                                            canEliminate = true;
-                                            eliminationDetails.push(`R${cell.row+1}C${cell.col+1}: remove ${candidatesToEliminate.join(', ')}`);
-                                        }
+                                let canEliminate = false;
+                                let eliminationDetails = [];
+                                
+                                for (const cell of allCells) {
+                                    const userNotes = notesGrid[cell.row][cell.col] || [];
+                                    const candidatesToEliminate = userNotes.filter(num => num !== digit1 && num !== digit2 && num !== digit3);
+                                    if (candidatesToEliminate.length > 0) {
+                                        canEliminate = true;
+                                        eliminationDetails.push(`R${cell.row+1}C${cell.col+1}: remove ${candidatesToEliminate.join(', ')}`);
                                     }
-                                    
-                                    if (canEliminate) {
-                                        return {
-                                            type: 'elimination',
-                                            cells: cellsWithDigit1.map(cell => ({row: cell.row, col: cell.col})),
-                                            values: [digit1, digit2, digit3],
-                                            explanation: `Hidden triple ${digit1}/${digit2}/${digit3} found at ${cellsWithDigit1.map(c => `R${c.row+1}C${c.col+1}`).join(', ')} in box ${boxR + 1}.${boxC + 1}.`,
-                                            reasoning: `These three digits can only appear in these three cells in this box, so eliminate all other candidates from these cells.`,
-                                            eliminations: eliminationDetails
-                                        };
-                                    }
+                                }
+                                
+                                if (canEliminate) {
+                                    return {
+                                        type: 'elimination',
+                                        cells: allCells.map(cell => ({row: cell.row, col: cell.col})),
+                                        values: [digit1, digit2, digit3],
+                                        explanation: `Hidden triple ${digit1}/${digit2}/${digit3} found at ${allCells.map(c => `R${c.row+1}C${c.col+1}`).join(', ')} in box ${boxR + 1}.${boxC + 1}.`,
+                                        reasoning: `These three digits can only appear in these three cells in this box, so eliminate all other candidates from these cells.`,
+                                        eliminations: eliminationDetails
+                                    };
                                 }
                             }
                         }
