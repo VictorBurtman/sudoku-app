@@ -1085,6 +1085,169 @@
         return null;
     }
 
+    function findHiddenTriples() {
+        // Check columns
+        for (let c = 0; c < 9; c++) {
+            for (let digit1 = 1; digit1 <= 7; digit1++) {
+                for (let digit2 = digit1 + 1; digit2 <= 8; digit2++) {
+                    for (let digit3 = digit2 + 1; digit3 <= 9; digit3++) {
+                        const cellsWithDigit1 = [];
+                        const cellsWithDigit2 = [];
+                        const cellsWithDigit3 = [];
+                        
+                        for (let r = 0; r < 9; r++) {
+                            if (currentGrid[r][c] === 0) {
+                                const userNotes = notesGrid[r][c] || [];
+                                if (userNotes.includes(digit1)) cellsWithDigit1.push(r);
+                                if (userNotes.includes(digit2)) cellsWithDigit2.push(r);
+                                if (userNotes.includes(digit3)) cellsWithDigit3.push(r);
+                            }
+                        }
+                        
+                        // Check if all three digits appear in exactly the same 3 cells
+                        if (cellsWithDigit1.length === 3 && cellsWithDigit2.length === 3 && cellsWithDigit3.length === 3 &&
+                            JSON.stringify(cellsWithDigit1) === JSON.stringify(cellsWithDigit2) &&
+                            JSON.stringify(cellsWithDigit1) === JSON.stringify(cellsWithDigit3)) {
+                            
+                            let canEliminate = false;
+                            let eliminationDetails = [];
+                            
+                            for (const row of cellsWithDigit1) {
+                                const userNotes = notesGrid[row][c] || [];
+                                const candidatesToEliminate = userNotes.filter(num => num !== digit1 && num !== digit2 && num !== digit3);
+                                if (candidatesToEliminate.length > 0) {
+                                    canEliminate = true;
+                                    eliminationDetails.push(`R${row+1}C${c+1}: remove ${candidatesToEliminate.join(', ')}`);
+                                }
+                            }
+                            
+                            if (canEliminate) {
+                                return {
+                                    type: 'elimination',
+                                    cells: cellsWithDigit1.map(row => ({row: row, col: c})),
+                                    values: [digit1, digit2, digit3],
+                                    explanation: `Hidden triple ${digit1}/${digit2}/${digit3} found at ${cellsWithDigit1.map(r => `R${r+1}C${c+1}`).join(', ')} in column ${c+1}.`,
+                                    reasoning: `These three digits can only appear in these three cells in this column, so eliminate all other candidates from these cells.`,
+                                    eliminations: eliminationDetails
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check rows
+        for (let r = 0; r < 9; r++) {
+            for (let digit1 = 1; digit1 <= 7; digit1++) {
+                for (let digit2 = digit1 + 1; digit2 <= 8; digit2++) {
+                    for (let digit3 = digit2 + 1; digit3 <= 9; digit3++) {
+                        const cellsWithDigit1 = [];
+                        const cellsWithDigit2 = [];
+                        const cellsWithDigit3 = [];
+                        
+                        for (let c = 0; c < 9; c++) {
+                            if (currentGrid[r][c] === 0) {
+                                const userNotes = notesGrid[r][c] || [];
+                                if (userNotes.includes(digit1)) cellsWithDigit1.push(c);
+                                if (userNotes.includes(digit2)) cellsWithDigit2.push(c);
+                                if (userNotes.includes(digit3)) cellsWithDigit3.push(c);
+                            }
+                        }
+                        
+                        if (cellsWithDigit1.length === 3 && cellsWithDigit2.length === 3 && cellsWithDigit3.length === 3 &&
+                            JSON.stringify(cellsWithDigit1) === JSON.stringify(cellsWithDigit2) &&
+                            JSON.stringify(cellsWithDigit1) === JSON.stringify(cellsWithDigit3)) {
+                            
+                            let canEliminate = false;
+                            let eliminationDetails = [];
+                            
+                            for (const col of cellsWithDigit1) {
+                                const userNotes = notesGrid[r][col] || [];
+                                const candidatesToEliminate = userNotes.filter(num => num !== digit1 && num !== digit2 && num !== digit3);
+                                if (candidatesToEliminate.length > 0) {
+                                    canEliminate = true;
+                                    eliminationDetails.push(`R${r+1}C${col+1}: remove ${candidatesToEliminate.join(', ')}`);
+                                }
+                            }
+                            
+                            if (canEliminate) {
+                                return {
+                                    type: 'elimination',
+                                    cells: cellsWithDigit1.map(col => ({row: r, col: col})),
+                                    values: [digit1, digit2, digit3],
+                                    explanation: `Hidden triple ${digit1}/${digit2}/${digit3} found at ${cellsWithDigit1.map(c => `R${r+1}C${c+1}`).join(', ')} in row ${r+1}.`,
+                                    reasoning: `These three digits can only appear in these three cells in this row, so eliminate all other candidates from these cells.`,
+                                    eliminations: eliminationDetails
+                                };
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Check boxes
+        for (let boxR = 0; boxR < 3; boxR++) {
+            for (let boxC = 0; boxC < 3; boxC++) {
+                for (let digit1 = 1; digit1 <= 7; digit1++) {
+                    for (let digit2 = digit1 + 1; digit2 <= 8; digit2++) {
+                        for (let digit3 = digit2 + 1; digit3 <= 9; digit3++) {
+                            const cellsWithDigit1 = [];
+                            const cellsWithDigit2 = [];
+                            const cellsWithDigit3 = [];
+                            
+                            for (let r = boxR * 3; r < (boxR + 1) * 3; r++) {
+                                for (let c = boxC * 3; c < (boxC + 1) * 3; c++) {
+                                    if (currentGrid[r][c] === 0) {
+                                        const userNotes = notesGrid[r][c] || [];
+                                        if (userNotes.includes(digit1)) cellsWithDigit1.push({row: r, col: c});
+                                        if (userNotes.includes(digit2)) cellsWithDigit2.push({row: r, col: c});
+                                        if (userNotes.includes(digit3)) cellsWithDigit3.push({row: r, col: c});
+                                    }
+                                }
+                            }
+                            
+                            // Compare the cells
+                            if (cellsWithDigit1.length === 3 && cellsWithDigit2.length === 3 && cellsWithDigit3.length === 3) {
+                                const keys1 = cellsWithDigit1.map(c => `${c.row},${c.col}`).sort().join(';');
+                                const keys2 = cellsWithDigit2.map(c => `${c.row},${c.col}`).sort().join(';');
+                                const keys3 = cellsWithDigit3.map(c => `${c.row},${c.col}`).sort().join(';');
+                                
+                                if (keys1 === keys2 && keys1 === keys3) {
+                                    let canEliminate = false;
+                                    let eliminationDetails = [];
+                                    
+                                    for (const cell of cellsWithDigit1) {
+                                        const userNotes = notesGrid[cell.row][cell.col] || [];
+                                        const candidatesToEliminate = userNotes.filter(num => num !== digit1 && num !== digit2 && num !== digit3);
+                                        if (candidatesToEliminate.length > 0) {
+                                            canEliminate = true;
+                                            eliminationDetails.push(`R${cell.row+1}C${cell.col+1}: remove ${candidatesToEliminate.join(', ')}`);
+                                        }
+                                    }
+                                    
+                                    if (canEliminate) {
+                                        return {
+                                            type: 'elimination',
+                                            cells: cellsWithDigit1.map(cell => ({row: cell.row, col: cell.col})),
+                                            values: [digit1, digit2, digit3],
+                                            explanation: `Hidden triple ${digit1}/${digit2}/${digit3} found at ${cellsWithDigit1.map(c => `R${c.row+1}C${c.col+1}`).join(', ')} in box ${boxR + 1}.${boxC + 1}.`,
+                                            reasoning: `These three digits can only appear in these three cells in this box, so eliminate all other candidates from these cells.`,
+                                            eliminations: eliminationDetails
+                                        };
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
     function findNakedTriples() {
         function isNakedTripleFromNotes(cells) {
             const allCandidates = new Set();
@@ -1460,7 +1623,6 @@
             return Math.floor(r1 / 3) === Math.floor(r2 / 3) && Math.floor(c1 / 3) === Math.floor(c2 / 3);
         };
 
-        // Trouver toutes les cellules bi-valeurs
         const biValueCells = [];
         for (let r = 0; r < 9; r++) {
             for (let c = 0; c < 9; c++) {
@@ -1473,28 +1635,23 @@
 
         if (biValueCells.length === 0) return null;
 
-        // Pour chaque paire de cellules bi-valeurs avec les mêmes candidats
         for (let i = 0; i < biValueCells.length; i++) {
             for (let j = i + 1; j < biValueCells.length; j++) {
                 const cell1 = biValueCells[i];
                 const cell2 = biValueCells[j];
 
-                // Vérifier qu'elles ont les mêmes candidats (après tri)
                 if (cell1.values[0] !== cell2.values[0] || cell1.values[1] !== cell2.values[1]) continue;
 
-                // Vérifier qu'elles ne se voient pas (Remote Pair)
                 if (sees(cell1.r, cell1.c, cell2.r, cell2.c)) continue;
 
                 const [val1, val2] = cell1.values;
                 const box1 = Math.floor(cell1.r / 3) * 3 + Math.floor(cell1.c / 3);
                 const box2 = Math.floor(cell2.r / 3) * 3 + Math.floor(cell2.c / 3);
 
-                // Vérifier si elles sont dans la même chute horizontale
                 const chuteRow1 = Math.floor(box1 / 3);
                 const chuteRow2 = Math.floor(box2 / 3);
                 
                 if (chuteRow1 === chuteRow2) {
-                    // Même chute horizontale - trouver la troisième box
                     const usedBoxes = [box1 % 3, box2 % 3];
                     const thirdBoxCol = [0, 1, 2].find(col => !usedBoxes.includes(col));
                     if (thirdBoxCol === undefined) continue;
@@ -1508,7 +1665,6 @@
                         }
                     }
 
-                    // Vérifier quels candidats sont dans la box jaune (SEULEMENT les candidats, pas les valeurs résolues)
                     let hasVal1 = false, hasVal2 = false;
                     
                     for (const yCell of yellowCells) {
@@ -1517,9 +1673,7 @@
                         if (notes.includes(val2)) hasVal2 = true;
                     }
 
-                    // Cas 1: Un seul candidat absent → éliminer celui qui est absent!
                     if (!hasVal1 && hasVal2) {
-                        // Éliminer val1 (l'ABSENT)
                         const eliminations = [];
                         for (let r = 0; r < 9; r++) {
                             for (let c = 0; c < 9; c++) {
@@ -1545,7 +1699,6 @@
                             };
                         }
                     } else if (!hasVal2 && hasVal1) {
-                        // Éliminer val2 (l'ABSENT)
                         const eliminations = [];
                         for (let r = 0; r < 9; r++) {
                             for (let c = 0; c < 9; c++) {
@@ -1571,7 +1724,6 @@
                             };
                         }
                     } else if (!hasVal1 && !hasVal2) {
-                        // Double elimination - rare
                         const eliminations = [];
                         for (let r = 0; r < 9; r++) {
                             for (let c = 0; c < 9; c++) {
@@ -1598,12 +1750,10 @@
                     }
                 }
 
-                // Vérifier si elles sont dans la même chute verticale
                 const chuteCol1 = box1 % 3;
                 const chuteCol2 = box2 % 3;
                 
                 if (chuteCol1 === chuteCol2) {
-                    // Même chute verticale - trouver la troisième box
                     const usedBoxRows = [Math.floor(box1 / 3), Math.floor(box2 / 3)];
                     const thirdBoxRow = [0, 1, 2].find(row => !usedBoxRows.includes(row));
                     if (thirdBoxRow === undefined) continue;
@@ -1617,7 +1767,6 @@
                         }
                     }
 
-                    // Vérifier quels candidats sont dans la box jaune (SEULEMENT les candidats, pas les valeurs résolues)
                     let hasVal1 = false, hasVal2 = false;
                     
                     for (const yCell of yellowCells) {
@@ -1626,7 +1775,6 @@
                         if (notes.includes(val2)) hasVal2 = true;
                     }
 
-                    // Cas 1: Un seul candidat présent
                     if (hasVal1 && !hasVal2) {
                         const eliminations = [];
                         for (let r = 0; r < 9; r++) {
@@ -1931,6 +2079,12 @@
             const hiddenPair = findHiddenPairs();
             if (hiddenPair) {
                 displayAnalysis("Hidden Pairs", hiddenPair);
+                return;
+            }
+
+            const hiddenTriple = findHiddenTriples();
+            if (hiddenTriple) {
+                displayAnalysis("Hidden Triples", hiddenTriple);
                 return;
             }
 
