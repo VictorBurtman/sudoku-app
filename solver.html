@@ -1440,6 +1440,130 @@
         return null;
     }
 
+    function findXYChain() {
+        // Find all bi-value cells (cells with exactly 2 candidates)
+        const biValueCells = [];
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                const notes = notesGrid[r][c] || [];
+                if (currentGrid[r][c] === 0 && notes.length === 2) {
+                    biValueCells.push({r, c, values: [...notes].sort((a,b) => a-b)});
+                }
+            }
+        }
+        
+        if (biValueCells.length < 2) return null;
+        
+        // Helper to check if two cells see each other
+        const sees = (r1, c1, r2, c2) => {
+            if (r1 === r2 && c1 === c2) return false;
+            if (r1 === r2 || c1 === c2) return true;
+            return Math.floor(r1/3) === Math.floor(r2/3) && Math.floor(c1/3) === Math.floor(c2/3);
+        };
+        
+        // Build adjacency list - two cells are connected if they share a candidate AND see each other
+        const adj = new Map();
+        biValueCells.forEach(cell => {
+            const key = `${cell.r},${cell.c}`;
+            adj.set(key, []);
+        });
+        
+        for (let i = 0; i < biValueCells.length; i++) {
+            for (let j = i + 1; j < biValueCells.length; j++) {
+                const cell1 = biValueCells[i];
+                const cell2 = biValueCells[j];
+                
+                if (sees(cell1.r, cell1.c, cell2.r, cell2.c)) {
+                    // Check if they share exactly one candidate
+                    const shared = cell1.values.filter(v => cell2.values.includes(v));
+                    if (shared.length === 1) {
+                        const key1 = `${cell1.r},${cell1.c}`;
+                        const key2 = `${cell2.r},${cell2.c}`;
+                        adj.get(key1).push({cell: cell2, sharedValue: shared[0]});
+                        adj.get(key2).push({cell: cell1, sharedValue: shared[0]});
+                    }
+                }
+            }
+        }
+        
+        // Search for XY-Chains using DFS
+        for (let i = 0; i < biValueCells.length; i++) {
+            const startCell = biValueCells[i];
+            const startKey = `${startCell.r},${startCell.c}`;
+            
+            // DFS to find chains (limit depth to 10 to avoid performance issues)
+            const stack = [[startCell, [startCell], null]]; // [currentCell, path, lastUsedValue]
+            
+            while (stack.length > 0) {
+                const [current, path, lastValue] = stack.pop();
+                const currentKey = `${current.r},${current.c}`;
+                
+                // Check if we have a chain of length >= 3 (at least 3 cells)
+                if (path.length >= 3) {
+                    const endCell = current;
+                    // Find common value between start and end
+                    const commonValues = startCell.values.filter(v => endCell.values.includes(v));
+                    
+                    if (commonValues.length > 0) {
+                        const targetValue = commonValues[0];
+                        
+                        // Find eliminations - cells that see both ends and contain targetValue
+                        const eliminations = [];
+                        for (let r = 0; r < 9; r++) {
+                            for (let c = 0; c < 9; c++) {
+                                if (currentGrid[r][c] === 0) {
+                                    // Skip cells in the chain
+                                    const inChain = path.some(p => p.r === r && p.c === c);
+                                    if (inChain) continue;
+                                    
+                                    // Check if sees both ends
+                                    if (sees(r, c, startCell.r, startCell.c) && 
+                                        sees(r, c, endCell.r, endCell.c)) {
+                                        const notes = notesGrid[r][c] || [];
+                                        if (notes.includes(targetValue)) {
+                                            eliminations.push(`R${r+1}C${c+1}: remove ${targetValue}`);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        if (eliminations.length > 0) {
+                            return {
+                                type: 'elimination',
+                                cells: path.map(p => ({row: p.r, col: p.c})),
+                                values: [targetValue],
+                                explanation: `XY-Chain of length ${path.length}: ${path.map(p => `R${p.r+1}C${p.c+1}`).join(' → ')}.`,
+                                reasoning: `Both ends of the chain (R${startCell.r+1}C${startCell.c+1} and R${endCell.r+1}C${endCell.c+1}) contain ${targetValue}, so ${targetValue} can be eliminated from cells seeing both ends.`,
+                                eliminations: eliminations
+                            };
+                        }
+                    }
+                }
+                
+                // Continue building the chain (limit to depth 10)
+                if (path.length < 10) {
+                    const neighbors = adj.get(currentKey);
+                    for (const {cell: neighbor, sharedValue} of neighbors) {
+                        const neighborKey = `${neighbor.r},${neighbor.c}`;
+                        
+                        // Don't revisit cells
+                        const inPath = path.some(p => p.r === neighbor.r && p.c === neighbor.c);
+                        if (inPath) continue;
+                        
+                        // In XY-Chain, we alternate values: the shared value should be different from last
+                        // This ensures proper alternation in bi-value cells
+                        if (lastValue !== null && sharedValue === lastValue) continue;
+                        
+                        stack.push([neighbor, [...path, neighbor], sharedValue]);
+                    }
+                }
+            }
+        }
+        
+        return null;
+    }
+
     function findXWing() {
         for (let digit = 1; digit <= 9; digit++) {
             const rowsWithTwo = [];
@@ -2118,6 +2242,12 @@
             const xWing = findXWing();
             if (xWing) {
                 displayAnalysis("X-Wing", xWing);
+                return;
+            }
+
+            const xyChain = findXYChain();
+            if (xyChain) {
+                displayAnalysis("XY-Chain", xyChain);
                 return;
             }
 
