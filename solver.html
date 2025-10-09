@@ -1661,99 +1661,105 @@
         return null;
     }
 
-    function findRemotePairs() {
-        const pairCells = [];
-        for (let r = 0; r < 9; r++) {
-            for (let c = 0; c < 9; c++) {
-                if (currentGrid[r][c] === 0 && (notesGrid[r][c] || []).length === 2) {
-                    pairCells.push({ r, c, notes: notesGrid[r][c] });
+   function findRemotePairs() {
+    const pairCells = [];
+    for (let r = 0; r < 9; r++) {
+        for (let c = 0; c < 9; c++) {
+            if (currentGrid[r][c] === 0 && (notesGrid[r][c] || []).length === 2) {
+                pairCells.push({ r, c, notes: notesGrid[r][c] });
+            }
+        }
+    }
+    
+    const pairs = {};
+    pairCells.forEach(cell => {
+        const key = [...cell.notes].sort().join(',');
+        if (!pairs[key]) pairs[key] = [];
+        pairs[key].push(cell);
+    });
+    
+    const sees = (c1, c2) => {
+        if (c1.r === c2.r && c1.c === c2.c) return false;
+        if (c1.r === c2.r || c1.c === c2.c) return true;
+        return Math.floor(c1.r / 3) === Math.floor(c2.r / 3) && Math.floor(c1.c / 3) === Math.floor(c2.c / 3);
+    };
+    
+    for (const key in pairs) {
+        const group = pairs[key];
+        if (group.length < 3) continue;
+        
+        const adj = new Map(group.map(cell => [`${cell.r},${cell.c}`, []]));
+        for (let i = 0; i < group.length; i++) {
+            for (let j = i + 1; j < group.length; j++) {
+                if (sees(group[i], group[j])) {
+                    adj.get(`${group[i].r},${group[i].c}`).push(group[j]);
+                    adj.get(`${group[j].r},${group[j].c}`).push(group[i]);
                 }
             }
         }
         
-        const pairs = {};
-        pairCells.forEach(cell => {
-            const key = [...cell.notes].sort().join(',');
-            if (!pairs[key]) pairs[key] = [];
-            pairs[key].push(cell);
-        });
-        
-        const sees = (c1, c2) => {
-            if (c1.r === c2.r && c1.c === c2.c) return false;
-            if (c1.r === c2.r || c1.c === c2.c) return true;
-            return Math.floor(c1.r / 3) === Math.floor(c2.r / 3) && Math.floor(c1.c / 3) === Math.floor(c2.c / 3);
-        };
-        
-        for (const key in pairs) {
-            const group = pairs[key];
-            if (group.length < 3) continue;
+        for (let i = 0; i < group.length; i++) {
+            const startNode = group[i];
+            const queue = [[startNode, [startNode]]];
+            const visited = new Set([`${startNode.r},${startNode.c}`]);
             
-            const adj = new Map(group.map(cell => [`${cell.r},${cell.c}`, []]));
-            for (let i = 0; i < group.length; i++) {
-                for (let j = i + 1; j < group.length; j++) {
-                    if (sees(group[i], group[j])) {
-                        adj.get(`${group[i].r},${group[i].c}`).push(group[j]);
-                        adj.get(`${group[j].r},${group[j].c}`).push(group[i]);
-                    }
-                }
-            }
-            
-            for (let i = 0; i < group.length; i++) {
-                const startNode = group[i];
-                const queue = [[startNode, [startNode]]];
-                const visited = new Set([`${startNode.r},${startNode.c}`]);
+            while (queue.length > 0) {
+                const [current, path] = queue.shift();
                 
-                while (queue.length > 0) {
-                    const [current, path] = queue.shift();
-                    if (path.length >= 2) {
-                        const endNode = current;
-                        const [d1, d2] = key.split(',').map(Number);
-                        let eliminations = [];
-                        let eliminationDetails = [];
-                        const pathCoords = new Set(path.map(p => `${p.r},${p.c}`));
-                        
-                        for (let r = 0; r < 9; r++) {
-                            for (let c = 0; c < 9; c++) {
-                                if (pathCoords.has(`${r},${c}`)) continue;
-                                const checkCell = { r, c };
-                                if (currentGrid[r][c] === 0 && sees(checkCell, startNode) && sees(checkCell, endNode)) {
-                                    const notes = notesGrid[r][c] || [];
-                                    if (notes.includes(d1)) {
-                                        eliminations.push({ r, c, val: d1 });
-                                        eliminationDetails.push(`R${r+1}C${c+1}: remove ${d1}`);
-                                    }
-                                    if (notes.includes(d2)) {
-                                        eliminations.push({ r, c, val: d2 });
-                                        eliminationDetails.push(`R${r+1}C${c+1}: remove ${d2}`);
-                                    }
+                // CORRECTION : Exiger au moins 3 cellules ET vérifier que les extrémités ne se voient pas
+                if (path.length >= 3) {
+                    const endNode = current;
+                    
+                    // NOUVELLE VÉRIFICATION : les extrémités ne doivent PAS se voir directement
+                    if (sees(startNode, endNode)) continue;
+                    
+                    const [d1, d2] = key.split(',').map(Number);
+                    let eliminations = [];
+                    let eliminationDetails = [];
+                    const pathCoords = new Set(path.map(p => `${p.r},${p.c}`));
+                    
+                    for (let r = 0; r < 9; r++) {
+                        for (let c = 0; c < 9; c++) {
+                            if (pathCoords.has(`${r},${c}`)) continue;
+                            const checkCell = { r, c };
+                            if (currentGrid[r][c] === 0 && sees(checkCell, startNode) && sees(checkCell, endNode)) {
+                                const notes = notesGrid[r][c] || [];
+                                if (notes.includes(d1)) {
+                                    eliminations.push({ r, c, val: d1 });
+                                    eliminationDetails.push(`R${r+1}C${c+1}: remove ${d1}`);
+                                }
+                                if (notes.includes(d2)) {
+                                    eliminations.push({ r, c, val: d2 });
+                                    eliminationDetails.push(`R${r+1}C${c+1}: remove ${d2}`);
                                 }
                             }
                         }
-                        
-                        if (eliminations.length > 0) {
-                            return {
-                                type: 'elimination',
-                                cells: path.map(p => ({row: p.r, col: p.c})),
-                                values: [d1, d2],
-                                explanation: `Remote Pair chain on {${key}} of length ${path.length}.`,
-                                reasoning: `Any cell seeing both ends of the chain cannot contain ${d1} or ${d2}.`,
-                                eliminations: eliminationDetails
-                            };
-                        }
                     }
                     
-                    const neighbors = adj.get(`${current.r},${current.c}`);
-                    for (const neighbor of neighbors) {
-                        if (!visited.has(`${neighbor.r},${neighbor.c}`)) {
-                            visited.add(`${neighbor.r},${neighbor.c}`);
-                            queue.push([neighbor, [...path, neighbor]]);
-                        }
+                    if (eliminations.length > 0) {
+                        return {
+                            type: 'elimination',
+                            cells: path.map(p => ({row: p.r, col: p.c})),
+                            values: [d1, d2],
+                            explanation: `Remote Pair chain on {${key}} of length ${path.length}.`,
+                            reasoning: `Any cell seeing both ends of the chain cannot contain ${d1} or ${d2}.`,
+                            eliminations: eliminationDetails
+                        };
+                    }
+                }
+                
+                const neighbors = adj.get(`${current.r},${current.c}`);
+                for (const neighbor of neighbors) {
+                    if (!visited.has(`${neighbor.r},${neighbor.c}`)) {
+                        visited.add(`${neighbor.r},${neighbor.c}`);
+                        queue.push([neighbor, [...path, neighbor]]);
                     }
                 }
             }
         }
-        return null;
     }
+    return null;
+}
 
     function findChuteRemotePairs() {
         const sees = (r1, c1, r2, c2) => {
