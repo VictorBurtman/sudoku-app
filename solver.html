@@ -588,11 +588,8 @@
         function getCandidates(row, col) {
             if (currentGrid[row][col] !== 0) return [];
             
-            const userNotes = notesGrid[row][col] || [];
-            if (userNotes.length > 0) {
-                return userNotes;
-            }
-            
+            // TOUJOURS calculer les vrais candidats possibles basés sur la grille
+            // et non sur les notes de l'utilisateur qui peuvent être incomplètes
             const candidates = [];
             for (let num = 1; num <= 9; num++) {
                 if (isValidPlacement(row, col, num)) {
