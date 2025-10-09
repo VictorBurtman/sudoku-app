@@ -1761,7 +1761,7 @@
             if (r1 === r2 || c1 === c2) return true;
             return Math.floor(r1 / 3) === Math.floor(r2 / 3) && Math.floor(c1 / 3) === Math.floor(c2 / 3);
         };
-
+    
         const biValueCells = [];
         for (let r = 0; r < 9; r++) {
             for (let c = 0; c < 9; c++) {
@@ -1771,22 +1771,21 @@
                 }
             }
         }
-
+    
         if (biValueCells.length === 0) return null;
-
+    
         for (let i = 0; i < biValueCells.length; i++) {
             for (let j = i + 1; j < biValueCells.length; j++) {
                 const cell1 = biValueCells[i];
                 const cell2 = biValueCells[j];
-
+    
                 if (cell1.values[0] !== cell2.values[0] || cell1.values[1] !== cell2.values[1]) continue;
-
                 if (sees(cell1.r, cell1.c, cell2.r, cell2.c)) continue;
-
+    
                 const [val1, val2] = cell1.values;
                 const box1 = Math.floor(cell1.r / 3) * 3 + Math.floor(cell1.c / 3);
                 const box2 = Math.floor(cell2.r / 3) * 3 + Math.floor(cell2.c / 3);
-
+    
                 const chuteRow1 = Math.floor(box1 / 3);
                 const chuteRow2 = Math.floor(box2 / 3);
                 
@@ -1794,7 +1793,7 @@
                     const usedBoxes = [box1 % 3, box2 % 3];
                     const thirdBoxCol = [0, 1, 2].find(col => !usedBoxes.includes(col));
                     if (thirdBoxCol === undefined) continue;
-
+    
                     const thirdBox = chuteRow1 * 3 + thirdBoxCol;
                     const yellowCells = [];
                     
@@ -1803,15 +1802,17 @@
                             yellowCells.push({r, c});
                         }
                     }
-
+    
                     let hasVal1 = false, hasVal2 = false;
                     
+                    // CORRECTION DU BUG : Vérifier aussi les valeurs déjà résolues
                     for (const yCell of yellowCells) {
                         const notes = notesGrid[yCell.r][yCell.c] || [];
-                        if (notes.includes(val1)) hasVal1 = true;
-                        if (notes.includes(val2)) hasVal2 = true;
+                        const cellValue = currentGrid[yCell.r][yCell.c];
+                        if (notes.includes(val1) || cellValue === val1) hasVal1 = true;
+                        if (notes.includes(val2) || cellValue === val2) hasVal2 = true;
                     }
-
+    
                     if (!hasVal1 && hasVal2) {
                         const eliminations = [];
                         for (let r = 0; r < 9; r++) {
@@ -1826,7 +1827,7 @@
                                 }
                             }
                         }
-
+    
                         if (eliminations.length > 0) {
                             return {
                                 type: 'elimination',
@@ -1851,7 +1852,7 @@
                                 }
                             }
                         }
-
+    
                         if (eliminations.length > 0) {
                             return {
                                 type: 'elimination',
@@ -1875,7 +1876,7 @@
                                 }
                             }
                         }
-
+    
                         if (eliminations.length > 0) {
                             return {
                                 type: 'elimination',
@@ -1888,7 +1889,7 @@
                         }
                     }
                 }
-
+    
                 const chuteCol1 = box1 % 3;
                 const chuteCol2 = box2 % 3;
                 
@@ -1896,7 +1897,7 @@
                     const usedBoxRows = [Math.floor(box1 / 3), Math.floor(box2 / 3)];
                     const thirdBoxRow = [0, 1, 2].find(row => !usedBoxRows.includes(row));
                     if (thirdBoxRow === undefined) continue;
-
+    
                     const thirdBox = thirdBoxRow * 3 + chuteCol1;
                     const yellowCells = [];
                     
@@ -1905,15 +1906,17 @@
                             yellowCells.push({r, c});
                         }
                     }
-
+    
                     let hasVal1 = false, hasVal2 = false;
                     
+                    // CORRECTION DU BUG : Vérifier aussi les valeurs déjà résolues
                     for (const yCell of yellowCells) {
                         const notes = notesGrid[yCell.r][yCell.c] || [];
-                        if (notes.includes(val1)) hasVal1 = true;
-                        if (notes.includes(val2)) hasVal2 = true;
+                        const cellValue = currentGrid[yCell.r][yCell.c];
+                        if (notes.includes(val1) || cellValue === val1) hasVal1 = true;
+                        if (notes.includes(val2) || cellValue === val2) hasVal2 = true;
                     }
-
+    
                     if (hasVal1 && !hasVal2) {
                         const eliminations = [];
                         for (let r = 0; r < 9; r++) {
@@ -1928,7 +1931,7 @@
                                 }
                             }
                         }
-
+    
                         if (eliminations.length > 0) {
                             return {
                                 type: 'elimination',
@@ -1953,7 +1956,7 @@
                                 }
                             }
                         }
-
+    
                         if (eliminations.length > 0) {
                             return {
                                 type: 'elimination',
@@ -1977,7 +1980,7 @@
                                 }
                             }
                         }
-
+    
                         if (eliminations.length > 0) {
                             return {
                                 type: 'elimination',
@@ -1992,10 +1995,11 @@
                 }
             }
         }
-
+    
         return null;
     }
 
+    
     function findSimpleColoring() {
         const sees = (r1, c1, r2, c2) => {
             if (r1 === r2 && c1 === c2) return false;
