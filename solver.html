@@ -1504,6 +1504,15 @@
                     if (commonValues.length > 0) {
                         const targetValue = commonValues[0];
                         
+                        // ✅ CORRECTION: Vérifier la parité
+                        // Pour des éliminations valides, il faut un nombre IMPAIR de cellules
+                        // (nombre pair de liens = les extrémités ont des états opposés)
+                        if (path.length % 2 === 0) {
+                            // Nombre pair de cellules = même parité = pas d'élimination standard
+                            // Continue à chercher d'autres chaînes
+                            continue;
+                        }
+                        
                         // Find eliminations - cells that see both ends and contain targetValue
                         const eliminations = [];
                         for (let r = 0; r < 9; r++) {
@@ -1531,7 +1540,7 @@
                                 cells: path.map(p => ({row: p.r, col: p.c})),
                                 values: [targetValue],
                                 explanation: `XY-Chain of length ${path.length}: ${path.map(p => `R${p.r+1}C${p.c+1}`).join(' → ')}.`,
-                                reasoning: `Both ends of the chain (R${startCell.r+1}C${startCell.c+1} and R${endCell.r+1}C${endCell.c+1}) contain ${targetValue}, so ${targetValue} can be eliminated from cells seeing both ends.`,
+                                reasoning: `Both ends of the chain (R${startCell.r+1}C${startCell.c+1} and R${endCell.r+1}C${endCell.c+1}) have opposite states for ${targetValue}, so ${targetValue} can be eliminated from cells seeing both ends.`,
                                 eliminations: eliminations
                             };
                         }
@@ -1560,7 +1569,6 @@
         
         return null;
     }
-
     function findXWing() {
         for (let digit = 1; digit <= 9; digit++) {
             const rowsWithTwo = [];
