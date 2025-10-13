@@ -755,6 +755,117 @@
         return null;
     }
 
+    function findBoxLineReduction() {
+        // Check rows: if a candidate in a row only appears in one box, eliminate it from other cells in that box
+        for (let row = 0; row < 9; row++) {
+            for (let num = 1; num <= 9; num++) {
+                // Skip if number already exists in this row
+                if (currentGrid[row].includes(num)) continue;
+                
+                const boxesWithCandidate = new Set();
+                const positions = [];
+                
+                for (let col = 0; col < 9; col++) {
+                    if (currentGrid[row][col] === 0) {
+                        const notes = notesGrid[row][col] || [];
+                        if (notes.includes(num)) {
+                            const boxNum = getBoxNumber(row, col);
+                            boxesWithCandidate.add(boxNum);
+                            positions.push({row, col, boxNum});
+                        }
+                    }
+                }
+                
+                // If candidate appears in only one box
+                if (boxesWithCandidate.size === 1) {
+                    const targetBox = Array.from(boxesWithCandidate)[0];
+                    const boxIndices = getBoxIndices(targetBox);
+                    let eliminationDetails = [];
+                    let eliminationCells = [];
+                    
+                    // Check other cells in this box (not in the row)
+                    for (const [r, c] of boxIndices) {
+                        if (r !== row && currentGrid[r][c] === 0) {
+                            const notes = notesGrid[r][c] || [];
+                            if (notes.includes(num)) {
+                                eliminationDetails.push(`R${r+1}C${c+1}: remove ${num}`);
+                                eliminationCells.push({row: r, col: c});
+                            }
+                        }
+                    }
+                    
+                    if (eliminationDetails.length > 0) {
+                        return {
+                            type: 'elimination',
+                            cells: positions.map(p => ({row: p.row, col: p.col})),
+                            values: [num],
+                            explanation: `Line/Box Reduction: ${num} in Row ${row + 1} is confined to Box ${targetBox + 1}`,
+                            reasoning: `In Row ${row + 1}, candidate ${num} only appears in Box ${targetBox + 1} (${positions.map(p => `R${p.row+1}C${p.col+1}`).join(', ')}). Therefore, ${num} can be eliminated from other cells in Box ${targetBox + 1}.`,
+                            eliminations: eliminationDetails,
+                            eliminationCells: eliminationCells
+                        };
+                    }
+                }
+            }
+        }
+        
+        // Check columns: if a candidate in a column only appears in one box, eliminate it from other cells in that box
+        for (let col = 0; col < 9; col++) {
+            for (let num = 1; num <= 9; num++) {
+                // Skip if number already exists in this column
+                if (currentGrid.some(row => row[col] === num)) continue;
+                
+                const boxesWithCandidate = new Set();
+                const positions = [];
+                
+                for (let row = 0; row < 9; row++) {
+                    if (currentGrid[row][col] === 0) {
+                        const notes = notesGrid[row][col] || [];
+                        if (notes.includes(num)) {
+                            const boxNum = getBoxNumber(row, col);
+                            boxesWithCandidate.add(boxNum);
+                            positions.push({row, col, boxNum});
+                        }
+                    }
+                }
+                
+                // If candidate appears in only one box
+                if (boxesWithCandidate.size === 1) {
+                    const targetBox = Array.from(boxesWithCandidate)[0];
+                    const boxIndices = getBoxIndices(targetBox);
+                    let eliminationDetails = [];
+                    let eliminationCells = [];
+                    
+                    // Check other cells in this box (not in the column)
+                    for (const [r, c] of boxIndices) {
+                        if (c !== col && currentGrid[r][c] === 0) {
+                            const notes = notesGrid[r][c] || [];
+                            if (notes.includes(num)) {
+                                eliminationDetails.push(`R${r+1}C${c+1}: remove ${num}`);
+                                eliminationCells.push({row: r, col: c});
+                            }
+                        }
+                    }
+                    
+                    if (eliminationDetails.length > 0) {
+                        return {
+                            type: 'elimination',
+                            cells: positions.map(p => ({row: p.row, col: p.col})),
+                            values: [num],
+                            explanation: `Line/Box Reduction: ${num} in Column ${col + 1} is confined to Box ${targetBox + 1}`,
+                            reasoning: `In Column ${col + 1}, candidate ${num} only appears in Box ${targetBox + 1} (${positions.map(p => `R${p.row+1}C${p.col+1}`).join(', ')}). Therefore, ${num} can be eliminated from other cells in Box ${targetBox + 1}.`,
+                            eliminations: eliminationDetails,
+                            eliminationCells: eliminationCells
+                        };
+                    }
+                }
+            }
+        }
+        
+        return null;
+    }
+
+    
     function findRectangleElimination() {
         for (let r1 = 0; r1 < 8; r1++) {
             for (let c1 = 0; c1 < 8; c1++) {
@@ -2224,6 +2335,12 @@
                 return;
             }
 
+            const boxLineReduction = findBoxLineReduction();
+            if (boxLineReduction) {
+                displayAnalysis("Line/Box Reduction", boxLineReduction);
+                return;
+            }
+            
             const nakedPair = findNakedPairs();
             if (nakedPair) {
                 displayAnalysis("Naked Pairs", nakedPair);
