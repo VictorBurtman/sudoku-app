@@ -1548,6 +1548,124 @@
         return null;
     }
 
+    function findXYZWing() {
+        const sees = (r1, c1, r2, c2) => {
+            if (r1 === r2 && c1 === c2) return false;
+            if (r1 === r2 || c1 === c2) return true;
+            return Math.floor(r1 / 3) === Math.floor(r2 / 3) && Math.floor(c1 / 3) === Math.floor(c2 / 3);
+        };
+    
+        // Find all cells with exactly 3 candidates (potential hinges)
+        const hinges = [];
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                const notes = notesGrid[r][c] || [];
+                if (currentGrid[r][c] === 0 && notes.length === 3) {
+                    hinges.push({r, c, values: [...notes].sort((a, b) => a - b)});
+                }
+            }
+        }
+    
+        // Find all cells with exactly 2 candidates (potential wings)
+        const biValueCells = [];
+        for (let r = 0; r < 9; r++) {
+            for (let c = 0; c < 9; c++) {
+                const notes = notesGrid[r][c] || [];
+                if (currentGrid[r][c] === 0 && notes.length === 2) {
+                    biValueCells.push({r, c, values: [...notes].sort((a, b) => a - b)});
+                }
+            }
+        }
+    
+        // Check each hinge
+        for (const hinge of hinges) {
+            const [X, Y, Z] = hinge.values;
+    
+            // Find wings that see the hinge and have 2 of the 3 hinge values
+            const potentialWings = biValueCells.filter(wing => {
+                if (!sees(hinge.r, hinge.c, wing.r, wing.c)) return false;
+                
+                // Wing must have exactly 2 values that are in the hinge
+                const commonValues = wing.values.filter(v => hinge.values.includes(v));
+                return commonValues.length === 2;
+            });
+    
+            // Try all pairs of potential wings
+            for (let i = 0; i < potentialWings.length - 1; i++) {
+                for (let j = i + 1; j < potentialWings.length; j++) {
+                    const wing1 = potentialWings[i];
+                    const wing2 = potentialWings[j];
+    
+                    // Check if the two wings together cover all 3 values of the hinge
+                    const allWingValues = new Set([...wing1.values, ...wing2.values]);
+                    
+                    // Must have exactly the 3 values from hinge
+                    if (allWingValues.size !== 3) continue;
+                    if (!hinge.values.every(v => allWingValues.has(v))) continue;
+    
+                    // Find the common value among all three cells (hinge + 2 wings)
+                    const commonToAll = hinge.values.filter(v => 
+                        wing1.values.includes(v) && wing2.values.includes(v)
+                    );
+    
+                    if (commonToAll.length !== 1) continue;
+                    
+                    const eliminationValue = commonToAll[0];
+    
+                    // Find cells that see all three (hinge + both wings) and contain the elimination value
+                    let eliminationDetails = [];
+                    let eliminationCells = [];
+    
+                    for (let r = 0; r < 9; r++) {
+                        for (let c = 0; c < 9; c++) {
+                            if (currentGrid[r][c] === 0) {
+                                // Skip if it's one of our three cells
+                                if ((r === hinge.r && c === hinge.c) ||
+                                    (r === wing1.r && c === wing1.c) ||
+                                    (r === wing2.r && c === wing2.c)) {
+                                    continue;
+                                }
+    
+                                // Check if this cell sees all three cells
+                                if (sees(r, c, hinge.r, hinge.c) &&
+                                    sees(r, c, wing1.r, wing1.c) &&
+                                    sees(r, c, wing2.r, wing2.c)) {
+                                    
+                                    const notes = notesGrid[r][c] || [];
+                                    if (notes.includes(eliminationValue)) {
+                                        eliminationDetails.push(`R${r+1}C${c+1}: remove ${eliminationValue}`);
+                                        eliminationCells.push({row: r, col: c});
+                                    }
+                                }
+                            }
+                        }
+                    }
+    
+                    if (eliminationDetails.length > 0) {
+                        return {
+                            type: 'elimination',
+                            cells: [
+                                {row: hinge.r, col: hinge.c},
+                                {row: wing1.r, col: wing1.c},
+                                {row: wing2.r, col: wing2.c}
+                            ],
+                            values: hinge.values,
+                            explanation: `XYZ-Wing: Hinge R${hinge.r+1}C${hinge.c+1} {${hinge.values.join('/')}} with wings R${wing1.r+1}C${wing1.c+1} {${wing1.values.join('/')}} and R${wing2.r+1}C${wing2.c+1} {${wing2.values.join('/')}}.`,
+                            reasoning: `All three cells share candidate ${eliminationValue}. Any cell seeing all three cannot contain ${eliminationValue}.`,
+                            eliminations: eliminationDetails,
+                            eliminationCells: eliminationCells
+                        };
+                    }
+                }
+            }
+        }
+    
+        return null;
+    }
+
+
+
+    
     function findXYChain() {
         // Find all bi-value cells (cells with exactly 2 candidates)
         const biValueCells = [];
@@ -2365,6 +2483,12 @@
                 return;
             }
 
+            const xyzWing = findXYZWing();
+            if (xyzWing) {
+                displayAnalysis("XYZ-Wing", xyzWing);
+                return;
+            }
+            
             const rectangleElim = findRectangleElimination();
             if (rectangleElim) {
                 displayAnalysis("Rectangle Elimination", rectangleElim);
